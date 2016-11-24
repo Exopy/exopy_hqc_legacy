@@ -216,6 +216,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaRS232':
                                            {'resource_class': 'INSTR'}
                                        }
+                                       
+                Drivers:
+                    manufacturer = 'Rohde and Schwarz'
+                    Driver:
+                        driver = 'rohde_and_schwarz_vna:ZNB20'
+                        model = 'ZNB20'
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaTCPIP': {'resource_class': 'INSTR'}
+                                       }
             Drivers:
                 path = 'dll'
                 starter = 'ecpy_hqc_legacy.starter.dll'
@@ -286,7 +295,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                         interface = 'pna_tasks:PNASetRFFrequencyInterface'
                         views = ['views.pna_task_views:IPNAChannelLabel',
                                  'views.pna_task_views:IPNAChannelValue']
-                        instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA']
+                        instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'rf_tasks:SetRFPowerTask'
                     view = 'views.rf_views:RFPowerView'
@@ -300,7 +309,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                  'views.pna_task_views:IPNAChannelValue',
                                  'views.pna_task_views:IPNAPortLabel',
                                  'views.pna_task_views:IPNAPortValue']
-                        instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA']
+                        instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'rf_tasks:SetRFOnOffTask'
                     view = 'views.rf_views:RFSetOnOffView'
@@ -311,15 +320,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'pna_tasks:PNASinglePointMeasureTask'
                     view = 'views.pna_task_views:PNASinglePointView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA']
+                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'pna_tasks:PNASweepTask'
                     view = 'views.pna_task_views:PNASweepMeasView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA']
+                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'pna_tasks:PNAGetTraces'
                     view = 'views.pna_task_views:PNAGetTraceView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA']
+                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'set_dc_voltage_task:SetDCVoltageTask'
                     view = 'views.set_dc_voltage_view:SetDcVoltageView'

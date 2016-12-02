@@ -160,6 +160,14 @@ enamldef HqcLegacyManifest(PluginManifest):
                                            {'resource_class': 'INSTR'}
                                        }
                 Drivers:
+                    manufacturer = 'Crymagnetics'
+                    Driver:
+                        driver = 'cyomagnetics_cs4:CS4'
+                        model  = 'IPS120-10'
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaUSB': {'resource_class': 'INSTR'}
+                                       }
+                Drivers:
                     manufacturer = 'Tektronix'
                     Driver:
                         driver = 'tektro_awg:AWG'
@@ -263,7 +271,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'apply_mag_field_task:ApplyMagFieldTask'
                     view = 'views.apply_mag_field_view:ApplyMagFieldView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.IPS12010']
+                    instruments = ['ecpy_hqc_legacy.Legacy.IPS12010',
+                                   'ecpy_hqc_legacy.Legacy.CS4']
                     metadata = {'loopable': True}
                 Task:
                     task = 'lock_in_measure_task:LockInMeasureTask'

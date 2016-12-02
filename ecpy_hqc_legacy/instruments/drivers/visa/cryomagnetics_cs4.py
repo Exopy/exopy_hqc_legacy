@@ -25,28 +25,30 @@ _GET_HEATER_DICT = {'0': 'Off',
 
 _ACTIVITY_DICT = {'To zero': 'SWEEP ZERO'}
 
-FIELD_CURRENT_RATIO = 0.043963
+FIELD_CURRENT_RATIO = 0.20393 # in tesla/amp
 OUT_FLUC = 2e-4
 MAXITER = 20
 
 
 class CS4(VisaInstrument):
-    """Driver for the CS4 superconducting magnet power supply.
-
-    """
 
     @secure_communication()
     def make_ready(self):
-        """Setup the correct unit and range.
-
+        """
+        Setup the correct unit and range.
         """
         self.write('UNITS T')
         self.write('RANGE 0 100')
+        # we'll only use the command sweep up (ie to upper limit)
+        # however upper limit can't be lower than lower limit for
+        # some sources : G4 for example
+        # set lower limit to lowest value
+        self.write('LLIM -7')
 
     def go_to_field(self, value, rate, auto_stop_heater=True,
                     post_switch_wait=30):
-        """Ramp up the field to the specified value.
-
+        """
+        Ramp up the field to the specified value.
         """
         # sweeping rate is converted from T/min to A/sec
         self.field_sweep_rate = rate / (60 * FIELD_CURRENT_RATIO)
@@ -72,23 +74,24 @@ class CS4(VisaInstrument):
                 sleep(1)
                 niter += 1
                 if niter > MAXITER:
-                    raise InstrIOError(cleandoc('''CS4 didn't set the field
-                        to zero after {} sec'''.format(MAXITER)))
+                    raise InstrIOError(cleandoc('''CS4 didn't set the
+                        field to zero after {} sec'''.format(MAXITER)))
 
     def check_connection(self):
         pass
 
     @instrument_property
     def heater_state(self):
-        """State of the switch heater allowing to inject current into the
+        """
+        State of the switch heater allowing to inject current into the
         coil.
-
         """
         heat = self.ask('PSHTR?').strip()
         try:
             return _GET_HEATER_DICT[heat]
         except KeyError:
-            raise ValueError(cleandoc('''The switch is in fault or absent'''))
+            raise ValueError(cleandoc('''The switch is in fault or
+                                         absent'''))
 
     @heater_state.setter
     @secure_communication()
@@ -98,8 +101,8 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def field_sweep_rate(self):
-        """Rate at which to ramp the field.
-
+        """
+        Rate at which to ramp the field.
         """
         return float(self.ask('RATE? 0'))
 
@@ -109,9 +112,21 @@ class CS4(VisaInstrument):
         self.write("RATE 0 {}".format(rate))
 
     @instrument_property
-    def target_field(self):
-        """Field that the source will try to reach.
+    def fast_sweep_rate(self):
+        """
+        Rate at which to ramp the field when the switch heater is off
+        """
+        return float(self.ask('RATE? 5'))
 
+    @field_sweep_rate.setter
+    @secure_communication()
+    def fast_sweep_rate(self, rate):
+        self.write("RATE 5 {}".format(rate))
+
+    @instrument_property
+    def target_field(self):
+        """
+        Field that the source will try to reach.
         """
         return float(self.ask('IOUT?').strip(' T'))
 
@@ -122,10 +137,17 @@ class CS4(VisaInstrument):
         sweep the output intensity to reach the specified ULIM (in A)
         at a rate depending on the intensity, as defined in the range(s)
         """
-        wait = abs(self.target_field - target) / self.field_sweep_rate
-        wait /= FIELD_CURRENT_RATIO
         self.write("ULIM {}".format(target))
-        self.write('SWEEP UP')
+
+        if self.heater_state == 'Off':
+            wait = abs(self.target_field - target) / self.fast_sweep_rate
+            self.write('SWEEP UP FAST')
+        else:
+            wait = abs(self.target_field - target) / self.field_sweep_rate
+            # careful, need to specify slow after a fast sweep !
+            self.write('SWEEP UP SLOW')
+
+        wait /= FIELD_CURRENT_RATIO
         sleep(wait)
         niter = 0
         while abs(self.target_field - target) >= OUT_FLUC:
@@ -133,19 +155,19 @@ class CS4(VisaInstrument):
             niter += 1
             if niter > MAXITER:
                 raise InstrIOError(cleandoc('''CS4 didn't set the field
-                    to {}'''.format(target)))
+                                               to {}'''.format(target)))
+
 
     @instrument_property
     def persistent_field(self):
-        """Last known field.
-
+        """
         """
         return float(self.ask('IMAG?').strip(' T'))
 
     @instrument_property
     def activity(self):
-        """Current activity of the power supply (idle, ramping).
-
+        """
+        Current activity of the power supply (idle, ramping).
         """
         return self.ask('SWEEP?').strip()
 
@@ -157,4 +179,4 @@ class CS4(VisaInstrument):
             self.write(par)
         else:
             raise ValueError(cleandoc(''' Invalid parameter {} sent to
-                CS4 set_activity method'''.format(value)))
+                             CS4 set_activity method'''.format(value)))

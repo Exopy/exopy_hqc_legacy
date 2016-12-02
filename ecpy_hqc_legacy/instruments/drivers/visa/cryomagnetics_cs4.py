@@ -34,8 +34,7 @@ class CS4(VisaInstrument):
 
     @secure_communication()
     def make_ready(self):
-        """
-        Setup the correct unit and range.
+        """Setup the correct unit and range.
         """
         self.write('UNITS T')
         self.write('RANGE 0 100')
@@ -47,8 +46,7 @@ class CS4(VisaInstrument):
 
     def go_to_field(self, value, rate, auto_stop_heater=True,
                     post_switch_wait=30):
-        """
-        Ramp up the field to the specified value.
+        """Ramp up the field to the specified value.
         """
         # sweeping rate is converted from T/min to A/sec
         self.field_sweep_rate = rate / (60 * FIELD_CURRENT_RATIO)
@@ -82,8 +80,7 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def heater_state(self):
-        """
-        State of the switch heater allowing to inject current into the
+        """State of the switch heater allowing to inject current into the
         coil.
         """
         heat = self.ask('PSHTR?').strip()
@@ -101,8 +98,7 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def field_sweep_rate(self):
-        """
-        Rate at which to ramp the field.
+        """Rate at which to ramp the field.
         """
         return float(self.ask('RATE? 0'))
 
@@ -113,8 +109,7 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def fast_sweep_rate(self):
-        """
-        Rate at which to ramp the field when the switch heater is off
+        """Rate at which to ramp the field when the switch heater is off
         """
         return float(self.ask('RATE? 5'))
 
@@ -125,16 +120,14 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def target_field(self):
-        """
-        Field that the source will try to reach.
+        """Field that the source will try to reach.
         """
         return float(self.ask('IOUT?').strip(' T'))
 
     @target_field.setter
     @secure_communication()
     def target_field(self, target):
-        """
-        sweep the output intensity to reach the specified ULIM (in A)
+        """Sweep the output intensity to reach the specified ULIM (in A)
         at a rate depending on the intensity, as defined in the range(s)
         """
         self.write("ULIM {}".format(target))
@@ -160,14 +153,13 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def persistent_field(self):
-        """
+        """Value of the magnet field
         """
         return float(self.ask('IMAG?').strip(' T'))
 
     @instrument_property
     def activity(self):
-        """
-        Current activity of the power supply (idle, ramping).
+        """Current activity of the power supply (idle, ramping).
         """
         return self.ask('SWEEP?').strip()
 

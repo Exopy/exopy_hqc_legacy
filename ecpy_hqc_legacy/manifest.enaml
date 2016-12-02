@@ -156,16 +156,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                         driver = 'oxford_ips:IPS12010'
                         model  = 'IPS120-10'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
-                                       'VisaRS232':
-                                           {'resource_class': 'INSTR'}
+                                       'VisaRS232': {'resource_class': 'INSTR'}
                                        }
                 Drivers:
                     manufacturer = 'Crymagnetics'
                     Driver:
                         driver = 'cyomagnetics_cs4:CS4'
-                        model  = 'IPS120-10'
+                        model  = 'CS4-10V/100'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
-                                       'VisaUSB': {'resource_class': 'INSTR'}
+                                       'VisaRS232': {'resource_class': 'INSTR'}
                                        }
                 Drivers:
                     manufacturer = 'Tektronix'

@@ -18,7 +18,8 @@ import enaml
 from enaml.workbench.api import PluginManifest, Extension
 from ecpy.app.api import AppStartup
 from ecpy.tasks.api import Tasks, Task, Interface
-from ecpy.instruments.api import Starter, Connection, Drivers, Driver
+from ecpy.instruments.api import (Starter, Connection, Drivers, Driver,
+                                  Settings)
 
 from .instruments.starters.legacy_starter import (VisaLegacyStarter,
                                                   DllLegacyStarter)

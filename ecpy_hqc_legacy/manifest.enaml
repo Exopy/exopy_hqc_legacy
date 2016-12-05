@@ -89,7 +89,7 @@ enamldef HqcLegacyManifest(PluginManifest):
     Extension:
         id = 'instruments.settings'
         point = 'ecpy.instruments.settings'
-        Setting:
+        Settings:
             id = 'MagnetConversionSetting'
             description = ('Magnet-dependant field to current ratio that need '
                            'to be specified for field sources.')

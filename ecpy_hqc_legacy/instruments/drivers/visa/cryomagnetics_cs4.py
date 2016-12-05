@@ -36,7 +36,8 @@ class CS4(VisaInstrument):
         super(CS4, self).__init__(connection_info, caching_allowed,
                                   caching_permissions)
         try:
-            self.field_current_ratio = connection_info['magnet_conversion']
+            mc = connection_info['magnet_conversion']
+            self.field_current_ratio = mc
         except KeyError:
             raise InstrIOError(cleandoc('''The field to current ratio
                  of the currently used magnet need to be specified in

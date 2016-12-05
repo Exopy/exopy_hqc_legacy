@@ -87,6 +87,23 @@ enamldef HqcLegacyManifest(PluginManifest):
                                      workbench=workbench, **defaults)
 
     Extension:
+        id = 'instruments.settings'
+        point = 'ecpy.instruments.settings'
+        Setting:
+            id = 'MagnetConversionSetting'
+            description = ('Magnet-dependant field to current ratio that need '
+                           'to be specified for field sources.')
+            new => (workbench, defaults, read_only):
+                with enaml.imports():
+                    from .instruments.settings.magnet_conversion_setting\
+                        import MagnetConversionSetting
+
+                mc = defaults.get('magnet_conversion', 0.)
+                widget = MagnetConversionSetting(workbench=workbench,
+                                                 magnet_conversion=mc)
+                widget.read_only = read_only
+                return widget
+    Extension:
         id = 'instruments.drivers'
         point = 'ecpy.instruments.drivers'
         Drivers:
@@ -167,6 +184,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
                     manufacturer = 'Crymagnetics'
+                    settings = {'MagnetConversionSetting': {}}
                     Driver:
                         driver = 'cyomagnetics_4G:CS4'
                         model  = '4G-100'
@@ -175,6 +193,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaTCPIP': {'port': 4444,
                                                      'resource_class': 'SOCKET'}
                                        }
+                        settings = {'MagnetConversionSetting': {}}
                 Drivers:
                     manufacturer = 'Tektronix'
                     Driver:

@@ -25,12 +25,21 @@ _GET_HEATER_DICT = {'0': 'Off',
 
 _ACTIVITY_DICT = {'To zero': 'SWEEP ZERO'}
 
-FIELD_CURRENT_RATIO = 0.20393 # in tesla/amp
 OUT_FLUC = 2e-4
 MAXITER = 20
 
 
 class CS4(VisaInstrument):
+
+    def __init__(self, connection_info, caching_allowed=True,
+                 caching_permissions={}, auto_open=True):
+        super(CS4, self).__init__(connection_info, caching_allowed,
+                                  caching_permissions)
+        self.field_current_ratio = connection_info['magnet_conversion']
+        if not self.field_current_ratio:
+            raise InstrIOError(cleandoc('''The field to current ratio
+                 of the currently used magnet need to be specified in
+                 the instrument settings.'''))
 
     @secure_communication()
     def make_ready(self):
@@ -51,7 +60,7 @@ class CS4(VisaInstrument):
 
         """
         # sweeping rate is converted from T/min to A/sec
-        self.field_sweep_rate = rate / (60 * FIELD_CURRENT_RATIO)
+        self.field_sweep_rate = rate / (60 * self.field_current_ratio)
 
         if abs(self.persistent_field - value) >= OUT_FLUC:
 

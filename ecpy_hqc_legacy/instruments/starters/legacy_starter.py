@@ -26,6 +26,7 @@ class LegacyStarter(BaseStarter):
 
         """
         c = self.format_connection_infos(connection)
+        c.update(settings)
         return driver_cls(c)
 
     def check_infos(self, driver_cls, connection, settings):

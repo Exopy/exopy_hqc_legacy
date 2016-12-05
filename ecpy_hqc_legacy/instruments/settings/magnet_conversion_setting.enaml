@@ -1,0 +1,47 @@
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# Copyright 2015 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+#
+# Distributed under the terms of the BSD license.
+#
+# The full license is in the file LICENCE, distributed with this software.
+# -----------------------------------------------------------------------------
+"""Specific connection information edition widget for visa instruments with settings
+
+"""
+from __future__ import (division, unicode_literals, print_function,
+                        absolute_import)
+
+import os
+from textwrap import fill
+
+from enaml.widgets.api import Label
+from enaml.stdlib.fields import FloatField
+from enaml.layout.api import hbox, vbox, grid, align
+from ecpy.instruments.api import BaseSettings
+from ecpy.app.icons.api import get_icon
+
+
+enamldef MagnetConversionSetting(Container):
+    """Field to amp conversion settings for magnet sources.
+
+    """
+    #: Reference to the workbench.
+    attr workbench
+
+    #: Current to field conversion ratio.
+    alias magnet_conversion : conversion_val.value
+
+    title = self.declaration.id
+
+    gather_infos => ():
+        return {'magnet_conversion': magnet_conversion}
+
+    constraints = [hbox(conversion_lab, conversion_val)]
+
+    Label: conversion_lab:
+        text = 'Conversion factor (T/A)'
+    FloatField: conversion_val:
+        enabled << not read_only
+        tool_tip = ('A conversion factor, dependant on the '
+        	        'magnet used need to be specified.')

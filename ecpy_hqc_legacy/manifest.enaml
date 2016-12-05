@@ -173,6 +173,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                     Driver:
                         driver = 'oxford_ips:IPS12010'
                         model  = 'IPS120-10'
+                        kind = 'Magnetic field source'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
@@ -181,6 +182,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                     Driver:
                         driver = 'cyomagnetics_cs4:CS4'
                         model  = 'CS4-10V/100'
+                        kind = 'Magnetic field source'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
@@ -189,6 +191,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                     Driver:
                         driver = 'cyomagnetics_4G:CS4'
                         model  = '4G-100'
+                        kind = 'Magnetic field source'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaUSB': {'resource_class': 'INSTR'},
                                        'VisaTCPIP': {'port': 4444,

@@ -13,16 +13,14 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
 import os
-from textwrap import fill
 
 from enaml.widgets.api import Label
 from enaml.stdlib.fields import FloatField
-from enaml.layout.api import hbox, vbox, grid, align
+from enaml.layout.api import hbox
 from ecpy.instruments.api import BaseSettings
-from ecpy.app.icons.api import get_icon
 
 
-enamldef MagnetConversionSetting(Container):
+enamldef MagnetConversionSetting(BaseSettings):
     """Field to amp conversion settings for magnet sources.
 
     """

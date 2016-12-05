@@ -171,7 +171,7 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def persistent_field(self):
-        """Value of the magnet field.
+        """Last known value of the magnet field.
 
         """
         return float(self.ask('IMAG?').strip(' T'))

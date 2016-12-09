@@ -35,10 +35,12 @@ enamldef MagnetConversionSetting(BaseSettings):
     gather_infos => ():
         return {'magnet_conversion': magnet_conversion}
 
-    constraints = [hbox(conversion_lab, conversion_val)]
+    constraints = [hbox(conversion_lab, conversion_val, units)]
 
     Label: conversion_lab:
-        text = 'Conversion factor (T/A)'
+        text = 'Conversion factor'
+    Label: units:
+        text = 'T/A'
     FloatField: conversion_val:
         enabled << not read_only
         tool_tip = ('A conversion factor, dependant on the '

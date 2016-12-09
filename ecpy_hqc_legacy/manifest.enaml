@@ -98,12 +98,12 @@ enamldef HqcLegacyManifest(PluginManifest):
                 with enaml.imports():
                     from .instruments.settings.magnet_conversion_setting\
                         import MagnetConversionSetting
-
                 mc = defaults.get('magnet_conversion', 0.)
                 widget = MagnetConversionSetting(workbench=workbench,
                                                  magnet_conversion=mc)
                 widget.read_only = read_only
                 return widget
+
     Extension:
         id = 'instruments.drivers'
         point = 'ecpy.instruments.drivers'
@@ -173,31 +173,26 @@ enamldef HqcLegacyManifest(PluginManifest):
                     Driver:
                         driver = 'oxford_ips:IPS12010'
                         model  = 'IPS120-10'
-                        kind = 'Magnetic field source'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
                 Drivers:
-                    manufacturer = 'Crymagnetics'
+                    manufacturer = 'Cryomagnetics'
+                    settings = {'MagnetConversionSetting': {}}
                     Driver:
-                        driver = 'cyomagnetics_cs4:CS4'
+                        driver = 'cryomagnetics_cs4:CS4'
                         model  = 'CS4-10V/100'
-                        kind = 'Magnetic field source'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
-                    manufacturer = 'Crymagnetics'
-                    settings = {'MagnetConversionSetting': {}}
                     Driver:
-                        driver = 'cyomagnetics_4G:CS4'
+                        driver = 'cryomagnetics_g4:C4G'
                         model  = '4G-100'
-                        kind = 'Magnetic field source'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaUSB': {'resource_class': 'INSTR'},
                                        'VisaTCPIP': {'port': 4444,
                                                      'resource_class': 'SOCKET'}
                                        }
-                        settings = {'MagnetConversionSetting': {}}
                 Drivers:
                     manufacturer = 'Tektronix'
                     Driver:

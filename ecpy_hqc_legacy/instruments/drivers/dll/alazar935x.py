@@ -20,88 +20,37 @@ import math
 import numpy as np
 import ctypes
 from inspect import cleandoc
+import matplotlib.pyplot as plt
 
 from pyclibrary import CLibrary
 
 from ..dll_tools import DllInstrument
+import atsapi as ats
 
-class DMABuffer:
-    '''Buffer suitable for DMA transfers.
+# TODO : getting it ot work
+# - properly get the headers directory and dll directory see sp_adq14 _setup_librar, we have three headers not just one
+# -
 
-    AlazarTech digitizers use direct memory access (DMA) to transfer
-    data from digitizers to the computer's main memory. This class
-    abstracts a memory buffer on the host, and ensures that all the
-    requirements for DMA transfers are met.
-
-    DMABuffers export a 'buffer' member, which is a NumPy array view
-    of the underlying memory buffer
-
-    Args:
-
-      bytes_per_sample (int): The number of bytes per samples of the
-      data. This varies with digitizer models and configurations.
-
-      size_bytes (int): The size of the buffer to allocate, in bytes.
-
-    '''
-    def __init__(self, bytes_per_sample, size_bytes):
-        self.size_bytes = size_bytes
-        ctypes.cSampleType = ctypes.c_uint8
-        npSampleType = np.uint8
-        if bytes_per_sample > 1:
-            ctypes.cSampleType = ctypes.c_uint16
-            npSampleType = np.uint16
-
-        self.addr = None
-        if os.name == 'nt':
-            MEM_COMMIT = 0x1000
-            PAGE_READWRITE = 0x4
-            ctypes.windll.kernel32.VirtualAlloc.argtypes = [ctypes.c_void_p, ctypes.c_long,
-                                                     ctypes.c_long, ctypes.c_long]
-            ctypes.windll.kernel32.VirtualAlloc.restype = ctypes.c_void_p
-            self.addr = ctypes.windll.kernel32.VirtualAlloc(
-                0, ctypes.c_long(size_bytes), MEM_COMMIT, PAGE_READWRITE)
-        elif os.name == 'posix':
-            ctypes.libc.valloc.argtypes = [ctypes.c_long]
-            ctypes.libc.valloc.restype = ctypes.c_void_p
-            self.addr = ctypes.libc.valloc(size_bytes)
-        else:
-            raise Exception("Unsupported OS")
-
-        ctypes.ctypes_array = (ctypes.cSampleType *
-                        (size_bytes // bytes_per_sample)
-                        ).from_address(self.addr)
-        self.buffer = np.frombuffer(ctypes.ctypes_array, dtype=npSampleType)
-        pointer, read_only_flag = self.buffer.__array_interface__['data']
-
-    def __exit__(self):
-        if os.name == 'nt':
-            MEM_RELEASE = 0x8000
-            ctypes.windll.kernel32.VirtualFree.argtypes = [ctypes.c_void_p, ctypes.c_long, ctypes.c_long]
-            ctypes.windll.kernel32.VirtualFree.restype = ctypes.c_int
-            ctypes.windll.kernel32.VirtualFree(ctypes.c_void_p(self.addr), 0, MEM_RELEASE)
-        elif os.name == 'posix':
-            ctypes.libc.free(self.addr)
-        else:
-            raise Exception("Unsupported OS")
-
+# TODO : cleanup
+# - remove DMABuffer use numpy array instead
+# - clean long lines
 
 class Alazar935x(DllInstrument):
 
     library = 'ATSApi.dll'
 
-    def __init__(self, connection_info, caching_allowed=True,
+    def __init__(self, connection_infos, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
 
-        super(Alazar935x, self).__init__(connection_info, caching_allowed,
+        super(Alazar935x, self).__init__(connection_infos, caching_allowed,
                                          caching_permissions, auto_open)
 
         cache_path = unicode(os.path.join(os.path.dirname(__file__),
-                                          'cache/Alazar.pycctypes.libc'))
-        self._dll = CLibrary('ATSApi.dll',
-                             ['AlazarError.h', 'AlazarCmd.h', 'AlazarApi.h'],
-                             cache=cache_path, prefix=['Alazar'],
-                             convention='windll')
+                                          'Alazar.pycctypes.libc'))
+        headers = [os.path.join(connection_infos.get('header_dir', ''), h)
+                   for h in ['AlazarError.h', 'AlazarCmd.h', 'AlazarApi.h']]
+
+        self.board = ats.Board()
 
     def open_connection(self):
         """Do not need to open a connection
@@ -116,56 +65,53 @@ class Alazar935x(DllInstrument):
         pass
 
     def configure_board(self):
-        board = self._dll.GetBoardBySystemID(1, 1)()
+        board = self.board
         # TODO: Select clock parameters as required to generate this
         # sample rate
-        samplesPerSec = 500000000.0
-        self._dll.SetCaptureClock(board,
-                                  self._dll.EXTERNAL_CLOCK_10MHz_REF,
-                                  500000000,
-                                  self._dll.CLOCK_EDGE_RISING,
-                                  0)
+        self.samplesPerSec = 500000000
+        board.setCaptureClock(    ats.EXTERNAL_CLOCK, # ZL: changed from EXTERNAL_CLOCK_10MHz_REF
+                                  ats.SAMPLE_RATE_500MSPS, # ZL: changed from 500000000
+                                  ats.CLOCK_EDGE_RISING,
+                                  1)
         # TODO: Select channel A input parameters as required.
-        self._dll.InputControl(board,
-                               self._dll.CHANNEL_A,
-                               self._dll.DC_COUPLING,
-                               self._dll.INPUT_RANGE_PM_400_MV,
-                               self._dll.IMPEDANCE_50_OHM)
+        board.inputControl(    ats.CHANNEL_A,
+                               ats.AC_COUPLING,
+                               ats.INPUT_RANGE_PM_2_V,
+                               ats.IMPEDANCE_50_OHM)
 
         # TODO: Select channel A bandwidth limit as required.
-        self._dll.SetBWLimit(board, self._dll.CHANNEL_A, 0)
+        board.setBWLimit(ats.CHANNEL_A, 0)
 
 
         # TODO: Select channel B input parameters as required.
-        self._dll.InputControl(board, self._dll.CHANNEL_B,
-                               self._dll.DC_COUPLING,
-                               self._dll.INPUT_RANGE_PM_400_MV,
-                               self._dll.IMPEDANCE_50_OHM)
+        board.inputControl(ats.CHANNEL_B,
+                               ats.AC_COUPLING,
+                               ats.INPUT_RANGE_PM_2_V,
+                               ats.IMPEDANCE_50_OHM)
 
         # TODO: Select channel B bandwidth limit as required.
-        self._dll.SetBWLimit(board, self._dll.CHANNEL_B, 0)
+        board.setBWLimit(ats.CHANNEL_B, 0)
         # TODO: Select trigger inputs and levels as required.
-        trigLevel = 0.3 # in Volts
-        trigRange = 2.5 # in Volts (Set in SetExternalTrigger() below)
-        trigCode = int(128 + 127 * trigLevel / trigRange)
-        self._dll.SetTriggerOperation(board, self._dll.TRIG_ENGINE_OP_J,
-                                      self._dll.TRIG_ENGINE_J,
-                                      self._dll.TRIG_EXTERNAL,
-                                      self._dll.TRIGGER_SLOPE_POSITIVE,
-                                      trigCode,
-                                      self._dll.TRIG_ENGINE_K,
-                                      self._dll.TRIG_DISABLE,
-                                      self._dll.TRIGGER_SLOPE_POSITIVE,
-                                      128)
-
+#        trigLevel = 0.3 # in Volts
+#        trigRange = 2.5 # in Volts (Set in SetExternalTrigger() below)
+#        trigCode = int(128 + 127 * trigLevel / trigRange)
+        board.setTriggerOperation(ats.TRIG_ENGINE_OP_J,
+                                  ats.TRIG_ENGINE_J,
+                                  ats.TRIG_EXTERNAL,
+                                  ats.TRIGGER_SLOPE_POSITIVE,
+                                  150,
+                                  ats.TRIG_ENGINE_K,
+                                  ats.TRIG_DISABLE,
+                                  ats.TRIGGER_SLOPE_POSITIVE,
+                                  128)
         # TODO: Select external trigger parameters as required.
-        self._dll.SetExternalTrigger(board, self._dll.DC_COUPLING,
-                                     self._dll.ETR_2V5)
+        board.setExternalTrigger(ats.DC_COUPLING,
+                                     ats.ETR_5V)
 
         # TODO: Set trigger delay as required.
         triggerDelay_sec = 0.
-        triggerDelay_samples = int(triggerDelay_sec * samplesPerSec + 0.5)
-        self._dll.SetTriggerDelay(board, triggerDelay_samples)
+        triggerDelay_samples = int(triggerDelay_sec * self.samplesPerSec + 0.5)
+        board.setTriggerDelay(triggerDelay_samples)
 
         # TODO: Set trigger timeout as required.
         #
@@ -178,337 +124,168 @@ class Alazar935x(DllInstrument):
         # appropriate trigger parameters have been determined, otherwise
         # the board may trigger if the timeout interval expires before a
         # hardware trigger event arrives.
-        self._dll.SetTriggerTimeOut(board, 0)
+        triggerTimeout_sec = 0.
+        triggerTimeout_clocks = int(triggerTimeout_sec / 10e-6 + 0.5)
+        board.setTriggerTimeOut(0)
+
         # Configure AUX I/O connector as required
-        self._dll.ConfigureAuxIO(board, self._dll.AUX_OUT_TRIGGER,
-                                 0)
-
-    def get_demod(self, startaftertrig, duration, recordsPerCapture,
-                  recordsPerBuffer, freq, average, NdemodA, NdemodB, NtraceA, NtraceB):
-                      
-        board = self._dll.GetBoardBySystemID(1, 1)()
-
-        # Number of samples per record: must be divisible by 32
-        samplesPerSec = 500000000.0
-        samplesPerTrace = int(samplesPerSec * np.max(np.array(startaftertrig) + np.array(duration)))
-        if samplesPerTrace % 32 == 0:
-            samplesPerRecord = int(samplesPerTrace)
-        else:
-            samplesPerRecord = int((samplesPerTrace)/32 + 1)*32
-            
-        retCode = self._dll.GetChannelInfo(board)()
-        bitsPerSample = self._dll.GetChannelInfo(board)[1]
-        if retCode != self._dll.ApiSuccess:
-            raise ValueError(cleandoc(self._dll.AlazarErrorToText(retCode)))
-
-        # Compute the number of bytes per record and per buffer
-        channel_number = 2 if ((NdemodA or NtraceA) and (NdemodB or NtraceB)) else 1  # Acquisition on A and B
-        ret, (boardhandle, memorySize_samples,
-              bitsPerSample) = self._dll.GetChannelInfo(board)
-        bytesPerSample = (bitsPerSample + 7) // 8
-        bytesPerRecord = bytesPerSample * samplesPerRecord
-        bytesPerBuffer = int(bytesPerRecord * recordsPerBuffer*channel_number)
-        
-        # For converting data into volts
-        channelRange = 0.4 # Volts
-        bitsPerSample = 12
-        bitShift = 4
-        code = (1 << (bitsPerSample - 1)) - 0.5
-
-        bufferCount = 4
-        buffers = []
-        for i in range(bufferCount):
-            buffers.append(DMABuffer(bytesPerSample, bytesPerBuffer))
-
-        # Set the record size
-        self._dll.SetRecordSize(board, 0, samplesPerRecord)
-
-        # Configure the number of records in the acquisition
-        acquisition_timeout_sec = 10
-        self._dll.SetRecordCount(board, recordsPerCapture)
-
-        # Calculate the number of buffers in the acquisition
-        buffersPerAcquisition = round(recordsPerCapture / recordsPerBuffer)
-
-        channelSelect = 1 if not (NdemodB or NtraceB) else (2 if not (NdemodA or NtraceA) else 3)
-        self._dll.BeforeAsyncRead(board, channelSelect,  # Channels A & B
-                                  0,
-                                  samplesPerRecord,
-                                  int(recordsPerBuffer),
-                                  recordsPerCapture,
-                                  self._dll.ADMA_EXTERNAL_STARTCAPTURE |
-                                  self._dll.ADMA_NPT)()
-
-        # Post DMA buffers to board. ATTENTION it is very important not to do "for buffer in buffers"
-        for i in range(bufferCount):
-            buffer = buffers[i]
-            self._dll.PostAsyncBuffer(board, buffer.addr, buffer.size_bytes)
-
-        start = time.clock()  # Keep track of when acquisition started
-        self._dll.StartCapture(board)  # Start the acquisition
-
-        if time.clock() - start > acquisition_timeout_sec:
-            self._dll.AbortCapture()
-            raise Exception("Error: Capture timeout. Verify trigger")
-            time.sleep(10e-3)
-            
-        # Preparation of the tables for the demodulation
-            
-        startSample = []
-        samplesPerDemod = []
-        samplesPerBlock = []
-        NumberOfBlocks = []
-        samplesMissing = []
-        data = []
-        dataExtended = []
-        
-        for i in range(NdemodA + NdemodB):
-            startSample.append( int(samplesPerSec * startaftertrig[i]) )
-            samplesPerDemod.append( int(samplesPerSec * duration[i]) )
-            # Check wheter it is possible to cut each record in blocks of size equal
-            # to an integer number of periods
-            periodsPerBlock = 1
-            while (periodsPerBlock * samplesPerSec < freq[i] * samplesPerDemod[i] 
-                   and periodsPerBlock * samplesPerSec % freq[i]):
-                periodsPerBlock += 1
-                
-            samplesPerBlock.append( int(np.minimum(periodsPerBlock * samplesPerSec / freq[i],
-                                                  samplesPerDemod[i])) )
-            NumberOfBlocks.append( np.divide(samplesPerDemod[i], samplesPerBlock[i]) )
-            samplesMissing.append( (-samplesPerDemod[i]) % samplesPerBlock[i] ) 
-            # Makes the table that will contain the data
-            data.append( np.empty((recordsPerCapture, samplesPerBlock[i])) )
-            dataExtended.append( np.zeros((recordsPerBuffer, samplesPerDemod[i] + samplesMissing[i]),
-                                          dtype='uint16') )
-                                        
-        for i in (np.arange(NtraceA + NtraceB) + NdemodA + NdemodB):
-            startSample.append( int(samplesPerSec * startaftertrig[i]) )
-            samplesPerDemod.append( int(samplesPerSec * duration[i]) )
-            data.append( np.empty((recordsPerCapture, samplesPerDemod[i])) )
-
-        start = time.clock()
-
-        buffersCompleted = 0
-        while buffersCompleted < buffersPerAcquisition:
-
-            # Wait for the buffer at the head of the list of available
-            # buffers to be filled by the board.
-            buffer = buffers[buffersCompleted % len(buffers)]
-            self._dll.WaitAsyncBufferComplete(board, buffer.addr, 10000)
-
-            # Process data
-
-            dataRaw = np.reshape(buffer.buffer, (recordsPerBuffer*channel_number, -1))
-            dataRaw = dataRaw >> bitShift
-
-            for i in np.arange(NdemodA):
-                dataExtended[i][:,:samplesPerDemod[i]] = dataRaw[:recordsPerBuffer,startSample[i]:startSample[i]+samplesPerDemod[i]]
-                dataBlock = np.reshape(dataExtended[i],(recordsPerBuffer,-1,samplesPerBlock[i]))
-                data[i][buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = np.sum(dataBlock, axis=1)
-
-            for i in (np.arange(NdemodB) + NdemodA):
-                dataExtended[i][:,:samplesPerDemod[i]] = dataRaw[(channel_number-1)*recordsPerBuffer:channel_number*recordsPerBuffer,startSample[i]:startSample[i]+samplesPerDemod[i]]
-                dataBlock = np.reshape(dataExtended[i],(recordsPerBuffer,-1,samplesPerBlock[i]))
-                data[i][buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = np.sum(dataBlock, axis=1)
-             
-            for i in (np.arange(NtraceA) + NdemodB + NdemodA):
-                data[i][buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = dataRaw[:recordsPerBuffer,startSample[i]:startSample[i]+samplesPerDemod[i]]
-            
-            for i in (np.arange(NtraceB) + NtraceA + NdemodB + NdemodA):
-                data[i][buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = dataRaw[(channel_number-1)*recordsPerBuffer:channel_number*recordsPerBuffer,startSample[i]:startSample[i]+samplesPerDemod[i]]
-             
-            buffersCompleted += 1
-
-            self._dll.PostAsyncBuffer(board, buffer.addr, buffer.size_bytes)
-
-        self._dll.AbortAsyncRead(board)
-
-        for i in range(bufferCount):
-            buffer = buffers[i]
-            buffer.__exit__()
-  
-        # Normalize the np.sum and convert data into Volts  
-        for i in range(NdemodA + NdemodB):
-            normalisation = 1 if samplesMissing[i] else 0
-            data[i][:,:samplesPerBlock[i]-samplesMissing[i]] /= NumberOfBlocks[i] + normalisation
-            data[i][:,samplesPerBlock[i]-samplesMissing[i]:] /= NumberOfBlocks[i]
-            data[i] = (data[i] / code - 1) * channelRange
-        for i in (np.arange(NtraceA + NtraceB) + NdemodA + NdemodB):
-            data[i] = (data[i] / code - 1) * channelRange
-
-        # calculate demodulation tables
-        if NdemodA:               
-            demA = np.arange(max(samplesPerBlock[:NdemodA]))
-            cosesA = np.cos(2. * math.pi * demA * freq[0] / samplesPerSec)
-            sinesA = np.sin(2. * math.pi * demA * freq[0] / samplesPerSec)
-        if NdemodB:
-            demB = np.arange(max(samplesPerBlock[NdemodA:]))
-            cosesB = np.cos(2. * math.pi * demB * freq[-1] / samplesPerSec)
-            sinesB = np.sin(2. * math.pi * demB * freq[-1] / samplesPerSec)
-
-        # prepare the structure of the answered array
-
-        if (NdemodA or NdemodB):
-            answerTypeDemod = []
-            for i in range(NdemodA):
-                answerTypeDemod += [('AI' + str(i), str(data[0].dtype)), ('AQ' + str(i), str(data[0].dtype))]
-            for i in range(NdemodB):
-                answerTypeDemod += [('BI' + str(i), str(data[0].dtype)), ('BQ' + str(i), str(data[0].dtype))]  
-        else:
-            answerTypeDemod = 'f'
-        
-        if (NtraceA or NtraceB):
-            answerTypeTrace = ( [('A' + str(i), str(data[0].dtype)) for i in range(NtraceA)]
-                              + [('B' + str(i), str(data[0].dtype)) for i in range(NtraceB)] )
-            biggerTrace = np.max(samplesPerDemod[NdemodA+NdemodB:])
-        else:
-            answerTypeTrace = 'f'
-            biggerTrace = 0
-
-        if average:
-            answerDemod = np.empty(1, dtype=answerTypeDemod)
-            answerTrace = np.zeros(biggerTrace, dtype=answerTypeTrace)
-        else:
-            answerDemod = np.empty(recordsPerCapture, dtype=answerTypeDemod)
-            answerTrace = np.zeros((recordsPerCapture, biggerTrace), dtype=answerTypeTrace)
-
-        meanAxis = 0 if average else 1
-
-        # Demodulate the data, average them if asked and return the result
-
-        for i in np.arange(NdemodA):
-            if average:
-                data[i] = np.mean(data[i], axis=0)     
-            ansI = 2*np.mean(data[i]*cosesA[:samplesPerBlock[i]], axis=meanAxis)
-            ansQ = 2*np.mean(data[i]*sinesA[:samplesPerBlock[i]], axis=meanAxis)
-            answerDemod['AI' + str(i)] = ( + ansI * np.cos(2 * np.pi * freq[0] * startSample[i]/samplesPerSec)
-                                      - ansQ * np.sin(2 * np.pi * freq[0] * startSample[i]/samplesPerSec) )
-            answerDemod['AQ' + str(i)] = ( + ansI * np.sin(2 * np.pi * freq[0] * startSample[i]/samplesPerSec)
-                                      + ansQ * np.cos(2 * np.pi * freq[0] * startSample[i]/samplesPerSec) )
-                
-        for i in (np.arange(NdemodB) + NdemodA):
-            if average:
-                data[i] = np.mean(data[i], axis=0)
-            ansI = 2*np.mean(data[i]*cosesB[:samplesPerBlock[i]], axis=meanAxis)
-            ansQ = 2*np.mean(data[i]*sinesB[:samplesPerBlock[i]], axis=meanAxis)
-            answerDemod['BI' + str(i-NdemodA)] = ( + ansI * np.cos(2 * np.pi * freq[-1] * startSample[i]/samplesPerSec)
-                                              - ansQ * np.sin(2 * np.pi * freq[-1] * startSample[i]/samplesPerSec) )
-            answerDemod['BQ' + str(i-NdemodA)] = ( + ansI * np.sin(2 * np.pi * freq[-1] * startSample[i]/samplesPerSec)
-                                              + ansQ * np.cos(2 * np.pi * freq[-1] * startSample[i]/samplesPerSec) )
-        
-        for i in (np.arange(NtraceA) + NdemodB + NdemodA):
-            if average:
-                answerTrace['A' + str(i-NdemodA-NdemodB)][:samplesPerDemod[i]] = np.mean(data[i], axis=0)
-            else:
-                answerTrace['A' + str(i-NdemodA-NdemodB)][:,:samplesPerDemod[i]] = data[i]
-             
-        for i in (np.arange(NtraceB) + NtraceA + NdemodB + NdemodA):
-            if average:
-                answerTrace['B' + str(i-NdemodA-NdemodB-NtraceA)][:samplesPerDemod[i]] = np.mean(data[i], axis=0)
-            else:
-                answerTrace['B' + str(i-NdemodA-NdemodB-NtraceA)][:,:samplesPerDemod[i]] = data[i]
-            
-        print time.clock() - start
-
-        return answerDemod, answerTrace
+        board.configureAuxIO(ats.AUX_OUT_TRIGGER,
+                             0)
 
     def get_traces(self, timeaftertrig, recordsPerCapture,
-                   recordsPerBuffer, average):
+                   recordsPerBuffer, average, verbose=False):
 
-        board = self._dll.GetBoardBySystemID(1, 1)()
+        if recordsPerCapture%recordsPerBuffer != 0:
+            raise Exception("Error: Number of records per capture must be an integer times the number of records per buffer! (recordsPerCapture = %s,recordsPerBuffer = %s)" %
+                            (recordsPerCapture,recordsPerBuffer))
 
-        # Number of samples per record: must be divisible by 32
-        samplesPerSec = 500000000.0
-        samplesPerTrace = samplesPerSec*timeaftertrig
-        if samplesPerTrace % 32 == 0:
-            samplesPerRecord = int(samplesPerTrace)
+        samplesPerSec = 500e6
+        postTriggerSamples = int(samplesPerSec*timeaftertrig)
+        if postTriggerSamples % 32 == 0:
+            postTriggerSamples = int(postTriggerSamples)
         else:
-            samplesPerRecord = int((samplesPerTrace)/32 + 1)*32
+            postTriggerSamples = int((postTriggerSamples)/32 + 1)*32
 
-        retCode = self._dll.GetChannelInfo(board)()
-        bitsPerSample = self._dll.GetChannelInfo(board)[1]
-        if retCode != self._dll.ApiSuccess:
-            raise ValueError(cleandoc(self._dll.AlazarErrorToText(retCode)))
+        board = self.board
+        # No pre-trigger samples in NPT mode
+        preTriggerSamples = 0
+
+        # TODO: Select the number of samples per record.
+        #postTriggerSamples = 2048
+
+        # TODO: Select the number of records per DMA buffer.
+        #recordsPerBuffer = 10
+
+        # TODO: Select the number of buffers per acquisition.
+        #buffersPerAcquisition = 10
+        buffersPerAcquisition = int(math.ceil(recordsPerCapture / recordsPerBuffer))
+
+        # TODO: Select the active channels.
+        channels = ats.CHANNEL_A | ats.CHANNEL_B
+        channelCount = 0
+        for c in ats.channels:
+            channelCount += (c & channels == c)
+
+        # TODO: Should data be saved to file?
+        saveData = False
+        dataFile = None
+        if saveData:
+            dataFile = open(os.path.join(os.path.dirname(__file__), "NPT_data.bin"), 'w')
 
         # Compute the number of bytes per record and per buffer
-        channel_number = 2  # Acquisition on A and B
-        ret, (boardhandle, memorySize_samples,
-              bitsPerSample) = self._dll.GetChannelInfo(board)
-        bytesPerSample = (bitsPerSample + 7) // 8
+        memorySize_samples, bitsPerSample = board.getChannelInfo()
+        bytesPerSample = (bitsPerSample.value + 7) // 8
+        samplesPerRecord = preTriggerSamples + postTriggerSamples
         bytesPerRecord = bytesPerSample * samplesPerRecord
-        bytesPerBuffer = int(bytesPerRecord * recordsPerBuffer*channel_number)
+        bytesPerBuffer = bytesPerRecord * recordsPerBuffer * channelCount
 
+        # TODO: Select number of DMA buffers to allocate
         bufferCount = 4
+
+        # Allocate DMA buffers
         buffers = []
         for i in range(bufferCount):
-            buffers.append(DMABuffer(bytesPerSample, bytesPerBuffer))
+            buffers.append(ats.DMABuffer(bytesPerSample, bytesPerBuffer))
+
         # Set the record size
-        self._dll.SetRecordSize(board, 0, samplesPerRecord)
+        board.setRecordSize(preTriggerSamples, postTriggerSamples)
 
-        # Configure the number of records in the acquisition
-        acquisition_timeout_sec = 10
-        self._dll.SetRecordCount(board, recordsPerCapture)
+        recordsPerAcquisition = recordsPerBuffer * buffersPerAcquisition
 
-        # Calculate the number of buffers in the acquisition
-        buffersPerAcquisition = math.ceil(recordsPerCapture / recordsPerBuffer)
+        # Configure the board to make an NPT AutoDMA acquisition
+        board.beforeAsyncRead(channels,
+                              -preTriggerSamples,
+                              samplesPerRecord,
+                              recordsPerBuffer,
+                              recordsPerAcquisition,
+                              ats.ADMA_EXTERNAL_STARTCAPTURE | ats.ADMA_NPT)
 
-        self._dll.BeforeAsyncRead(board, 3,  # Channels A & B
-                                  0,
-                                  samplesPerRecord,
-                                  int(recordsPerBuffer),
-                                  recordsPerCapture,
-                                  self._dll.ADMA_EXTERNAL_STARTCAPTURE |
-                                  self._dll.ADMA_NPT)()
+
 
         # Post DMA buffers to board
         for buffer in buffers:
-            self._dll.PostAsyncBuffer(board, buffer.addr, buffer.size_bytes)
+            board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
 
-        start = time.clock()  # Keep track of when acquisition started
-        self._dll.StartCapture(board)  # Start the acquisition
-
-        if time.clock() - start > acquisition_timeout_sec:
-            self._dll.AbortCapture()
-            raise Exception("Error: Capture timeout. Verify trigger")
-            time.sleep(10e-3)
-
-        # Preparation of the tables for the traces
+        start = time.clock() # Keep track of when acquisition started
+        board.startCapture() # Start the acquisition
+        if verbose: print("Capturing %d buffers. Press any key to abort" % buffersPerAcquisition)
+        buffersCompleted = 0
+        bytesTransferred = 0
 
         dataA = np.empty((recordsPerCapture, samplesPerRecord))
         dataB = np.empty((recordsPerCapture, samplesPerRecord))
 
-        buffersCompleted = 0
+        if verbose: fig, ax = plt.subplots()
         while buffersCompleted < buffersPerAcquisition:
             # Wait for the buffer at the head of the list of available
             # buffers to be filled by the board.
             buffer = buffers[buffersCompleted % len(buffers)]
-            self._dll.WaitAsyncBufferComplete(board, buffer.addr, 500)
-
-            data = np.reshape(buffer.buffer, (recordsPerBuffer*channel_number, -1))
+            board.waitAsyncBufferComplete(buffer.addr, timeout_ms=5000)
+            data = np.reshape(buffer.buffer, (recordsPerBuffer*channelCount, -1))
             dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[:recordsPerBuffer]
             dataB[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[recordsPerBuffer:]
+
             buffersCompleted += 1
+            bytesTransferred += buffer.size_bytes
 
-            self._dll.PostAsyncBuffer(board, buffer.addr, buffer.size_bytes)
+            # TODO: Process sample data in this buffer. Data is available
+            # as a NumPy array at buffer.buffer
 
-        self._dll.AbortAsyncRead(board)
+            # NOTE:
+            #
+            # While you are processing this buffer, the board is already
+            # filling the next available buffer(s).
+            #
+            # You MUST finish processing this buffer and post it back to the
+            # board before the board fills all of its available DMA buffers
+            # and on-board memory.
+            #
+            # Records are arranged in the buffer as follows:
+            # R0A, R1A, R2A ... RnA, R0B, R1B, R2B ...
+            #
+            # A 12-bit sample code is stored in the most significant bits of
+            # in each 16-bit sample value.
+            #
+            # Sample codes are unsigned by default. As a result:
+            # - a sample code of 0x0000 represents a negative full scale input signal.
+            # - a sample code of 0x8000 represents a ~0V signal.
+            # - a sample code of 0xFFFF represents a positive full scale input signal.
+            # Optionaly save data to file
 
-        for buffer in buffers:
-            buffer.__exit__()
+            if verbose: ax.plot(buffer.buffer)
+            if dataFile: buffer.buffer.tofile(dataFile)
+
+            # Update progress bar
+
+            # Add the buffer to the end of the list of available buffers.
+            board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
+        # Compute the total transfer time, and display performance information.
+        transferTime_sec = time.clock() - start
+        if verbose: print("Capture completed in %f sec" % transferTime_sec)
+        buffersPerSec = 0
+        bytesPerSec = 0
+        recordsPerSec = 0
+        if transferTime_sec > 0:
+            buffersPerSec = buffersCompleted / transferTime_sec
+            bytesPerSec = bytesTransferred / transferTime_sec
+            recordsPerSec = recordsPerBuffer * buffersCompleted / transferTime_sec
+        if verbose:
+            print("Captured %d buffers (%f buffers per sec)" % (buffersCompleted, buffersPerSec))
+            print("Captured %d records (%f records per sec)" % (recordsPerBuffer * buffersCompleted, recordsPerSec))
+            print("Transferred %d bytes (%f bytes per sec)" % (bytesTransferred, bytesPerSec))
+
+        # Abort transfer.
+        board.abortAsyncRead()
 
         # Re-shaping of the data for demodulation and demodulation
-        dataA = dataA[:,1:samplesPerTrace + 1]
-        dataB = dataB[:,1:samplesPerTrace + 1]
+        dataA = dataA[:,1:samplesPerRecord + 1]
+        dataB = dataB[:,1:samplesPerRecord + 1]
 
-        # Averaging if needed and converting binary numbers into Volts
+                # Averaging if needed and converting binary numbers into Volts
         if average:
             dataA = np.mean(dataA, axis=0)
             dataB = np.mean(dataB, axis=0)
 
-        dataA = (dataA-2**15)/65535*0.8+0.000459610322728
-        dataB = (dataB-2**15)/65535*0.8+0.00154325074388
-
         return (dataA, dataB)
-
 
 DRIVERS = {'Alazar935x': Alazar935x}

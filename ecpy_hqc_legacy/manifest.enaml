@@ -216,7 +216,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaRS232':
                                            {'resource_class': 'INSTR'}
                                        }
-                                       
+
                 Drivers:
                     manufacturer = 'Rohde and Schwarz'
                     Driver:
@@ -233,6 +233,11 @@ enamldef HqcLegacyManifest(PluginManifest):
                     driver = 'sp_adq14:SPADQ14'
                     manufacturer = 'SPDevices'
                     model = 'ADQ14'
+
+                Driver:
+                    driver = 'alazar935x:Alazar935x'
+                    manufacturer = 'AlazarTech'
+                    model = 'ATS9350'
 
     Extension:
         id = 'ecpy_hqc_legacy.tasks'
@@ -347,3 +352,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                     task = 'spdev_tasks:DemodSPTask'
                     view = 'views.spdev_views:DemodSpView'
                     instruments = ['ecpy_hqc_legacy.Legacy.SPADQ14']
+                Task:
+                    task = 'alazar_tasks:TracesAlazarTask'
+                    view = 'views.alazar_views:TracesAlazarView'
+                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
+                Task:
+                    task = 'alazar_tasks:DemodTrajAlazarTask'
+                    view = 'views.alazar_views:DemodTrajAlazarView'
+                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
+                Task:
+                    task = 'alazar_tasks:DemodAlazarTask'
+                    view = 'views.alazar_views:DemodAlazarView'
+                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']

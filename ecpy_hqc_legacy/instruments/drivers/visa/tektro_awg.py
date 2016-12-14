@@ -450,7 +450,7 @@ class AWG(VisaInstrument):
                                                                    looplength))
 
         header = "WLIS:WAV:DATA '{}',0,{},".format(name, looplength)
-        # 
+        #
         self._driver.write_binary_values(header, waveform, datatype='B')
         self.write('*WAI')
 

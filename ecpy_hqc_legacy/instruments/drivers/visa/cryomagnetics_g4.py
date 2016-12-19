@@ -7,3 +7,4 @@ from .cryomagnetics_cs4 import CS4
 class C4G(CS4):
     """ Duplicate class for the 4G field source
     """
+    pass

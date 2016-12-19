@@ -37,7 +37,7 @@ class CS4(VisaInstrument):
                                   caching_permissions)
         try:
             mc = connection_info['magnet_conversion']
-            self.field_current_ratio = mc
+            self.field_current_ratio = float(mc)
         except KeyError:
             raise InstrIOError(cleandoc('''The field to current ratio
                  of the currently used magnet need to be specified in

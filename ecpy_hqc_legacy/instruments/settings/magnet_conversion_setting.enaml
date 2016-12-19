@@ -28,12 +28,12 @@ enamldef MagnetConversionSetting(BaseSettings):
     attr workbench
 
     #: Current to field conversion ratio.
-    alias magnet_conversion : conversion_val.value
-
-    title = self.declaration.id
+    alias magnet_conversion : conversion_val.text
 
     gather_infos => ():
-        return {'magnet_conversion': magnet_conversion}
+        settings = BaseSettings.gather_infos(self)
+        settings['magnet_conversion'] = magnet_conversion
+        return settings
 
     constraints = [hbox(conversion_lab, conversion_val, units)]
 

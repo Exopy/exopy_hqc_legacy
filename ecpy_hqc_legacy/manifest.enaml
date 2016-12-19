@@ -92,14 +92,16 @@ enamldef HqcLegacyManifest(PluginManifest):
         point = 'ecpy.instruments.settings'
         Settings:
             id = 'MagnetConversionSetting'
-            description = ('Magnet-dependant field to current ratio that need '
+            description = ('Magnet-dependent field to current ratio that need '
                            'to be specified for field sources.')
             new => (workbench, defaults, read_only):
                 with enaml.imports():
                     from .instruments.settings.magnet_conversion_setting\
                         import MagnetConversionSetting
-                mc = defaults.get('magnet_conversion', 0.)
+                mc = defaults.get('magnet_conversion', '0.')
+                uid = defaults.get('user_id', '')
                 widget = MagnetConversionSetting(workbench=workbench,
+                                                 user_id=uid,
                                                  magnet_conversion=mc)
                 widget.read_only = read_only
                 return widget

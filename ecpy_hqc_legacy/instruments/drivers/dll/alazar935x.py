@@ -132,23 +132,58 @@ class Alazar935x(DllInstrument):
         board.configureAuxIO(ats.AUX_OUT_TRIGGER,
                              0)
 
-    def get_traces(self, timeaftertrig, recordsPerCapture,
-                   recordsPerBuffer, average, verbose=False):
-
-        if recordsPerCapture%recordsPerBuffer != 0:
-            raise Exception("Error: Number of records per capture must be an integer times the number of records per buffer! (recordsPerCapture = %s,recordsPerBuffer = %s)" %
-                            (recordsPerCapture,recordsPerBuffer))
-
+#    def get_traces(self, timeaftertrig, recordsPerCapture,
+#                   recordsPerBuffer, average, verbose=False):
+    def get_traces(self, channels, duration, delay, records_per_capture,
+                   retry=True, average=1):
+        board = self.board
+        verbose = False
+        timeaftertrig = duration
+        recordsPerCapture = records_per_capture
         samplesPerSec = 500e6
+
+        # TODO: Select the active channels.
+        channels = ats.CHANNEL_A | ats.CHANNEL_B
+        channelCount = 0
+        for c in ats.channels:
+            channelCount += (c & channels == c)
+
         postTriggerSamples = int(samplesPerSec*timeaftertrig)
         if postTriggerSamples % 32 == 0:
-            postTriggerSamples = int(postTriggerSamples)
+            postTriggerSamples = channelCount*int(postTriggerSamples)
         else:
-            postTriggerSamples = int((postTriggerSamples)/32 + 1)*32
+            postTriggerSamples = channelCount*int((postTriggerSamples)/32 + 1)*32
 
-        board = self.board
+        # determine the number of records per buffer
+        memorySize_samples, bitsPerSample = board.getChannelInfo()
+        memorySize_samples_per_chann = memorySize_samples.value/2
+        total_number_samples = postTriggerSamples * recordsPerCapture
+
         # No pre-trigger samples in NPT mode
         preTriggerSamples = 0
+        bytesPerSample = (bitsPerSample.value + 7) // 8
+        samplesPerRecord = preTriggerSamples + postTriggerSamples
+        bytesPerRecord = bytesPerSample * samplesPerRecord
+
+
+
+
+        bytesPerBufferMax = 1e6 # See remark page 93 in ATS-SDK-Guide 7.1.4
+        recordsPerBuffer = np.min([int(math.floor(bytesPerBufferMax / (bytesPerRecord * channelCount))),recordsPerCapture])
+        bytesPerBuffer = bytesPerRecord * recordsPerBuffer * channelCount
+        print("bytesPerBuffer = %s" %bytesPerBuffer)
+
+#        while total_number_samples/buffersPerAcquisition > memorySize_samples_per_chann and 1==0:
+#            buffersPerAcquisition+=1
+
+
+
+        delay = 0
+#        if recordsPerCapture%recordsPerBuffer != 0:
+#            raise Exception("Error: Number of records per capture must be an integer times the number of records per buffer! (recordsPerCapture = %s,recordsPerBuffer = %s)" %
+#                            (recordsPerCapture,recordsPerBuffer))
+
+
 
         # TODO: Select the number of samples per record.
         #postTriggerSamples = 2048
@@ -158,13 +193,17 @@ class Alazar935x(DllInstrument):
 
         # TODO: Select the number of buffers per acquisition.
         #buffersPerAcquisition = 10
-        buffersPerAcquisition = int(math.ceil(recordsPerCapture / recordsPerBuffer))
+        # the float() is imporant otherwise python rounds the fraction to int
+        # with floor, and math.ceil is meaningless
 
-        # TODO: Select the active channels.
-        channels = ats.CHANNEL_A | ats.CHANNEL_B
-        channelCount = 0
-        for c in ats.channels:
-            channelCount += (c & channels == c)
+        buffersPerAcquisition = int(math.ceil(float(recordsPerCapture) / recordsPerBuffer))
+        records_to_ignore = buffersPerAcquisition*recordsPerBuffer - recordsPerCapture
+        print('recordsPerCapture = %s' %recordsPerCapture)
+        print('recordsPerBuffer = %s' %recordsPerBuffer)
+        print('buffersPerAcquisition = %s' %buffersPerAcquisition)
+        print('records_to_ignore = %s' %records_to_ignore)
+
+
 
         # TODO: Should data be saved to file?
         saveData = False
@@ -173,11 +212,8 @@ class Alazar935x(DllInstrument):
             dataFile = open(os.path.join(os.path.dirname(__file__), "NPT_data.bin"), 'w')
 
         # Compute the number of bytes per record and per buffer
-        memorySize_samples, bitsPerSample = board.getChannelInfo()
-        bytesPerSample = (bitsPerSample.value + 7) // 8
-        samplesPerRecord = preTriggerSamples + postTriggerSamples
-        bytesPerRecord = bytesPerSample * samplesPerRecord
-        bytesPerBuffer = bytesPerRecord * recordsPerBuffer * channelCount
+
+
 
         # TODO: Select number of DMA buffers to allocate
         bufferCount = 4
@@ -190,6 +226,9 @@ class Alazar935x(DllInstrument):
         # Set the record size
         board.setRecordSize(preTriggerSamples, postTriggerSamples)
 
+        # I need to define a "new" recordsPerAcquisition which is an integer
+        # number of recordsPerBuffer, otherwise Alazar throws an error
+        # We will take care of this below
         recordsPerAcquisition = recordsPerBuffer * buffersPerAcquisition
 
         # Configure the board to make an NPT AutoDMA acquisition
@@ -199,8 +238,6 @@ class Alazar935x(DllInstrument):
                               recordsPerBuffer,
                               recordsPerAcquisition,
                               ats.ADMA_EXTERNAL_STARTCAPTURE | ats.ADMA_NPT)
-
-
 
         # Post DMA buffers to board
         for buffer in buffers:
@@ -217,13 +254,19 @@ class Alazar935x(DllInstrument):
 
         if verbose: fig, ax = plt.subplots()
         while buffersCompleted < buffersPerAcquisition:
+
             # Wait for the buffer at the head of the list of available
             # buffers to be filled by the board.
             buffer = buffers[buffersCompleted % len(buffers)]
             board.waitAsyncBufferComplete(buffer.addr, timeout_ms=5000)
             data = np.reshape(buffer.buffer, (recordsPerBuffer*channelCount, -1))
-            dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[:recordsPerBuffer]
-            dataB[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[recordsPerBuffer:]
+
+            # making sure we only grab the number of records we asked for
+            records_to_ignore_val = 0 if buffersCompleted < buffersPerAcquisition-1  else records_to_ignore
+            print(records_to_ignore_val)
+            print(np.shape(dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer]),np.shape(data[:recordsPerBuffer-records_to_ignore_val]))
+            dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[:recordsPerBuffer-records_to_ignore_val]
+            dataB[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[recordsPerBuffer+records_to_ignore_val:]
 
             buffersCompleted += 1
             bytesTransferred += buffer.size_bytes
@@ -259,6 +302,25 @@ class Alazar935x(DllInstrument):
 
             # Add the buffer to the end of the list of available buffers.
             board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
+
+        if buffersCompleted == buffersPerAcquisition-1:
+            buffer = buffers[buffersCompleted % len(buffers)]
+            board.waitAsyncBufferComplete(buffer.addr, timeout_ms=5000)
+            data = np.reshape(buffer.buffer, (recordsPerBuffer*channelCount, -1))
+            dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[:recordsPerBuffer]
+            dataB[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[recordsPerBuffer:]
+
+            buffersCompleted += 1
+            bytesTransferred += buffer.size_bytes
+            if verbose: ax.plot(buffer.buffer)
+            if dataFile: buffer.buffer.tofile(dataFile)
+
+            # Update progress bar
+
+            # Add the buffer to the end of the list of available buffers.
+            board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
+
+
         # Compute the total transfer time, and display performance information.
         transferTime_sec = time.clock() - start
         if verbose: print("Capture completed in %f sec" % transferTime_sec)

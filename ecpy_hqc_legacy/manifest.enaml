@@ -196,6 +196,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                         kind = 'RF source'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'}
                                        }
+
+                Drivers:
+                    manufacturer = 'WindfreakTech'
+                    Driver:
+                        driver = 'windfreaktech_synthHD_signal_generator:SynthHD'
+                        model = 'SynthHD'
+                        kind = 'RF source'
+                        connections = {'VisaUSB': {'resource_class': 'INSTR'}
+                                       }
                 Drivers:
                     manufacturer = 'Bilt'
                     Driver:
@@ -351,16 +360,16 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'spdev_tasks:DemodSPTask'
                     view = 'views.spdev_views:DemodSpView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.SPADQ14']
-                Task:
-                    task = 'alazar_tasks:TracesAlazarTask'
-                    view = 'views.alazar_views:TracesAlazarView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
-                Task:
-                    task = 'alazar_tasks:DemodTrajAlazarTask'
-                    view = 'views.alazar_views:DemodTrajAlazarView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
-                Task:
-                    task = 'alazar_tasks:DemodAlazarTask'
-                    view = 'views.alazar_views:DemodAlazarView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
+                    instruments = ['ecpy_hqc_legacy.Legacy.SPADQ14','ecpy_hqc_legacy.Legacy.Alazar935x']
+#                Task:
+#                    task = 'alazar_tasks:TracesAlazarTask'
+#                    view = 'views.alazar_views:TracesAlazarView'
+#                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
+#                Task:
+#                    task = 'alazar_tasks:DemodTrajAlazarTask'
+#                    view = 'views.alazar_views:DemodTrajAlazarView'
+#                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
+#                Task:
+#                    task = 'alazar_tasks:DemodAlazarTask'
+#                    view = 'views.alazar_views:DemodAlazarView'
+#                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']

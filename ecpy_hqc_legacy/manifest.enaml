@@ -187,14 +187,6 @@ enamldef HqcLegacyManifest(PluginManifest):
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
-                    Driver:
-                        driver = 'cryomagnetics_g4:C4G'
-                        model  = '4G-100'
-                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
-                                       'VisaUSB': {'resource_class': 'INSTR'},
-                                       'VisaTCPIP': {'port': 4444,
-                                                     'resource_class': 'SOCKET'}
-                                       }
                 Drivers:
                     manufacturer = 'Tektronix'
                     Driver:
@@ -300,8 +292,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                     task = 'apply_mag_field_task:ApplyMagFieldTask'
                     view = 'views.apply_mag_field_view:ApplyMagFieldView'
                     instruments = ['ecpy_hqc_legacy.Legacy.IPS12010',
-                                   'ecpy_hqc_legacy.Legacy.CS4',
-                                   'ecpy.hqc_legacy.Legacy.C4G']
+                                   'ecpy_hqc_legacy.Legacy.CS4']
                     metadata = {'loopable': True}
                 Task:
                     task = 'lock_in_measure_task:LockInMeasureTask'

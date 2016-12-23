@@ -6,7 +6,7 @@
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Driver for the Cryomagnetic superconducting magnets power supply.
+"""Driver for the Cryomagnetic superconducting magnet power supply CS4.
 
 """
 from __future__ import (division, unicode_literals, print_function,
@@ -26,7 +26,7 @@ _GET_HEATER_DICT = {'0': 'Off',
 _ACTIVITY_DICT = {'To zero': 'SWEEP ZERO'}
 
 OUT_FLUC = 2e-4
-MAXITER = 20
+MAXITER = 10
 
 
 class CS4(VisaInstrument):
@@ -41,7 +41,8 @@ class CS4(VisaInstrument):
         except KeyError:
             raise InstrIOError(cleandoc('''The field to current ratio
                  of the currently used magnet need to be specified in
-                 the instrument settings.'''))
+                 the instrument settings. One should also check that
+                 the switch heater current is correct.'''))
 
     @secure_communication()
     def make_ready(self):
@@ -82,11 +83,11 @@ class CS4(VisaInstrument):
             sleep(wait)
             niter = 0
             while abs(self.target_field) >= OUT_FLUC:
-                sleep(1)
+                sleep(5)
                 niter += 1
                 if niter > MAXITER:
                     raise InstrIOError(cleandoc('''CS4 didn't set the
-                        field to zero after {} sec'''.format(MAXITER)))
+                        field to zero after {} sec'''.format(5 * MAXITER)))
 
     def check_connection(self):
         pass
@@ -120,7 +121,7 @@ class CS4(VisaInstrument):
     @field_sweep_rate.setter
     @secure_communication()
     def field_sweep_rate(self, rate):
-        self.write("RATE 0 {}".format(rate))
+        self.write('RATE 0 {}'.format(rate))
 
     @instrument_property
     def fast_sweep_rate(self):
@@ -132,7 +133,7 @@ class CS4(VisaInstrument):
     @field_sweep_rate.setter
     @secure_communication()
     def fast_sweep_rate(self, rate):
-        self.write("RATE 5 {}".format(rate))
+        self.write('RATE 5 {}'.format(rate))
 
     @instrument_property
     def target_field(self):
@@ -148,7 +149,7 @@ class CS4(VisaInstrument):
         at a rate depending on the intensity, as defined in the range(s).
 
         """
-        self.write("ULIM {}".format(target))
+        self.write('ULIM {}'.format(target))
 
         if self.heater_state == 'Off':
             wait = abs(self.target_field - target) / self.fast_sweep_rate
@@ -158,11 +159,11 @@ class CS4(VisaInstrument):
             # careful, need to specify slow after a fast sweep !
             self.write('SWEEP UP SLOW')
 
-        wait /= FIELD_CURRENT_RATIO
+        wait /= (60 * FIELD_CURRENT_RATIO)
         sleep(wait)
         niter = 0
         while abs(self.target_field - target) >= OUT_FLUC:
-            sleep(1)
+            sleep(5)
             niter += 1
             if niter > MAXITER:
                 raise InstrIOError(cleandoc('''CS4 didn't set the field

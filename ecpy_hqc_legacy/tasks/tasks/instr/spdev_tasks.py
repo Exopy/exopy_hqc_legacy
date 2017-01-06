@@ -29,6 +29,10 @@ class DemodSPTask(InstrumentTask):
     """Get the averaged quadratures of the signal.
 
     """
+
+    # return averaged data or single shot data
+    average = Bool(True).tag(pref=True)
+
     #: Should the acquisition on channel 1 be enabled
     ch1_enabled = Bool(True).tag(pref=True)
 
@@ -108,27 +112,41 @@ class DemodSPTask(InstrumentTask):
         channels = (self.ch1_enabled, self.ch2_enabled)
         ch1, ch2 = self.driver.get_traces(channels, duration, delay,
                                           records_number)
+
         if self.ch1_enabled:
             f1 = self.format_and_eval_string(self.freq_1)*1e6
-            phi1 = np.linspace(0, 2*np.pi*f1*duration, len(ch1))
+            ntraces1, nsamples1 = np.shape(ch1)
+            phi1 = np.linspace(0, 2*np.pi*f1*duration, nsamples1)
             c1 = np.cos(phi1)
             s1 = np.sin(phi1)
             # The mean value of cos^2 is 0.5 hence the factor 2 to get the
             # amplitude.
-            self.write_in_database('Ch1_I', 2*np.mean(ch1*c1))
-            self.write_in_database('Ch1_Q', 2*np.mean(ch1*s1))
+            Ch1_I = 2*np.mean(ch1*c1, axis=1)
+            Ch1_Q = 2*np.mean(ch1*s1, axis=1)
+            print("len(Ch1_I) = %s "%len(Ch1_I))
+            Ch1_I_av = Ch1_I if not self.average else np.mean(Ch1_I)
+            Ch1_Q_av = Ch1_Q if not self.average else np.mean(Ch1_Q)
+            self.write_in_database('Ch1_I', Ch1_I_av)
+            self.write_in_database('Ch1_Q', Ch1_Q_av)
+
             if self.ch1_trace:
                 self.write_in_database('Ch1_trace', ch1)
 
         if self.ch2_enabled:
             f2 = self.format_and_eval_string(self.freq_2)*1e6
-            phi2 = np.linspace(0, 2*np.pi*f2*duration, len(ch2))
+            ntraces1, nsamples1 = np.shape(ch1)
+            phi2 = np.linspace(0, 2*np.pi*f2*duration, nsamples1)
             c2 = np.cos(phi2)
             s2 = np.sin(phi2)
             # The mean value of cos^2 is 0.5 hence the factor 2 to get the
             # amplitude.
-            self.write_in_database('Ch2_I', 2*np.mean(ch2*c2))
-            self.write_in_database('Ch2_Q', 2*np.mean(ch2*s2))
+            Ch2_I = 2*np.mean(ch2*c2, axis=1)
+            Ch2_Q = 2*np.mean(ch2*s2, axis=1)
+            Ch2_I_av = Ch2_I if not self.average else np.mean(Ch2_I)
+            Ch2_Q_av = Ch2_Q if not self.average else np.mean(Ch2_Q)
+            self.write_in_database('Ch2_I', Ch2_I_av)
+            self.write_in_database('Ch2_Q', Ch2_Q_av)
+
             if self.ch2_trace:
                 self.write_in_database('Ch2_trace', ch2)
 

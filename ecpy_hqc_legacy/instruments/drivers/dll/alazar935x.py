@@ -135,14 +135,15 @@ class Alazar935x(DllInstrument):
 #    def get_traces(self, timeaftertrig, recordsPerCapture,
 #                   recordsPerBuffer, average, verbose=False):
     def get_traces(self, channels, duration, delay, records_per_capture,
-                   retry=True, average=1):
+                   retry=True, average=0):
+
         board = self.board
         verbose = False
         timeaftertrig = duration
         recordsPerCapture = records_per_capture
         samplesPerSec = 500e6
 
-        # TODO: Select the active channels.
+        # both channels are always acquired
         channels = ats.CHANNEL_A | ats.CHANNEL_B
         channelCount = 0
         for c in ats.channels:
@@ -165,18 +166,14 @@ class Alazar935x(DllInstrument):
         samplesPerRecord = preTriggerSamples + postTriggerSamples
         bytesPerRecord = bytesPerSample * samplesPerRecord
 
-
-
-
         bytesPerBufferMax = 1e6 # See remark page 93 in ATS-SDK-Guide 7.1.4
+                                # + following email exchange with Alazar engineer Romain Deterre
         recordsPerBuffer = np.min([int(math.floor(bytesPerBufferMax / (bytesPerRecord * channelCount))),recordsPerCapture])
         bytesPerBuffer = bytesPerRecord * recordsPerBuffer * channelCount
         print("bytesPerBuffer = %s" %bytesPerBuffer)
 
 #        while total_number_samples/buffersPerAcquisition > memorySize_samples_per_chann and 1==0:
 #            buffersPerAcquisition+=1
-
-
 
         delay = 0
 #        if recordsPerCapture%recordsPerBuffer != 0:

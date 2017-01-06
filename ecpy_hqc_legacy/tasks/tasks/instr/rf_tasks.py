@@ -14,7 +14,7 @@ from __future__ import (division, unicode_literals, print_function,
 
 import numbers
 
-from atom.api import (Unicode, Bool, set_default, Enum)
+from atom.api import (Unicode, Bool, set_default, Enum, Int)
 
 from ecpy.tasks.api import (InstrumentTask, InterfaceableTaskMixin,
                             validators)

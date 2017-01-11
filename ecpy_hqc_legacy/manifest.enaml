@@ -312,6 +312,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                  'views.pna_task_views:IPNAChannelValue']
                         instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA',
                                        'ecpy_hqc_legacy.Legacy.ZNB20']
+                     Interface:
                         interface = 'synthHD_tasks:SynthHDsetChannelInterface'
                         views = ['views.synthHD_task_views:ISynthHDChannelLabel',
                                  'views.synthHD_task_views:ISynthHDChannelValue']
@@ -352,15 +353,18 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'pna_tasks:PNASinglePointMeasureTask'
                     view = 'views.pna_task_views:PNASinglePointView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
+                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA',
+                                   'ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'pna_tasks:PNASweepTask'
                     view = 'views.pna_task_views:PNASweepMeasView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
+                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA',
+                                   'ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'pna_tasks:PNAGetTraces'
                     view = 'views.pna_task_views:PNAGetTraceView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
+                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA',
+                                   'ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'set_dc_voltage_task:SetDCVoltageTask'
                     view = 'views.set_dc_voltage_view:SetDcVoltageView'
@@ -378,16 +382,5 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'spdev_tasks:DemodSPTask'
                     view = 'views.spdev_views:DemodSpView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.SPADQ14','ecpy_hqc_legacy.Legacy.Alazar935x']
-#                Task:
-#                    task = 'alazar_tasks:TracesAlazarTask'
-#                    view = 'views.alazar_views:TracesAlazarView'
-#                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
-#                Task:
-#                    task = 'alazar_tasks:DemodTrajAlazarTask'
-#                    view = 'views.alazar_views:DemodTrajAlazarView'
-#                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
-#                Task:
-#                    task = 'alazar_tasks:DemodAlazarTask'
-#                    view = 'views.alazar_views:DemodAlazarView'
-#                    instruments = ['ecpy_hqc_legacy.Legacy.Alazar935x']
+                    instruments = ['ecpy_hqc_legacy.Legacy.SPADQ14',
+                                   'ecpy_hqc_legacy.Legacy.Alazar935x']

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Driver for the Keysight VNA (PNA).
+"""Driver for the Rohde and Schwartz VNA ZNB20.
 
 """
 from __future__ import (division, unicode_literals, print_function,
@@ -36,13 +36,13 @@ FORMATTING_DICT = {'PHAS': lambda x: np.angle(x, deg=True),
                    'IMAG': np.imag}
 
 
-class AgilentPNAChannelError(Exception):
+class ZNB20ChannelError(Exception):
     """
     """
     pass
 
 
-class AgilentPNAChannel(BaseInstrument):
+class ZNB20Channel(BaseInstrument):
     """
     """
     caching_permissions = {'frequency': True,
@@ -57,7 +57,7 @@ class AgilentPNAChannel(BaseInstrument):
 
     def __init__(self, pna, channel_num, caching_allowed=True,
                  caching_permissions={}):
-        super(AgilentPNAChannel, self).__init__(None, caching_allowed,
+        super(ZNB20Channel, self).__init__(None, caching_allowed,
                                                 caching_permissions)
         self._pna = pna
         self._channel = channel_num
@@ -68,7 +68,7 @@ class AgilentPNAChannel(BaseInstrument):
         """
         self._pna.reopen_connection()
 
-    # ZL needs checking
+    # TODO ZL needs checking
     @secure_communication()
     def read_formatted_data(self, meas_name=''):
         """ Read formatted data for a measure.
@@ -104,11 +104,11 @@ class AgilentPNAChannel(BaseInstrument):
         if data:
             return np.array(data)
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                 channel {} formatted data for meas {}'''.format(
                 self._channel, meas_name)))
 
-    # ZL needs checking
+    # TODO ZL needs checking
     @secure_communication()
     def read_raw_data(self, meas_name=''):
         """ Read raw data for a measure.
@@ -146,18 +146,18 @@ class AgilentPNAChannel(BaseInstrument):
             aux = np.array(data)
             return aux[::2] + 1j*aux[1::2]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                 channel {} formatted data for meas {}'''.format(
                 self._channel, meas_name)))
 
-    # ZL needs checking
+    # TODO ZL needs checking
     def read_and_format_raw_data(self, meas_format, meas_name=''):
         """
         """
         data = self.read_raw_data(meas_name)
         return FORMATTING_DICT[meas_format](data)
 
-    # ZL needs checking
+    # TODO ZL needs checking
     @secure_communication()
     def run_averaging(self, aver_count=''):
         """ Restart averaging on the channel and wait until it is over
@@ -186,12 +186,12 @@ class AgilentPNAChannel(BaseInstrument):
                 except Exception:
                     self._pna.timeout = self._pna.timeout*2
                     logger = logging.getLogger(__name__)
-                    msg = cleandoc('''PNA timeout increased to {} s
-                        This will make the PNA diplay 420 error w/o issue''')
+                    msg = cleandoc('''ZNB20 timeout increased to {} s
+                        This will make the ZNB20 diplay 420 error w/o issue''')
                     logger.info(msg.format(self._pna.timeout))
 
             if done != 1:
-                raise InstrError(cleandoc('''Agilent PNA did could  not perform
+                raise InstrError(cleandoc('''ZNB20 did could  not perform
                 the average on channel {} '''.format(self._channel)))
     
     # ZL OK
@@ -212,7 +212,7 @@ class AgilentPNAChannel(BaseInstrument):
                    for i in range(int(len(param)/2))]
             return aux
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} selected measure'''.format(self._channel)))
 
     # ZL OK
@@ -227,13 +227,11 @@ class AgilentPNAChannel(BaseInstrument):
 
         if param not in measures:
             create_meas = "CALCulate{}:PARameter:SDEFine '{}','{}'"
-#            print(create_meas.format(self._channel, meas_name, param))
             self._pna.write(create_meas.format(self._channel,
                                                meas_name.replace(':','_'),
                                                param))
 
             meas = self._pna.ask(catalog_request.format(self._channel))
-#            print(meas)
             if meas:
                 if param not in meas:
                     mess = cleandoc('''The Pna did not create the
@@ -241,7 +239,7 @@ class AgilentPNAChannel(BaseInstrument):
                                                          self._channel))
                     raise InstrIOError(mess)
 
-    # ZL needs checking
+    # TODO ZL needs checking
     @secure_communication()
     def delete_meas(self, meas_name):
         """
@@ -263,7 +261,6 @@ class AgilentPNAChannel(BaseInstrument):
         """
 #        self._pna.write('CALCulate{}:PARameter:DELete:ALL'.format(self._channel))            
         for meas in self.list_existing_measures():
-#            print(meas)
             self._pna.write(
                 "CALCulate{}:PARameter:DELete {}".format(self._channel,
                                                            meas['name']))
@@ -351,7 +348,7 @@ class AgilentPNAChannel(BaseInstrument):
             self._pna.write('SOURce{}:POWer:STOP {}'.format(self._channel,
                                                             stop))
         else:
-            raise AgilentPNAChannelError(cleandoc('''Unsupported type of sweep
+            raise ZNB20ChannelError(cleandoc('''Unsupported type of sweep
             : {} was specified for channel'''.format(sweep_type,
                                                      self._channel)))
 
@@ -365,7 +362,7 @@ class AgilentPNAChannel(BaseInstrument):
         if freq:
             return freq[0]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} frequency'''.format(self._channel)))
 
     @frequency.setter
@@ -379,10 +376,10 @@ class AgilentPNAChannel(BaseInstrument):
                                           self._channel))
         if result:
             if abs(result[0] - value)/value > 10**-12:
-                raise InstrIOError(cleandoc('''PNA did not set correctly the
+                raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} frequency'''.format(self._channel)))
         else:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} frequency'''.format(self._channel)))
 
     @instrument_property
@@ -398,7 +395,7 @@ class AgilentPNAChannel(BaseInstrument):
         if trace_nb:
             return trace_nb[0]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     trace number on channel {} '''.format(self._channel)))
 
     @tracenb.setter
@@ -411,11 +408,11 @@ class AgilentPNAChannel(BaseInstrument):
                                           self._channel))
         if result:
             if abs(result[0] - value)/value > 10**-12:
-                raise InstrIOError(cleandoc('''PNA could not set the
+                raise InstrIOError(cleandoc('''ZNB20 could not set the
                     trace number {} on channel {}'''.format(value,
                     self._channel)))
         else:
-            raise InstrIOError(cleandoc('''PNA could not set the
+            raise InstrIOError(cleandoc('''ZNB20 could not set the
                     trace number {} on channel {}'''.format(value,
                     self._channel)))
 
@@ -446,7 +443,7 @@ class AgilentPNAChannel(BaseInstrument):
                 .format(self._channel))[0]*1e-9
             return np.logspace(sweep_start, sweep_stop, sweep_points)
         else:
-            raise InstrIOError(cleandoc('''Sweep type of PNA not yet
+            raise InstrIOError(cleandoc('''Sweep type of ZNB20 not yet
                 supported for channel {}'''.format(self._channel)))
 
     @instrument_property
@@ -460,7 +457,7 @@ class AgilentPNAChannel(BaseInstrument):
         if power:
             return power[0]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} power for port {}'''.format(self._channel,
                                                            self.port)))
 
@@ -477,11 +474,11 @@ class AgilentPNAChannel(BaseInstrument):
                                           self.port))
         if result:
             if abs(result[0] > value) > 10**-12:
-                raise InstrIOError(cleandoc('''PNA did not set correctly the
+                raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} power for port {}'''.format(self._channel,
                                                            self.port)))
         else:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} power for port {}'''.format(self._channel,
                                                            self.port)))
 
@@ -497,7 +494,7 @@ class AgilentPNAChannel(BaseInstrument):
         if meas:
             return meas[1:-1]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} selected measure'''.format(self._channel)))
 
     @selected_measure.setter
@@ -515,7 +512,7 @@ class AgilentPNAChannel(BaseInstrument):
 #        raise InstrIOError(result)
         if result:
             if result[1:-1] != value:
-                raise InstrIOError(cleandoc('''PNA did not set correctly the
+                raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} selected measure'''.format(self._channel)))
 
     @instrument_property
@@ -528,7 +525,7 @@ class AgilentPNAChannel(BaseInstrument):
         if if_bw:
             return if_bw[0]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} IF bandwidth'''.format(self._channel)))
 
     @if_bandwidth.setter
@@ -541,10 +538,10 @@ class AgilentPNAChannel(BaseInstrument):
                                           self._channel))
         if result:
             if abs(result[0] > value) > 10**-12:
-                raise InstrIOError(cleandoc('''PNA did not set correctly the
+                raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} IF bandwidth'''.format(self._channel)))
         else:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} IF bandwidth'''.format(self._channel)))
 
     @instrument_property
@@ -556,7 +553,7 @@ class AgilentPNAChannel(BaseInstrument):
         if mode:
             return mode
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} sweep mode'''.format(self._channel)))
 
     @sweep_mode.setter
@@ -568,7 +565,7 @@ class AgilentPNAChannel(BaseInstrument):
         result = self._pna.ask('SENSe{}:SWEep:MODE?'.format(self._channel))
 
         if result.lower() != value.lower()[:len(result)]:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 channel {} sweep mode'''.format(self._channel)))
 
     @instrument_property
@@ -580,7 +577,7 @@ class AgilentPNAChannel(BaseInstrument):
         if sweep_type:
             return sweep_type
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} sweep type'''.format(self._channel)))
 
     @sweep_type.setter
@@ -592,7 +589,7 @@ class AgilentPNAChannel(BaseInstrument):
         result = self._pna.ask('SENSe{}:SWEep:TYPE?'.format(self._channel))
 
         if result.lower() != value.lower()[:len(result)]:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 channel {} sweep type'''.format(self._channel)))
 
     @instrument_property
@@ -605,7 +602,7 @@ class AgilentPNAChannel(BaseInstrument):
         if points:
             return points[0]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} sweep point number'''.format(self._channel)))
 
     @sweep_points.setter
@@ -618,10 +615,10 @@ class AgilentPNAChannel(BaseInstrument):
                                           self._channel))
         if result:
             if result[0] != value:
-                raise InstrIOError(cleandoc('''PNA did not set correctly the
+                raise InstrIOError(cleandoc('''ZNB20 not set correctly the
                     channel {} sweep point number'''.format(self._channel)))
         else:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} sweep point number'''.format(self._channel)))
 
     @instrument_property
@@ -634,7 +631,7 @@ class AgilentPNAChannel(BaseInstrument):
         if time:
             return time[0]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} sweep point number'''.format(self._channel)))
 
     @sweep_time.setter
@@ -653,7 +650,7 @@ class AgilentPNAChannel(BaseInstrument):
         if state:
             return bool(state)
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} average state'''.format(self._channel)))
 
     @average_state.setter
@@ -666,7 +663,7 @@ class AgilentPNAChannel(BaseInstrument):
         result = self._pna.ask('SENSe{}:AVERage:STATe?'.format(self._channel))
 
         if bool(result) != value:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 channel {} average state'''.format(self._channel)))
 
     @instrument_property
@@ -679,7 +676,7 @@ class AgilentPNAChannel(BaseInstrument):
         if count:
             return count[0]
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} average count'''.format(self._channel)))
 
     @average_count.setter
@@ -696,10 +693,10 @@ class AgilentPNAChannel(BaseInstrument):
                                           self._channel))
         if result:
             if result[0] == value:
-                raise InstrIOError(cleandoc('''PNA did not set correctly the
+                raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} average count'''.format(self._channel)))
         else:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} average count'''.format(self._channel)))
 
     @instrument_property
@@ -711,7 +708,7 @@ class AgilentPNAChannel(BaseInstrument):
         if mode:
             return mode
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} average mode'''.format(self._channel)))
 
     @average_mode.setter
@@ -723,7 +720,7 @@ class AgilentPNAChannel(BaseInstrument):
         result = self._pna.ask('SENSe{}:AVERage:MODE?'.format(self._channel))
 
         if result.lower() != value.lower()[:len(result)]:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 channel {} average mode'''.format(self._channel)))
 
     @instrument_property
@@ -736,7 +733,7 @@ class AgilentPNAChannel(BaseInstrument):
         if mode:
             return mode[0]*1000000000.0
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} electrical delay'''.format(self._channel)))
 
     @electrical_delay.setter
@@ -780,7 +777,7 @@ class ZNB20(VisaInstrument):
         if num in self.channels:
             return self.channels[num]
         else:
-            channel = AgilentPNAChannel(self, num)
+            channel = ZNB20Channel(self, num)
             self.channels[num] = channel
             return channel
 
@@ -802,7 +799,7 @@ class ZNB20(VisaInstrument):
             traces_list = self.ask('DISPlay:WINDow{}:TRACe:CATalog?'.format(window_num))[1:-1].split(',')
             traces = [int(traces_list[2*ii]) for ii in range(int(len(traces_list)/2))]
             if len(traces)>0:
-                raise InstrIOError(cleandoc('''Agilent PNA did not clear all
+                raise InstrIOError(cleandoc('''ZNB20 did not clear all
                     traces from window {}'''.format(window_num)))
 
     # ZL for this to work, I needed to set trigger source to IMM
@@ -838,7 +835,7 @@ class ZNB20(VisaInstrument):
             result = self.ask('SENSe{}:SWEep:MODE?'.format(channel))
 
             if result != 'CONT': # ZL changed from 'HOLD'
-                raise InstrIOError(cleandoc('''PNA did not set correctly the
+                raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} sweep mode while setting all defined channels
                     to HOLD'''.format(channel)))
 
@@ -877,10 +874,10 @@ class ZNB20(VisaInstrument):
             aux = [int(windows_number_list[2*ii]) for ii in range(int(len(windows_number_list)/2))] # ZL
             return aux
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     defined windows'''))
 
-    # ZL needs more checking
+    # TODO ZL needs more checking
     @instrument_property
     @secure_communication()
     def trigger_scope(self):
@@ -893,7 +890,7 @@ class ZNB20(VisaInstrument):
                 scope = 'CURRent'
             return scope
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     trigger scope'''))
 
     @trigger_scope.setter
@@ -908,7 +905,7 @@ class ZNB20(VisaInstrument):
         result = self.ask('INITiate'+format(channel)+':SCOPe?')
 
         if result.lower() != value.lower()[:len(result)]:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 trigger scope'''))
 
     @instrument_property
@@ -920,10 +917,9 @@ class ZNB20(VisaInstrument):
         if scope:
             return scope
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     trigger source'''))
 
-    # ZL OK
     @trigger_source.setter
     @secure_communication()
     def trigger_source(self, value):
@@ -934,10 +930,9 @@ class ZNB20(VisaInstrument):
         result = self.ask('TRIGger:SEQuence:SOURce?')
 
         if result.lower() != value.lower()[:len(result)]:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 trigger source'''))
 
-    # ZL OK
     @instrument_property
     @secure_communication()
     def data_format(self):
@@ -947,7 +942,7 @@ class ZNB20(VisaInstrument):
         if data_format:
             return data_format
         else:
-            raise InstrIOError(cleandoc('''Agilent PNA did not return the
+            raise InstrIOError(cleandoc('''ZNB20 did not return the
                     data format'''))
 
     # ZL OK
@@ -960,6 +955,6 @@ class ZNB20(VisaInstrument):
         result = self.ask('FORMAT:DATA?')
 
         if result.lower() != value.lower()[:len(result)]:
-            raise InstrIOError(cleandoc('''PNA did not set correctly the
+            raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 data format'''))
             

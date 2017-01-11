@@ -27,6 +27,7 @@ CONVERSION_FACTORS = {'GHz': {'Hz': 1e9, 'kHz': 1e6, 'MHz': 1e3, 'GHz': 1},
                       'kHz': {'Hz': 1e3, 'kHz': 1, 'MHz': 1e-3, 'GHz': 1e-6},
                       'Hz': {'Hz': 1, 'kHz': 1e-3, 'MHz': 1e-6, 'GHz': 1e-9}}
 
+
 class SynthHD(VisaInstrument):
     """
     Generic driver for Agilent PSG SignalGenerator, using the VISA library.

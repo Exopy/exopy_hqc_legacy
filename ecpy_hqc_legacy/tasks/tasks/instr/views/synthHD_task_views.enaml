@@ -14,21 +14,8 @@ from __future__ import (division, unicode_literals, print_function,
 
 import re
 from textwrap import fill
-
-from atom.api import set_default, Value, observe
-from enaml.core.api import Conditional
-from enaml.layout.api import grid, vbox, hbox, factory
-from enaml.widgets.api import (GroupBox, Label, Field, ObjectCombo, Container,
-                               CheckBox)
-from enaml.stdlib.fields import IntField, FloatField
-from enaml.validator import Validator
-
-from ecpy.tasks.api import EVALUATER_TOOLTIP
-from ecpy.utils.widgets.qt_completers import QtLineCompleter
-from ecpy_hqc_legacy.utils.layouts import auto_grid_layout
-from ecpy_hqc_legacy.utils.widgets.pair_editor import PairEditor
-from ...base_instr_view import InstrView
-
+from enaml.widgets.api import (Label)
+from enaml.stdlib.fields import IntField
 
 enamldef ISynthHDChannelLabel(Label):
     """Label for the channel selection.
@@ -48,3 +35,4 @@ enamldef ISynthHDChannelValue(IntField):
     attr root
     hug_width = 'strong'
     value := interface.channel
+    

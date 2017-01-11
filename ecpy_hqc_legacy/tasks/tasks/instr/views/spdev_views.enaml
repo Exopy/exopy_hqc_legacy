@@ -60,6 +60,8 @@ enamldef DemodSpView(InstrView): view:
     CheckBox: average:
         text = 'Average'
         checked := task.average
+        tool_tip = 'Check if you want averaged data, 
+                    i.e: only one (I_avg,Q_avg) per acquisition'
 
     GroupBox: demod1:
         title = 'Channel 1 demodulation settings'

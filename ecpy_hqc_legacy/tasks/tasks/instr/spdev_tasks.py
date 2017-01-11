@@ -123,7 +123,6 @@ class DemodSPTask(InstrumentTask):
             # amplitude.
             Ch1_I = 2*np.mean(ch1*c1, axis=1)
             Ch1_Q = 2*np.mean(ch1*s1, axis=1)
-            print("len(Ch1_I) = %s "%len(Ch1_I))
             Ch1_I_av = Ch1_I if not self.average else np.mean(Ch1_I)
             Ch1_Q_av = Ch1_Q if not self.average else np.mean(Ch1_Q)
             self.write_in_database('Ch1_I', Ch1_I_av)

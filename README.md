@@ -26,4 +26,6 @@ FAQs
 - A: Go to ecpy_hqc_legacy\ecpy_hqc_legacy\manifest.enaml and add your instrument to the instruments list for the task you want: 
 	 e.g. instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA','ecpy_hqc_legacy.Legacy.ZNB20']
 
+- Q: I created a task file, but do not see it appear as the proposed tasks in the GUI, why?
+- A: You need to add the task in the plugin manifest ecpy_hqc_legacy\ecpy_hqc_legacy\manifest.enaml
 	 

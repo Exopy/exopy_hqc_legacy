@@ -962,3 +962,4 @@ class ZNB20(VisaInstrument):
         if result.lower() != value.lower()[:len(result)]:
             raise InstrIOError(cleandoc('''PNA did not set correctly the
                 data format'''))
+            

@@ -30,7 +30,7 @@ CONVERSION_FACTORS = {'GHz': {'Hz': 1e9, 'kHz': 1e6, 'MHz': 1e3, 'GHz': 1},
 
 class SynthHD(VisaInstrument):
     """
-    Generic driver for Agilent PSG SignalGenerator, using the VISA library.
+    Driver for WindFreakTech's synthHD SignalGenerator, using the VISA library.
 
     This driver does not give access to all the functionnality of the
     instrument but you can extend it if needed. See the documentation of
@@ -52,26 +52,17 @@ class SynthHD(VisaInstrument):
         Fixed power of the output signal.
     output : bool, instrument_property
         State of the output 'ON'(True)/'OFF'(False).
-
-    Notes
-    -----
-    This driver has been written for the  but might work for other
-    models using the same SCPI commands.
-
     """
+    
     def __init__(self, connection_info, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
 
-        print(connection_info)
         super(SynthHD, self).__init__(connection_info, caching_allowed,
                                          caching_permissions, auto_open)
         self.channel = 0
         self.frequency_unit = 'GHz'
         self.write_termination = ''
         self.read_termination = ''
-        self.detuneRef = 10.0 # in MHz
-        self.powerRef = 13.0 # in dBm
-        self.detuneRef_format = '{:.4f}'.format(self.detuneRef) # in correct format for inst
 
     @instrument_property
     @secure_communication()
@@ -83,8 +74,9 @@ class SynthHD(VisaInstrument):
         freq = self.read()
         if freq:
             return freq
+            mes = 'Instrument did not return the frequency'
         else:
-            raise InstrIOError
+            raise InstrIOError(mes)
 
     @frequency.setter
     @secure_communication()
@@ -93,14 +85,10 @@ class SynthHD(VisaInstrument):
         """
         unit = self.frequency_unit
         channel = self.channel
-
         valueMHz = value*CONVERSION_FACTORS[unit]['MHz']
         valueMHz_format = '{:.4f}'.format(valueMHz)
-        print(str(valueMHz_format))
         self.write('C'+str(channel))
         self.write('f'+str(valueMHz_format))
-        #self.write('C1')
-        #self.write('f'+str(valueMHz_format+self.detuneRef_format))
         self.write('f?') # asks for frequency of current channel
         result = float(self.read()) # returns frequency in MHz
         if abs(result - valueMHz) > 10**-12:
@@ -118,7 +106,8 @@ class SynthHD(VisaInstrument):
         if power is not None:
             return power
         else:
-            raise InstrIOError
+            mes = 'Instrument did not return the power'
+            raise InstrIOError(mes)
 
     @power.setter
     @secure_communication()
@@ -127,9 +116,6 @@ class SynthHD(VisaInstrument):
         """
         self.write('C'+str(self.channel))
         self.write('W'+str('{:.4f}'.format(value)))
-#        self.write('C1')
-#        self.write('W'+str(self.powerRef))
-
         self.write('W?')
         result = float(self.read())
         if abs(result - value) > 10**-12:

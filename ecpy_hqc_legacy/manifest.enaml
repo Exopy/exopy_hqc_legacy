@@ -312,7 +312,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                  'views.pna_task_views:IPNAChannelValue']
                         instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA',
                                        'ecpy_hqc_legacy.Legacy.ZNB20']
-                     Interface:
+                    Interface:
                         interface = 'synthHD_tasks:SynthHDsetChannelInterface'
                         views = ['views.synthHD_task_views:ISynthHDChannelLabel',
                                  'views.synthHD_task_views:ISynthHDChannelValue']

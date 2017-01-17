@@ -480,10 +480,11 @@ class PNAGetTraces(InstrumentTask):
                np.absolute(complexdata),
                np.unwrap(np.angle(complexdata))]
 
-        return np.rec.fromarrays(aux, names=['Freq (GHz)', measname+' real',
-                                             measname+' imag',
-                                             measname+' abs',
-                                             measname+' phase'])
+        return np.rec.fromarrays(aux, names=[str('Freq (GHz)'),
+                                             str(measname+' real'),
+                                             str(measname+' imag'),
+                                             str(measname+' abs'),
+                                             str(measname+' phase')])
 
     def check(self, *args, **kwargs):
         """Create meaningful database entries.
@@ -495,7 +496,8 @@ class PNAGetTraces(InstrumentTask):
         sweep_data = {}
         for trace in traces:
             data = [np.array([0.0, 1.0]), np.array([1.0, 2.0])]
-            sweep_data[trace] = np.rec.fromarrays(data, names=['a', 'b'])
+            sweep_data[trace] = np.rec.fromarrays(data,
+                                                  names=[str('a'), str('b')])
 
         self.write_in_database('sweep_data', sweep_data)
         return test, traceback

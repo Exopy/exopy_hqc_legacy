@@ -19,7 +19,7 @@ from inspect import cleandoc
 
 import numpy as np
 from atom.api import (Unicode, Int, Bool, Enum, set_default,
-                      Value, List)
+                      Value, List, Str)
 
 from ecpy.tasks.api import InstrumentTask, TaskInterface, validators
 from ecpy.utils.atom_util import ordered_dict_to_pref, ordered_dict_from_pref

@@ -15,7 +15,6 @@ from __future__ import (division, unicode_literals, print_function,
 import logging
 from inspect import cleandoc
 import numpy as np
-import time
 
 try:
     from visa import ascii, single, double
@@ -58,7 +57,7 @@ class ZNB20Channel(BaseInstrument):
     def __init__(self, pna, channel_num, caching_allowed=True,
                  caching_permissions={}):
         super(ZNB20Channel, self).__init__(None, caching_allowed,
-                                                caching_permissions)
+                                           caching_permissions)
         self._pna = pna
         self._channel = channel_num
         self.port = 1
@@ -177,7 +176,8 @@ class ZNB20Channel(BaseInstrument):
 
         self.average_state = 1
         for i in range(0, int(self.average_count)):
-            #self._pna.write('sense{}:sweep:mode gro'.format(self._channel)) # ZL: ask Madar what this does
+            # self._pna.write('sense{}:sweep:mode gro'.format(self._channel))
+            # ZL: ask Madar what this does
 
             while True:
                 try:
@@ -193,7 +193,7 @@ class ZNB20Channel(BaseInstrument):
             if done != 1:
                 raise InstrError(cleandoc('''ZNB20 did could  not perform
                 the average on channel {} '''.format(self._channel)))
-    
+
     # ZL OK
     @secure_communication()
     def list_existing_measures(self):
@@ -203,11 +203,9 @@ class ZNB20Channel(BaseInstrument):
         meas = self._pna.ask(request.format(self._channel))
 
         if meas:
-            if meas == "''": 
+            if meas == "''":
                 return []
-#            print(meas)
             param = meas[1:-1].split(',')
-#            print(param)
             aux = [{'name': param[2*i], 'parameters': param[2*i+1]}
                    for i in range(int(len(param)/2))]
             return aux
@@ -219,25 +217,24 @@ class ZNB20Channel(BaseInstrument):
     @secure_communication()
     def create_meas(self, meas_name):
         """
-        """        
+        """
         catalog_request = 'CALCulate{}:PARameter:CATalog:SENDed?'
-        measures = self._pna.ask(catalog_request.format(self._channel))
-#        print(measures)
+        # measures = self._pna.ask(catalog_request.format(self._channel))
+
         param = meas_name.split(':')[1]
 
-        if param not in measures:
-            create_meas = "CALCulate{}:PARameter:SDEFine '{}','{}'"
-            self._pna.write(create_meas.format(self._channel,
-                                               meas_name.replace(':','_'),
-                                               param))
+        create_meas = "CALCulate{}:PARameter:SDEFine '{}','{}'"
+        self._pna.write(create_meas.format(self._channel,
+                                           meas_name.replace(':', '_'),
+                                           param))
 
-            meas = self._pna.ask(catalog_request.format(self._channel))
-            if meas:
-                if param not in meas:
-                    mess = cleandoc('''The Pna did not create the
-                        meas {} for channel {}'''.format(meas_name,
-                                                         self._channel))
-                    raise InstrIOError(mess)
+        meas = self._pna.ask(catalog_request.format(self._channel))
+        if meas:
+            if param not in meas:
+                mess = cleandoc('''The Pna did not create the
+                    meas {} for channel {}'''.format(meas_name,
+                                                     self._channel))
+                raise InstrIOError(mess)
 
     # TODO ZL needs checking
     @secure_communication()
@@ -259,11 +256,11 @@ class ZNB20Channel(BaseInstrument):
     def delete_all_meas(self):
         """
         """
-#        self._pna.write('CALCulate{}:PARameter:DELete:ALL'.format(self._channel))            
+#        self._pna.write('CALCulate{}:PARameter:DELete:ALL'.format(self._channel))
         for meas in self.list_existing_measures():
             self._pna.write(
                 "CALCulate{}:PARameter:DELete {}".format(self._channel,
-                                                           meas['name']))
+                                                         meas['name']))
         self.clear_cache(['selected_measure'])
         if self.list_existing_measures():
             raise InstrIOError(cleandoc('''The Pna did not delete all meas
@@ -274,8 +271,8 @@ class ZNB20Channel(BaseInstrument):
     def format_meas(self, meas_format, meas_name=''):
         """
         """
-        #raise IOError(format(meas_format))
-#        meas_format = 'POL'
+        # raise IOError(format(meas_format))
+        # meas_format = 'POL'
         if meas_name:
             selected_meas = self.selected_measure
             self.selected_measure = meas_name
@@ -299,11 +296,11 @@ class ZNB20Channel(BaseInstrument):
         if window_num not in self._pna.windows:
             self._pna.write('DISPlay:WINDow{} ON'.format(window_num))
 
-        self._pna.write("DISPlay:WINDow{}:TRACe{}:EFEed '{}'".format(window_num, # ZL
+        self._pna.write("DISPlay:WINDow{}:TRACe{}:EFEed '{}'".format(window_num,
                         1, meas_name.replace(':','_')))
 
         traces = self._pna.ask('DISPlay:WINDow{}:TRACe1:CATalog?'.format(window_num))
-        if str(meas_name.replace(':','_')) not in traces:
+        if str(meas_name.replace(':', '_')) not in traces:
             raise InstrIOError(cleandoc('''The Pna did not bind the meas {}
                 to window {}'''.format(meas_name, window_num)))
 
@@ -503,7 +500,6 @@ class ZNB20Channel(BaseInstrument):
         """
         """
         value = value.replace(':','_')
-         #raise InstrIOError(format(value)+"   "+format(self._channel))
         mess0 = "CALC{}:PARameter:SELect '{}'".format(self._channel,value)
         self._pna.write(mess0)
         mess = 'CALC{}:PARameter:SELect?'.format(self._channel)
@@ -743,7 +739,7 @@ class ZNB20Channel(BaseInstrument):
         electrical delay for the selected trace in ns
         """
         self._pna.write('CORRection:EDELay{} {}NS'.format(self._channel,
-                                                            value))
+                                                          value))
 
 
 class ZNB20(VisaInstrument):
@@ -757,8 +753,8 @@ class ZNB20(VisaInstrument):
     def __init__(self, connection_info, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
         super(ZNB20, self).__init__(connection_info, caching_allowed,
-                                         caching_permissions, auto_open)
-        self.channels = {}        
+                                    caching_permissions, auto_open)
+        self.channels = {}
 
     def open_connection(self, **para):
         """Open the connection to the instr using the `connection_str`.
@@ -786,11 +782,8 @@ class ZNB20(VisaInstrument):
     def clear_traces_from_window(self, window_num):
         """
         """
-        print(format(window_num))
         traces_list = self.ask('DISPlay:WINDow{}:TRACe:CATalog?'.format(window_num))[1:-1].split(',') # 'DISPlay:WINDow{}:CATalog?'.format(window_num)  ZL
-        print(traces_list)        
         traces = [int(traces_list[2*ii]) for ii in range(int(len(traces_list)/2))]
-        print(traces)
         if len(traces)>0:
             for trace in traces:
                 mess = 'DISPlay:WINDow{}:TRACe{}:DELete'.format(window_num,
@@ -811,7 +804,7 @@ class ZNB20(VisaInstrument):
             self.write('INITiate:IMMediate')
         else:
             self.write('INITiate{}:IMMediate'.format(channel))
-        self.write('*OPC')    
+        self.write('*OPC')
 
     # ZL OK
     @secure_communication()
@@ -819,7 +812,6 @@ class ZNB20(VisaInstrument):
         """
         """
         bites = self.ask('*ESR?')
-        print(bites)
         status_byte = ('{0:08b}'.format(int(bites)))[::-1]
         return bool(int(status_byte[0]))
 
@@ -845,7 +837,7 @@ class ZNB20(VisaInstrument):
         """Clear and restart averaging of the measurement data.
 
         """
-        self.write('SENS:AVER:CLE') 
+        self.write('SENS:AVER:CLE')
 
     # ZL OK
     @instrument_property
@@ -898,7 +890,7 @@ class ZNB20(VisaInstrument):
     def trigger_scope(self, value):
         """
         """
-        if value == 'CURRent' or value == 'CURR': # translating the PNA to ZNB instruction 
+        if value == 'CURRent' or value == 'CURR': # translating the PNA to ZNB instruction
             value = 'SINGle'
         channel = self.defined_channels[0]
         self.write('INITiate'+format(channel)+':SCOPe {}'.format(value))
@@ -957,4 +949,3 @@ class ZNB20(VisaInstrument):
         if result.lower() != value.lower()[:len(result)]:
             raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 data format'''))
-            

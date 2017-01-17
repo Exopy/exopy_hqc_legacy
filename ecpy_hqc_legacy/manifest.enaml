@@ -235,6 +235,11 @@ enamldef HqcLegacyManifest(PluginManifest):
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaTCPIP': {'resource_class': 'INSTR'}
                                        }
+                    Driver:
+                        driver = 'rohde_and_schwarz_signal_generators:RohdeSchwarzSMB100A'
+                        model = 'SMB100A'
+                        connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
+                                       }
             Drivers:
                 path = 'dll'
                 starter = 'ecpy_hqc_legacy.starter.dll'
@@ -304,7 +309,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                     view = 'views.rf_views:RFFrequencyView'
                     instruments = ['ecpy_hqc_legacy.Legacy.AgilentPSG',
                                    'ecpy_hqc_legacy.Legacy.AnritsuMG3694',
-                                   'ecpy_hqc_legacy.Legacy.LabBrickLMS103']
+                                   'ecpy_hqc_legacy.Legacy.LabBrickLMS103',
+                                   'ecpy_hqc_legacy.Legacy.RohdeSchwarzSMB100A']
                     metadata = {'loopable': True}
                     Interface:
                         interface = 'pna_tasks:PNASetRFFrequencyInterface'
@@ -324,7 +330,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                     view = 'views.rf_views:RFPowerView'
                     instruments = ['ecpy_hqc_legacy.Legacy.AgilentPSG',
                                    'ecpy_hqc_legacy.Legacy.AnritsuMG3694',
-                                   'ecpy_hqc_legacy.Legacy.LabBrickLMS103']
+                                   'ecpy_hqc_legacy.Legacy.LabBrickLMS103',
+                                   'ecpy_hqc_legacy.Legacy.RohdeSchwarzSMB100A']
                     metadata = {'loopable': True}
                     Interface:
                         interface = 'pna_tasks:PNASetRFPowerInterface'
@@ -334,6 +341,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                  'views.pna_task_views:IPNAPortValue']
                         instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA',
                                        'ecpy_hqc_legacy.Legacy.ZNB20']
+                    Interface:
                         interface = 'synthHD_tasks:SynthHDsetChannelInterface'
                         views = ['views.synthHD_task_views:ISynthHDChannelLabel',
                                  'views.synthHD_task_views:ISynthHDChannelValue']
@@ -343,7 +351,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                     view = 'views.rf_views:RFSetOnOffView'
                     instruments = ['ecpy_hqc_legacy.Legacy.AgilentPSG',
                                    'ecpy_hqc_legacy.Legacy.AnritsuMG3694',
-                                   'ecpy_hqc_legacy.Legacy.LabBrickLMS103']
+                                   'ecpy_hqc_legacy.Legacy.LabBrickLMS103',
+                                   'ecpy_hqc_legacy.Legacy.RohdeSchwarzSMB100A']
                     metadata = {'loopable': True}
                     Interface:
                         interface = 'synthHD_tasks:SynthHDsetChannelInterface'

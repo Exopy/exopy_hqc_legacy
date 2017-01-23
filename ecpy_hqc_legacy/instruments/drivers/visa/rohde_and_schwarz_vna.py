@@ -387,6 +387,8 @@ class ZNB20Channel(BaseInstrument):
         WARNING: this command will not work if the trace selection has not been
         made by the software beforehand
         """
+        traces = self._pna.ask_for_values('CALCulate {}:PARameter:CATalog?'.format(
+                                          self._channel))
         trace_nb = self._pna.ask_for_values('CALC{}:PAR:MNUM?'.format(
             self._channel))
         if trace_nb:
@@ -826,10 +828,10 @@ class ZNB20(VisaInstrument):
         for channel in self.defined_channels:
             result = self.ask('SENSe{}:SWEep:MODE?'.format(channel))
 
-            if result != 'CONT': # ZL changed from 'HOLD'
+            if result != 'HOLD':
                 raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} sweep mode while setting all defined channels
-                    to HOLD'''.format(channel)))
+                    to HOLD, instead channel mode is {}'''.format(channel, result)))
 
     # ZL OK
     @secure_communication()
@@ -853,6 +855,15 @@ class ZNB20(VisaInstrument):
         else:
             raise InstrIOError(cleandoc('''ZNB20 did not return the
                     defined channels''')) # ZL
+
+    @instrument_property
+    @secure_communication()
+    def get_all_trace_names(self):
+        tracelist_raw = self.ask('CONFigure:TRACe:CATalog?')
+        tracelist = tracelist_raw[1:-1].split(',')
+        tracelist = np.reshape(tracelist, (int(len(tracelist)/2), 2))
+        tracelist = tracelist[:, 1]
+        return tracelist
 
     # ZL OK
     @instrument_property

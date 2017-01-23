@@ -69,15 +69,15 @@ class Alazar935x(DllInstrument):
         # TODO: Select clock parameters as required to generate this
         # sample rate
         self.samplesPerSec = 500000000
-        board.setCaptureClock(    ats.EXTERNAL_CLOCK, # ZL: changed from EXTERNAL_CLOCK_10MHz_REF
-                                  ats.SAMPLE_RATE_500MSPS, # ZL: changed from 500000000
+        board.setCaptureClock(    ats.EXTERNAL_CLOCK_10MHz_REF, # ZL: changed from EXTERNAL_CLOCK_10MHz_REF
+                                  500e6, # ZL: changed from 500000000
                                   ats.CLOCK_EDGE_RISING,
                                   1)
         # TODO: Select channel A input parameters as required.
-        board.inputControl(    ats.CHANNEL_A,
-                               ats.AC_COUPLING,
-                               ats.INPUT_RANGE_PM_2_V,
-                               ats.IMPEDANCE_50_OHM)
+        board.inputControl(ats.CHANNEL_A,
+                           ats.AC_COUPLING,
+                           ats.INPUT_RANGE_PM_200_MV,
+                           ats.IMPEDANCE_50_OHM)
 
         # TODO: Select channel A bandwidth limit as required.
         board.setBWLimit(ats.CHANNEL_A, 0)
@@ -86,7 +86,7 @@ class Alazar935x(DllInstrument):
         # TODO: Select channel B input parameters as required.
         board.inputControl(ats.CHANNEL_B,
                                ats.AC_COUPLING,
-                               ats.INPUT_RANGE_PM_2_V,
+                               ats.INPUT_RANGE_PM_200_MV,
                                ats.IMPEDANCE_50_OHM)
 
         # TODO: Select channel B bandwidth limit as required.
@@ -151,9 +151,9 @@ class Alazar935x(DllInstrument):
 
         postTriggerSamples = int(samplesPerSec*timeaftertrig)
         if postTriggerSamples % 32 == 0:
-            postTriggerSamples = channelCount*int(postTriggerSamples)
+            postTriggerSamples = int(postTriggerSamples)
         else:
-            postTriggerSamples = channelCount*int((postTriggerSamples)/32 + 1)*32
+            postTriggerSamples = int((postTriggerSamples)/32 + 1)*32
 
         # determine the number of records per buffer
         memorySize_samples, bitsPerSample = board.getChannelInfo()
@@ -176,22 +176,6 @@ class Alazar935x(DllInstrument):
 #            buffersPerAcquisition+=1
 
         delay = 0
-#        if recordsPerCapture%recordsPerBuffer != 0:
-#            raise Exception("Error: Number of records per capture must be an integer times the number of records per buffer! (recordsPerCapture = %s,recordsPerBuffer = %s)" %
-#                            (recordsPerCapture,recordsPerBuffer))
-
-
-
-        # TODO: Select the number of samples per record.
-        #postTriggerSamples = 2048
-
-        # TODO: Select the number of records per DMA buffer.
-        #recordsPerBuffer = 10
-
-        # TODO: Select the number of buffers per acquisition.
-        #buffersPerAcquisition = 10
-        # the float() is imporant otherwise python rounds the fraction to int
-        # with floor, and math.ceil is meaningless
 
         buffersPerAcquisition = int(math.ceil(float(recordsPerCapture) / recordsPerBuffer))
         records_to_ignore = buffersPerAcquisition*recordsPerBuffer - recordsPerCapture
@@ -200,13 +184,6 @@ class Alazar935x(DllInstrument):
         print('buffersPerAcquisition = %s' %buffersPerAcquisition)
         print('records_to_ignore = %s' %records_to_ignore)
 
-
-
-        # TODO: Should data be saved to file?
-        saveData = False
-        dataFile = None
-        if saveData:
-            dataFile = open(os.path.join(os.path.dirname(__file__), "NPT_data.bin"), 'w')
 
         # Compute the number of bytes per record and per buffer
 
@@ -242,7 +219,6 @@ class Alazar935x(DllInstrument):
 
         start = time.clock() # Keep track of when acquisition started
         board.startCapture() # Start the acquisition
-        if verbose: print("Capturing %d buffers. Press any key to abort" % buffersPerAcquisition)
         buffersCompleted = 0
         bytesTransferred = 0
 
@@ -261,64 +237,18 @@ class Alazar935x(DllInstrument):
             # making sure we only grab the number of records we asked for
             records_to_ignore_val = 0 if buffersCompleted < buffersPerAcquisition-1  else records_to_ignore
             print(records_to_ignore_val)
-            print(np.shape(dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer]),np.shape(data[:recordsPerBuffer-records_to_ignore_val]))
-            dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[:recordsPerBuffer-records_to_ignore_val]
-            dataB[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[recordsPerBuffer+records_to_ignore_val:]
+            print(np.shape(dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val]),np.shape(data[:recordsPerBuffer-records_to_ignore_val]))
+            dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val] = data[:recordsPerBuffer-records_to_ignore_val]
+            dataB[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val] = data[recordsPerBuffer:2*recordsPerBuffer-records_to_ignore_val]
 
             buffersCompleted += 1
             bytesTransferred += buffer.size_bytes
-
-            # TODO: Process sample data in this buffer. Data is available
-            # as a NumPy array at buffer.buffer
-
-            # NOTE:
-            #
-            # While you are processing this buffer, the board is already
-            # filling the next available buffer(s).
-            #
-            # You MUST finish processing this buffer and post it back to the
-            # board before the board fills all of its available DMA buffers
-            # and on-board memory.
-            #
-            # Records are arranged in the buffer as follows:
-            # R0A, R1A, R2A ... RnA, R0B, R1B, R2B ...
-            #
-            # A 12-bit sample code is stored in the most significant bits of
-            # in each 16-bit sample value.
-            #
-            # Sample codes are unsigned by default. As a result:
-            # - a sample code of 0x0000 represents a negative full scale input signal.
-            # - a sample code of 0x8000 represents a ~0V signal.
-            # - a sample code of 0xFFFF represents a positive full scale input signal.
-            # Optionaly save data to file
-
-            if verbose: ax.plot(buffer.buffer)
-            if dataFile: buffer.buffer.tofile(dataFile)
 
             # Update progress bar
 
             # Add the buffer to the end of the list of available buffers.
             board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
 
-        if buffersCompleted == buffersPerAcquisition-1:
-            buffer = buffers[buffersCompleted % len(buffers)]
-            board.waitAsyncBufferComplete(buffer.addr, timeout_ms=5000)
-            data = np.reshape(buffer.buffer, (recordsPerBuffer*channelCount, -1))
-            dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[:recordsPerBuffer]
-            dataB[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer] = data[recordsPerBuffer:]
-
-            buffersCompleted += 1
-            bytesTransferred += buffer.size_bytes
-            if verbose: ax.plot(buffer.buffer)
-            if dataFile: buffer.buffer.tofile(dataFile)
-
-            # Update progress bar
-
-            # Add the buffer to the end of the list of available buffers.
-            board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
-
-
-        # Compute the total transfer time, and display performance information.
         transferTime_sec = time.clock() - start
         if verbose: print("Capture completed in %f sec" % transferTime_sec)
         buffersPerSec = 0

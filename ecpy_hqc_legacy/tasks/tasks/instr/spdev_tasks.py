@@ -19,7 +19,6 @@ from atom.api import (Bool, Unicode, set_default)
 
 from ecpy.tasks.api import InstrumentTask, validators
 
-
 VAL_REAL = validators.Feval(types=numbers.Real)
 
 VAL_INT = validators.Feval(types=numbers.Integral)
@@ -46,10 +45,10 @@ class DemodSPTask(InstrumentTask):
     ch2_trace = Bool(False).tag(pref=True)
 
     #: Frequency of the signal sent to channel 1 in MHz
-    freq_1 = Unicode('20').tag(pref=True, feval=VAL_REAL)
+    freq_1 = Unicode('50').tag(pref=True, feval=VAL_REAL)
 
     #: Frequency of the signal sent to channel 2 in MHz
-    freq_2 = Unicode('20').tag(pref=True, feval=VAL_REAL)
+    freq_2 = Unicode('50').tag(pref=True, feval=VAL_REAL)
 
     #: Time during which to acquire data after a trigger (ns).
     duration = Unicode('0').tag(pref=True, feval=VAL_REAL)
@@ -61,7 +60,8 @@ class DemodSPTask(InstrumentTask):
     records_number = Unicode('1000').tag(pref=True, feval=VAL_INT)
 
     database_entries = set_default({'Ch1_I': 1.0, 'Ch1_Q': 1.0,
-                                    'Ch2_I': 1.0, 'Ch2_Q': 1.0})
+                                    'Ch2_I': 1.0, 'Ch2_Q': 1.0,
+                                    'Chc_I': 1.0, 'Chc_Q': 1.0})
 
     def check(self, *args, **kwargs):
         """Check that parameters make sense.
@@ -116,7 +116,7 @@ class DemodSPTask(InstrumentTask):
         if self.ch1_enabled:
             f1 = self.format_and_eval_string(self.freq_1)*1e6
             ntraces1, nsamples1 = np.shape(ch1)
-            phi1 = np.linspace(0, 2*np.pi*f1*duration, nsamples1)
+            phi1 = np.linspace(0, 2*np.pi*f1*((nsamples1-1)*2e-9), nsamples1)
             c1 = np.cos(phi1)
             s1 = np.sin(phi1)
             # The mean value of cos^2 is 0.5 hence the factor 2 to get the
@@ -133,8 +133,8 @@ class DemodSPTask(InstrumentTask):
 
         if self.ch2_enabled:
             f2 = self.format_and_eval_string(self.freq_2)*1e6
-            ntraces1, nsamples1 = np.shape(ch1)
-            phi2 = np.linspace(0, 2*np.pi*f2*duration, nsamples1)
+            ntraces2, nsamples2 = np.shape(ch2)
+            phi2 = np.linspace(0, 2*np.pi*f2*((nsamples2-1)*2e-9), nsamples2)
             c2 = np.cos(phi2)
             s2 = np.sin(phi2)
             # The mean value of cos^2 is 0.5 hence the factor 2 to get the
@@ -149,11 +149,23 @@ class DemodSPTask(InstrumentTask):
             if self.ch2_trace:
                 self.write_in_database('Ch2_trace', ch2)
 
+        if self.ch1_enabled and self.ch2_enabled:
+            Ch1_c = Ch1_I + 1j*Ch1_Q
+            Ch2_c = Ch2_I + 1j*Ch2_Q
+            Chc_I = np.real(Ch1_c/Ch2_c)
+            Chc_Q = np.imag(Ch1_c/Ch2_c)
+            Chc_I_av = Chc_I if not self.average else np.mean(Chc_I)
+            Chc_Q_av = Chc_Q if not self.average else np.mean(Chc_Q)
+            self.write_in_database('Chc_I', Chc_I_av)
+            self.write_in_database('Chc_Q', Chc_Q_av)
+
     def _post_setattr_ch1_enabled(self, old, new):
         """Update the database entries based on the enabled channels.
 
         """
-        entries = {'Ch1_I': 1.0, 'Ch1_Q': 1.0}
+        #TODO: how do we add the corrected I, Q Chc_I and Chc_Q to the database
+        #      correctly?
+        entries = {'Ch1_I': 1.0, 'Ch1_Q': 1.0, 'Chc_I': 1.0, 'Chc_Q': 1.0}
         if self.ch1_trace:
             entries['Ch1_trace'] = np.array([0, 1])
         self._update_entries(new, entries)

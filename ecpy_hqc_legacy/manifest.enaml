@@ -372,8 +372,11 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'pna_tasks:PNAGetTraces'
                     view = 'views.pna_task_views:PNAGetTraceView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA',
-                                   'ecpy_hqc_legacy.Legacy.ZNB20']
+                    instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA']
+                Task:
+                    task = 'pna_tasks:ZNBGetTraces'
+                    view = 'views.pna_task_views:ZNBGetTraceView'
+                    instruments = ['ecpy_hqc_legacy.Legacy.ZNB20']
                 Task:
                     task = 'set_dc_voltage_task:SetDCVoltageTask'
                     view = 'views.set_dc_voltage_view:SetDcVoltageView'

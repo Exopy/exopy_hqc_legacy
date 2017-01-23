@@ -120,7 +120,7 @@ class RohdeSchwarzSMB100A(VisaInstrument):
     def output(self):
         """Output getter method
         """
-        output = self.ask_for_values(':OUTPUT?')
+        output = self.ask_for_values(':OUTP?')
         if output is not None:
             return bool(output[0])
         else:

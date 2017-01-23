@@ -463,7 +463,6 @@ class PNAGetTraces(InstrumentTask):
         on channel and tracenb.
 
         """
-
         channel_driver = self.driver.get_channel(channelnb)
 
         try:
@@ -500,4 +499,37 @@ class PNAGetTraces(InstrumentTask):
                                                   names=[str('a'), str('b')])
 
         self.write_in_database('sweep_data', sweep_data)
+        return test, traceback
+
+
+class ZNBGetTraces(SingleChannelPNATask):
+    """ Get the traces that are displayed right now (no new acquisition).
+
+    """
+
+    database_entries = set_default({'sweep_data': {}})
+
+    def perform(self):
+        tr_data = {}
+        channels = self.driver.defined_channels
+        for channel in channels:
+            driverchannel = self.driver.get_channel(channel)
+            measures = driverchannel.list_existing_measures()
+            x_axis = driverchannel.sweep_x_axis
+            for measure in measures:
+                meas_name = measure['name']
+                data = driverchannel.read_formatted_data(meas_name)
+                aux = [x_axis, data]
+
+                tr_data[meas_name] = np.rec.fromarrays(aux,
+                                      names=[str('Freq (GHz)'),
+                                             str(meas_name+' data')])
+
+        self.write_in_database('sweep_data', tr_data)
+
+    def check(self, *args, **kwargs):
+        """Create meaningful database entries.
+
+        """
+        test, traceback = super(ZNBGetTraces, self).check(*args, **kwargs)
         return test, traceback

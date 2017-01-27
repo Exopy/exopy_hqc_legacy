@@ -13,7 +13,6 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
 import numbers
-
 import numpy as np
 from atom.api import (Bool, Unicode, set_default)
 
@@ -102,7 +101,6 @@ class DemodSPTask(InstrumentTask):
         """
         if self.driver.owner != self.name:
             self.driver.owner = self.name
-
             self.driver.configure_board()
 
         records_number = self.format_and_eval_string(self.records_number)
@@ -110,6 +108,7 @@ class DemodSPTask(InstrumentTask):
         duration = self.format_and_eval_string(self.duration)*1e-9
 
         channels = (self.ch1_enabled, self.ch2_enabled)
+
         ch1, ch2 = self.driver.get_traces(channels, duration, delay,
                                           records_number)
 
@@ -129,7 +128,8 @@ class DemodSPTask(InstrumentTask):
             self.write_in_database('Ch1_Q', Ch1_Q_av)
 
             if self.ch1_trace:
-                self.write_in_database('Ch1_trace', ch1)
+                ch1_av = ch1 if not self.average else np.mean(ch1, axis=0)
+                self.write_in_database('Ch1_trace', ch1_av)
 
         if self.ch2_enabled:
             f2 = self.format_and_eval_string(self.freq_2)*1e6
@@ -147,7 +147,8 @@ class DemodSPTask(InstrumentTask):
             self.write_in_database('Ch2_Q', Ch2_Q_av)
 
             if self.ch2_trace:
-                self.write_in_database('Ch2_trace', ch2)
+                ch2_av = ch2 if not self.average else np.mean(ch2, axis=0)
+                self.write_in_database('Ch2_trace', ch2_av)
 
         if self.ch1_enabled and self.ch2_enabled:
             Ch1_c = Ch1_I + 1j*Ch1_Q
@@ -158,6 +159,41 @@ class DemodSPTask(InstrumentTask):
             Chc_Q_av = Chc_Q if not self.average else np.mean(Chc_Q)
             self.write_in_database('Chc_I', Chc_I_av)
             self.write_in_database('Chc_Q', Chc_Q_av)
+            if self.ch1_trace:
+                samples_per_period = int(500e6/f1)
+                samples_per_trace = len(ch1[0])
+                print('--------------------------------------')
+
+                Ch1_c1 = ch1*c1
+                Ch1_s1 = ch1*s1
+                if (samples_per_trace % samples_per_period)!=0:
+                    Ch1_c1 = Ch1_c1[:,:-(samples_per_trace % samples_per_period)]
+                    Ch1_s1 = Ch1_s1[:,:-(samples_per_trace % samples_per_period)]
+                Ch1_c1 = Ch1_c1.reshape((records_number,samples_per_trace//samples_per_period,samples_per_period))
+                Ch1_I_t = 2*np.mean(Ch1_c1, axis=2)
+                Ch1_s1 = Ch1_s1.reshape((records_number,samples_per_trace//samples_per_period,samples_per_period))
+                Ch1_Q_t = 2*np.mean(Ch1_s1, axis=2)
+
+#==============================================================================
+#                 Ch2_c2 = ch2*c2
+#                 #Ch2_c2 = np.roll(Ch2_c2, 5, axis=1)
+#                 Ch2_c2 = Ch2_c2.reshape((records_number,int(samples_per_trace/samples_per_period),samples_per_period))
+#                 Ch2_I_t = 2*np.mean(Ch2_c2, axis=2)
+#                 Ch2_s2 = ch2*s2
+#                 Ch2_s2 = Ch2_s2.reshape((records_number,int(samples_per_trace/samples_per_period),samples_per_period))
+#                 Ch2_Q_t = 2*np.mean(Ch2_s2, axis=2)
+#                 Ch2_c_t = Ch2_I_t + 1j*Ch2_Q_t
+#==============================================================================
+
+
+                Ch1_c_t = Ch1_I_t + 1j*Ch1_Q_t
+                #Ch1_c_corr = Ch1_c_t/Ch2_c_t
+                Ch1_c_corr = np.transpose(np.transpose(Ch1_c_t)/Ch2_c)
+                Ch1_c_corr_av = Ch1_c_corr if not self.average else np.mean(Ch1_c_corr, axis=0)
+                ChI_t_corr = np.real(Ch1_c_corr_av)
+                ChQ_t_corr = np.imag(Ch1_c_corr_av)
+                self.write_in_database('ChI_trace_corr', ChI_t_corr)
+                self.write_in_database('ChQ_trace_corr', ChQ_t_corr)
 
     def _post_setattr_ch1_enabled(self, old, new):
         """Update the database entries based on the enabled channels.
@@ -168,6 +204,8 @@ class DemodSPTask(InstrumentTask):
         entries = {'Ch1_I': 1.0, 'Ch1_Q': 1.0, 'Chc_I': 1.0, 'Chc_Q': 1.0}
         if self.ch1_trace:
             entries['Ch1_trace'] = np.array([0, 1])
+            entries['ChI_trace_corr'] = np.array([0, 1])
+            entries['ChQ_trace_corr'] = np.array([0, 1])
         self._update_entries(new, entries)
 
     def _post_setattr_ch2_enabled(self, old, new):
@@ -185,7 +223,9 @@ class DemodSPTask(InstrumentTask):
         """
         if new and not self.ch1_enabled:
             return
-        self._update_entries(new, {'Ch1_trace': np.array([0, 1])})
+        self._update_entries(new, {'Ch1_trace': np.array([0, 1]),
+                                   'ChI_trace_corr': np.array([0, 1]),
+                                   'ChQ_trace_corr': np.array([0, 1])})
 
     def _post_setattr_ch2_trace(self, old, new):
         """Update the database entries based on the trace settings.

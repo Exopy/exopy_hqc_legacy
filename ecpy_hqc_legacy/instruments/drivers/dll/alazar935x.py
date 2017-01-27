@@ -17,14 +17,14 @@ To read well the Dll of the Alazar9351, Visual C++ Studio is needed.
 import os
 import time
 import math
-import numpy as np
-import ctypes
+from subprocess import call
 from inspect import cleandoc
-import matplotlib.pyplot as plt
 
+import numpy as np
 from pyclibrary import CLibrary
 
 from ..dll_tools import DllInstrument
+from ..driver_tools import InstrIOError
 import atsapi as ats
 
 # TODO : getting it ot work
@@ -56,7 +56,10 @@ class Alazar935x(DllInstrument):
         """Do not need to open a connection
 
         """
-        pass
+        try:
+            call("TASKKILL /F /IM AlazarDSO.exe", shell=True)
+        except Exception:
+            pass
 
     def close_connection(self):
         """Do not need to close a connection
@@ -65,6 +68,7 @@ class Alazar935x(DllInstrument):
         pass
 
     def configure_board(self):
+
         board = self.board
         # TODO: Select clock parameters as required to generate this
         # sample rate
@@ -76,7 +80,7 @@ class Alazar935x(DllInstrument):
         # TODO: Select channel A input parameters as required.
         board.inputControl(ats.CHANNEL_A,
                            ats.AC_COUPLING,
-                           ats.INPUT_RANGE_PM_200_MV,
+                           ats.INPUT_RANGE_PM_100_MV,
                            ats.IMPEDANCE_50_OHM)
 
         # TODO: Select channel A bandwidth limit as required.
@@ -86,7 +90,7 @@ class Alazar935x(DllInstrument):
         # TODO: Select channel B input parameters as required.
         board.inputControl(ats.CHANNEL_B,
                                ats.AC_COUPLING,
-                               ats.INPUT_RANGE_PM_200_MV,
+                               ats.INPUT_RANGE_PM_40_MV,
                                ats.IMPEDANCE_50_OHM)
 
         # TODO: Select channel B bandwidth limit as required.
@@ -154,7 +158,6 @@ class Alazar935x(DllInstrument):
             postTriggerSamples = int(postTriggerSamples)
         else:
             postTriggerSamples = int((postTriggerSamples)/32 + 1)*32
-
         # determine the number of records per buffer
         memorySize_samples, bitsPerSample = board.getChannelInfo()
         memorySize_samples_per_chann = memorySize_samples.value/2
@@ -170,7 +173,6 @@ class Alazar935x(DllInstrument):
                                 # + following email exchange with Alazar engineer Romain Deterre
         recordsPerBuffer = np.min([int(math.floor(bytesPerBufferMax / (bytesPerRecord * channelCount))),recordsPerCapture])
         bytesPerBuffer = bytesPerRecord * recordsPerBuffer * channelCount
-        print("bytesPerBuffer = %s" %bytesPerBuffer)
 
 #        while total_number_samples/buffersPerAcquisition > memorySize_samples_per_chann and 1==0:
 #            buffersPerAcquisition+=1
@@ -179,10 +181,10 @@ class Alazar935x(DllInstrument):
 
         buffersPerAcquisition = int(math.ceil(float(recordsPerCapture) / recordsPerBuffer))
         records_to_ignore = buffersPerAcquisition*recordsPerBuffer - recordsPerCapture
-        print('recordsPerCapture = %s' %recordsPerCapture)
-        print('recordsPerBuffer = %s' %recordsPerBuffer)
-        print('buffersPerAcquisition = %s' %buffersPerAcquisition)
-        print('records_to_ignore = %s' %records_to_ignore)
+#        print('recordsPerCapture = %s' %recordsPerCapture)
+#        print('recordsPerBuffer = %s' %recordsPerBuffer)
+#        print('buffersPerAcquisition = %s' %buffersPerAcquisition)
+#        print('records_to_ignore = %s' %records_to_ignore)
 
 
         # Compute the number of bytes per record and per buffer
@@ -225,7 +227,6 @@ class Alazar935x(DllInstrument):
         dataA = np.empty((recordsPerCapture, samplesPerRecord))
         dataB = np.empty((recordsPerCapture, samplesPerRecord))
 
-        if verbose: fig, ax = plt.subplots()
         while buffersCompleted < buffersPerAcquisition:
 
             # Wait for the buffer at the head of the list of available
@@ -236,8 +237,8 @@ class Alazar935x(DllInstrument):
 
             # making sure we only grab the number of records we asked for
             records_to_ignore_val = 0 if buffersCompleted < buffersPerAcquisition-1  else records_to_ignore
-            print(records_to_ignore_val)
-            print(np.shape(dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val]),np.shape(data[:recordsPerBuffer-records_to_ignore_val]))
+#            print(records_to_ignore_val)
+#            print(np.shape(dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val]),np.shape(data[:recordsPerBuffer-records_to_ignore_val]))
             dataA[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val] = data[:recordsPerBuffer-records_to_ignore_val]
             dataB[buffersCompleted*recordsPerBuffer:(buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val] = data[recordsPerBuffer:2*recordsPerBuffer-records_to_ignore_val]
 
@@ -250,7 +251,6 @@ class Alazar935x(DllInstrument):
             board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
 
         transferTime_sec = time.clock() - start
-        if verbose: print("Capture completed in %f sec" % transferTime_sec)
         buffersPerSec = 0
         bytesPerSec = 0
         recordsPerSec = 0
@@ -258,23 +258,28 @@ class Alazar935x(DllInstrument):
             buffersPerSec = buffersCompleted / transferTime_sec
             bytesPerSec = bytesTransferred / transferTime_sec
             recordsPerSec = recordsPerBuffer * buffersCompleted / transferTime_sec
-        if verbose:
-            print("Captured %d buffers (%f buffers per sec)" % (buffersCompleted, buffersPerSec))
-            print("Captured %d records (%f records per sec)" % (recordsPerBuffer * buffersCompleted, recordsPerSec))
-            print("Transferred %d bytes (%f bytes per sec)" % (bytesTransferred, bytesPerSec))
 
         # Abort transfer.
         board.abortAsyncRead()
 
-        # Re-shaping of the data for demodulation and demodulation
-        dataA = dataA[:,1:samplesPerRecord + 1]
-        dataB = dataB[:,1:samplesPerRecord + 1]
-
-                # Averaging if needed and converting binary numbers into Volts
-        if average:
-            dataA = np.mean(dataA, axis=0)
-            dataB = np.mean(dataB, axis=0)
-
+#        # Re-shaping of the data for demodulation and demodulation
+#        dataA = dataA[:,1:samplesPerRecord + 1]
+#        dataB = dataB[:,1:samplesPerRecord + 1]
+#
+#                # Averaging if needed and converting binary numbers into Volts
+#        if average:
+#            dataA = np.mean(dataA, axis=0)
+#            dataB = np.mean(dataB, axis=0)
+        maxADC = 2**16-100
+        minADC = 100
+        maxA = np.max(dataA)
+        maxB = np.max(dataB)
+        minA = np.min(dataA)
+        minB = np.min(dataB)
+        if maxA > maxADC or maxB > maxADC or minA < minADC or minB < minADC :
+            mes = '''Channel A or B are saturated: increase input range or
+            decrease amplification'''
+            raise InstrIOError(mes)
         return (dataA, dataB)
 
 DRIVERS = {'Alazar935x': Alazar935x}

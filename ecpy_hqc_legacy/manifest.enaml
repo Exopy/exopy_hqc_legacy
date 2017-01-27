@@ -297,8 +297,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'lock_in_measure_task:LockInMeasureTask'
                     view = 'views.lock_in_meas_view:LockInMeasView'
-                    instruments = ['ecpy_hqc_legacy.Legacy.SR7265LI',
-                                   'ecpy_hqc_legacy.Legacy.SR830']
+                    instruments = ['ecpy_hqc_legacy.Legacy.LockInSR7265',
+                                   'ecpy_hqc_legacy.Legacy.LockInSR830']
                 Task:
                     task = 'meas_dc_tasks:MeasDCVoltageTask'
                     view = 'views.meas_dc_views:MeasDCVoltView'

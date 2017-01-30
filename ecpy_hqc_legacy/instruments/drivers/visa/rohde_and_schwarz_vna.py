@@ -176,9 +176,6 @@ class ZNB20Channel(BaseInstrument):
 
         self.average_state = 1
         for i in range(0, int(self.average_count)):
-            # self._pna.write('sense{}:sweep:mode gro'.format(self._channel))
-            # ZL: ask Madar what this does
-
             while True:
                 try:
                     done = self._pna.ask_for_values('*OPC?')[0]
@@ -194,7 +191,6 @@ class ZNB20Channel(BaseInstrument):
                 raise InstrError(cleandoc('''ZNB20 did could  not perform
                 the average on channel {} '''.format(self._channel)))
 
-    # ZL OK
     @secure_communication()
     def list_existing_measures(self):
         """
@@ -213,13 +209,11 @@ class ZNB20Channel(BaseInstrument):
             raise InstrIOError(cleandoc('''ZNB20 did not return the
                     channel {} selected measure'''.format(self._channel)))
 
-    # ZL OK
     @secure_communication()
     def create_meas(self, meas_name):
         """
         """
         catalog_request = 'CALCulate{}:PARameter:CATalog:SENDed?'
-        # measures = self._pna.ask(catalog_request.format(self._channel))
 
         param = meas_name.split(':')[1]
 
@@ -251,12 +245,10 @@ class ZNB20Channel(BaseInstrument):
                 raise InstrIOError(cleandoc('''The Pna did not delete the meas
                 {} for channel {}'''.format(meas_name, self._channel)))
 
-    # ZL OK
     @secure_communication()
     def delete_all_meas(self):
         """
         """
-#        self._pna.write('CALCulate{}:PARameter:DELete:ALL'.format(self._channel))
         for meas in self.list_existing_measures():
             self._pna.write(
                 "CALCulate{}:PARameter:DELete {}".format(self._channel,
@@ -266,13 +258,10 @@ class ZNB20Channel(BaseInstrument):
             raise InstrIOError(cleandoc('''The Pna did not delete all meas
                 for channel {}'''.format(self._channel)))
 
-    # ZL OK
     @secure_communication()
     def format_meas(self, meas_format, meas_name=''):
         """
         """
-        # raise IOError(format(meas_format))
-        # meas_format = 'POL'
         if meas_name:
             selected_meas = self.selected_measure
             self.selected_measure = meas_name
@@ -288,7 +277,6 @@ class ZNB20Channel(BaseInstrument):
             raise InstrIOError(cleandoc('''The Pna did not format the meas
                 for channel {}'''.format(self._channel)))
 
-    # ZL OK
     @secure_communication()
     def bind_meas_to_window(self, meas_name, window_num, trace_num):
         """
@@ -296,21 +284,20 @@ class ZNB20Channel(BaseInstrument):
         if window_num not in self._pna.windows:
             self._pna.write('DISPlay:WINDow{} ON'.format(window_num))
 
-        self._pna.write("DISPlay:WINDow{}:TRACe{}:EFEed '{}'".format(window_num,
-                        1, meas_name.replace(':','_')))
+        self._pna.write("DISPlay:WINDow{}:TRACe{}:EFEed '{}'".
+                        format(window_num, 1, meas_name.replace(':', '_')))
 
-        traces = self._pna.ask('DISPlay:WINDow{}:TRACe1:CATalog?'.format(window_num))
+        traces = self._pna.ask('DISPlay:WINDow{}:TRACe1:CATalog?'.
+                               format(window_num))
         if str(meas_name.replace(':', '_')) not in traces:
             raise InstrIOError(cleandoc('''The Pna did not bind the meas {}
                 to window {}'''.format(meas_name, window_num)))
 
-    # ZL OK
     def prepare_measure(self, meas_name, window_num, trace_num=1,
                         clear_window=True):
         """
         """
         info = meas_name.split(':')
-#        raise InstrIOError(format(meas_name))
         self.create_meas(meas_name)
         if len(info) > 2:
             if info[2] == '':
@@ -325,7 +312,6 @@ class ZNB20Channel(BaseInstrument):
                 self._pna.clear_traces_from_window(window_num)
         self.bind_meas_to_window(meas_name, window_num, trace_num)
 
-    # ZL OK
     @secure_communication()
     def prepare_sweep(self, sweep_type, start, stop, sweep_points):
         """
@@ -387,8 +373,6 @@ class ZNB20Channel(BaseInstrument):
         WARNING: this command will not work if the trace selection has not been
         made by the software beforehand
         """
-        traces = self._pna.ask_for_values('CALCulate {}:PARameter:CATalog?'.format(
-                                          self._channel))
         trace_nb = self._pna.ask_for_values('CALC{}:PAR:MNUM?'.format(
             self._channel))
         if trace_nb:
@@ -409,11 +393,11 @@ class ZNB20Channel(BaseInstrument):
             if abs(result[0] - value)/value > 10**-12:
                 raise InstrIOError(cleandoc('''ZNB20 could not set the
                     trace number {} on channel {}'''.format(value,
-                    self._channel)))
+                                                            self._channel)))
         else:
             raise InstrIOError(cleandoc('''ZNB20 could not set the
                     trace number {} on channel {}'''.format(value,
-                    self._channel)))
+                                                            self._channel)))
 
     @instrument_property
     @secure_communication()
@@ -430,16 +414,18 @@ class ZNB20Channel(BaseInstrument):
                 'SENSe{}:FREQuency:STOP?'.format(self._channel))[0]*1e-9
             return np.linspace(sweep_start, sweep_stop, sweep_points)
         elif sweep_type == 'POW':
-            sweep_start = self._pna.ask_for_values('SOURce{}:POWer:STARt?' \
-                .format(self._channel))[0]
-            sweep_stop = self._pna.ask_for_values('SOURce{}:POWer:STOP?' \
-                .format(self._channel))[0]
+            sweep_start = self._pna.ask_for_values('SOURce{}:POWer:STARt?'
+                                                   .format(self._channel))[0]
+            sweep_stop = self._pna.ask_for_values('SOURce{}:POWer:STOP?'
+                                                  .format(self._channel))[0]
             return np.linspace(sweep_start, sweep_stop, sweep_points)
         elif sweep_type == 'LOG':
-            sweep_start = self._pna.ask_for_values('SENSe{}:FREQuency:STARt?' \
-                .format(self._channel))[0]*1e-9
-            sweep_stop = self._pna.ask_for_values('SENSe{}:FREQuency:STOP?' \
-                .format(self._channel))[0]*1e-9
+            sweep_start = self._pna.ask_for_values(
+                            'SENSe{}:FREQuency:STARt?'
+                            .format(self._channel))[0]*1e-9
+            sweep_stop = self._pna.ask_for_values(
+                            'SENSe{}:FREQuency:STOP?'
+                            .format(self._channel))[0]*1e-9
             return np.logspace(sweep_start, sweep_stop, sweep_points)
         else:
             raise InstrIOError(cleandoc('''Sweep type of ZNB20 not yet
@@ -501,13 +487,11 @@ class ZNB20Channel(BaseInstrument):
     def selected_measure(self, value):
         """
         """
-        value = value.replace(':','_')
-        mess0 = "CALC{}:PARameter:SELect '{}'".format(self._channel,value)
+        value = value.replace(':', '_')
+        mess0 = "CALC{}:PARameter:SELect '{}'".format(self._channel, value)
         self._pna.write(mess0)
         mess = 'CALC{}:PARameter:SELect?'.format(self._channel)
-#        raise InstrIOError(mess+mess0)
         result = self._pna.ask(mess)
-#        raise InstrIOError(result)
         if result:
             if result[1:-1] != value:
                 raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
@@ -779,21 +763,24 @@ class ZNB20(VisaInstrument):
             self.channels[num] = channel
             return channel
 
-    # ZL OK
     @secure_communication()
     def clear_traces_from_window(self, window_num):
         """
         """
-        traces_list = self.ask('DISPlay:WINDow{}:TRACe:CATalog?'.format(window_num))[1:-1].split(',') # 'DISPlay:WINDow{}:CATalog?'.format(window_num)  ZL
-        traces = [int(traces_list[2*ii]) for ii in range(int(len(traces_list)/2))]
-        if len(traces)>0:
+        traces_list = self.ask('DISPlay:WINDow{}:TRACe:CATalog?'.
+                               format(window_num))[1:-1].split(',')
+        traces = [int(traces_list[2*ii])
+                  for ii in range(int(len(traces_list)/2))]
+        if len(traces) > 0:
             for trace in traces:
                 mess = 'DISPlay:WINDow{}:TRACe{}:DELete'.format(window_num,
                                                                 int(trace))
                 self.write(mess)
-            traces_list = self.ask('DISPlay:WINDow{}:TRACe:CATalog?'.format(window_num))[1:-1].split(',')
-            traces = [int(traces_list[2*ii]) for ii in range(int(len(traces_list)/2))]
-            if len(traces)>0:
+            traces_list = self.ask('DISPlay:WINDow{}:TRACe:CATalog?'.
+                                   format(window_num))[1:-1].split(',')
+            traces = [int(traces_list[2*ii])
+                      for ii in range(int(len(traces_list)/2))]
+            if len(traces) > 0:
                 raise InstrIOError(cleandoc('''ZNB20 did not clear all
                     traces from window {}'''.format(window_num)))
 
@@ -808,7 +795,6 @@ class ZNB20(VisaInstrument):
             self.write('INITiate{}:IMMediate'.format(channel))
         self.write('*OPC')
 
-    # ZL OK
     @secure_communication()
     def check_operation_completion(self):
         """
@@ -817,13 +803,12 @@ class ZNB20(VisaInstrument):
         status_byte = ('{0:08b}'.format(int(bites)))[::-1]
         return bool(int(status_byte[0]))
 
-    # ZL OK
     @secure_communication()
     def set_all_chanel_to_hold(self):
         """
         """
         for channel in self.defined_channels:
-            self.write('INITiate{}:CONTinuous OFF'.format(channel)) # ZL
+            self.write('INITiate{}:CONTinuous OFF'.format(channel))
 
         for channel in self.defined_channels:
             result = self.ask('SENSe{}:SWEep:MODE?'.format(channel))
@@ -831,9 +816,9 @@ class ZNB20(VisaInstrument):
             if result != 'HOLD':
                 raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                     channel {} sweep mode while setting all defined channels
-                    to HOLD, instead channel mode is {}'''.format(channel, result)))
+                    to HOLD, instead channel mode is {}'''.
+                                   format(channel, result)))
 
-    # ZL OK
     @secure_communication()
     def clear_averaging(self):
         """Clear and restart averaging of the measurement data.
@@ -841,20 +826,21 @@ class ZNB20(VisaInstrument):
         """
         self.write('SENS:AVER:CLE')
 
-    # ZL OK
     @instrument_property
     @secure_communication()
     def defined_channels(self):
         """
         """
-        channels = self.ask('CONFigure:CHANnel:CATalog?') # ZL
+        channels = self.ask('CONFigure:CHANnel:CATalog?')
         if channels:
             channels_number_list = channels[1:-2].split(',')
-            defined_channels = [int(channels_number_list[2*ii]) for ii in range(int(len(channels_number_list)/2))]
+            n_channels = int(len(channels_number_list)/2)
+            defined_channels = [int(channels_number_list[2*ii])
+                                for ii in range(n_channels)]
             return defined_channels
         else:
             raise InstrIOError(cleandoc('''ZNB20 did not return the
-                    defined channels''')) # ZL
+                    defined channels'''))
 
     @instrument_property
     @secure_communication()
@@ -865,16 +851,16 @@ class ZNB20(VisaInstrument):
         tracelist = tracelist[:, 1]
         return tracelist
 
-    # ZL OK
     @instrument_property
     @secure_communication()
     def windows(self):
         """
         """
-        windows = self.ask('DISPlay:CATalog?') # ZL
+        windows = self.ask('DISPlay:CATalog?')
         if windows:
             windows_number_list = windows[1:-2].split(',')
-            aux = [int(windows_number_list[2*ii]) for ii in range(int(len(windows_number_list)/2))] # ZL
+            aux = [int(windows_number_list[2*ii])
+                   for ii in range(int(len(windows_number_list)/2))]
             return aux
         else:
             raise InstrIOError(cleandoc('''ZNB20 did not return the
@@ -887,7 +873,7 @@ class ZNB20(VisaInstrument):
         """
         """
         channel = self.defined_channels[0]
-        scope = self.ask('INITiate'+format(channel)+':SCOPe?') #
+        scope = self.ask('INITiate'+format(channel)+':SCOPe?')
         if scope:
             if scope == 'SINGle' or scope == 'SING':
                 scope = 'CURRent'
@@ -901,7 +887,8 @@ class ZNB20(VisaInstrument):
     def trigger_scope(self, value):
         """
         """
-        if value == 'CURRent' or value == 'CURR': # translating the PNA to ZNB instruction
+        # translating the PNA to ZNB instruction
+        if value == 'CURRent' or value == 'CURR':
             value = 'SINGle'
         channel = self.defined_channels[0]
         self.write('INITiate'+format(channel)+':SCOPe {}'.format(value))
@@ -928,7 +915,9 @@ class ZNB20(VisaInstrument):
     def trigger_source(self, value):
         """
         """
-        value = 'IMM' # ZL I am forcing this to 'IMM' so that INITiate will start the measurement
+        # ZL I am forcing this to 'IMM' so that
+        # INITiate will start the measurement
+        value = 'IMM'
         self.write('TRIGger:SEQuence:SOURce {}'.format(value))
         result = self.ask('TRIGger:SEQuence:SOURce?')
 
@@ -948,7 +937,6 @@ class ZNB20(VisaInstrument):
             raise InstrIOError(cleandoc('''ZNB20 did not return the
                     data format'''))
 
-    # ZL OK
     @data_format.setter
     @secure_communication()
     def data_format(self, value):

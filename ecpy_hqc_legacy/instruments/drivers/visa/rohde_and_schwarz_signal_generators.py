@@ -58,8 +58,9 @@ class RohdeSchwarzSMB100A(VisaInstrument):
     def __init__(self, connection_info, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
 
-        super(RohdeSchwarzSMB100A, self).__init__(connection_info, caching_allowed,
-                                      caching_permissions, auto_open)
+        super(RohdeSchwarzSMB100A, self).__init__(connection_info,
+                                                  caching_allowed,
+                                                caching_permissions, auto_open)
         self.frequency_unit = 'GHz'
         self.write_termination = '\n'
         self.read_termination = '\n'

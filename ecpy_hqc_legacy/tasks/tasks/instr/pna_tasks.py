@@ -522,8 +522,8 @@ class ZNBGetTraces(SingleChannelPNATask):
                 aux = [x_axis, data]
 
                 tr_data[meas_name] = np.rec.fromarrays(aux,
-                                      names=[str('Freq (GHz)'),
-                                             str(meas_name+' data')])
+                                        names=[str('Freq (GHz)'),
+                                               str(meas_name+' data')])
 
         self.write_in_database('sweep_data', tr_data)
 

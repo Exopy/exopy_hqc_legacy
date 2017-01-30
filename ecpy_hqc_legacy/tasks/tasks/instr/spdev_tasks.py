@@ -162,34 +162,28 @@ class DemodSPTask(InstrumentTask):
             if self.ch1_trace:
                 samples_per_period = int(500e6/f1)
                 samples_per_trace = len(ch1[0])
-                print('--------------------------------------')
-
                 Ch1_c1 = ch1*c1
                 Ch1_s1 = ch1*s1
-                if (samples_per_trace % samples_per_period)!=0:
-                    Ch1_c1 = Ch1_c1[:,:-(samples_per_trace % samples_per_period)]
-                    Ch1_s1 = Ch1_s1[:,:-(samples_per_trace % samples_per_period)]
-                Ch1_c1 = Ch1_c1.reshape((records_number,samples_per_trace//samples_per_period,samples_per_period))
+                if (samples_per_trace % samples_per_period) != 0:
+                    Ch1_c1 = Ch1_c1[:,
+                                    :-(samples_per_trace % samples_per_period)]
+                    Ch1_s1 = Ch1_s1[:,
+                                    :-(samples_per_trace % samples_per_period)]
+                Ch1_c1 = Ch1_c1.reshape((records_number,
+                                         samples_per_trace//samples_per_period,
+                                         samples_per_period))
                 Ch1_I_t = 2*np.mean(Ch1_c1, axis=2)
-                Ch1_s1 = Ch1_s1.reshape((records_number,samples_per_trace//samples_per_period,samples_per_period))
+                Ch1_s1 = Ch1_s1.reshape((records_number,
+                                         samples_per_trace//samples_per_period,
+                                         samples_per_period))
                 Ch1_Q_t = 2*np.mean(Ch1_s1, axis=2)
 
-#==============================================================================
-#                 Ch2_c2 = ch2*c2
-#                 #Ch2_c2 = np.roll(Ch2_c2, 5, axis=1)
-#                 Ch2_c2 = Ch2_c2.reshape((records_number,int(samples_per_trace/samples_per_period),samples_per_period))
-#                 Ch2_I_t = 2*np.mean(Ch2_c2, axis=2)
-#                 Ch2_s2 = ch2*s2
-#                 Ch2_s2 = Ch2_s2.reshape((records_number,int(samples_per_trace/samples_per_period),samples_per_period))
-#                 Ch2_Q_t = 2*np.mean(Ch2_s2, axis=2)
-#                 Ch2_c_t = Ch2_I_t + 1j*Ch2_Q_t
-#==============================================================================
-
-
                 Ch1_c_t = Ch1_I_t + 1j*Ch1_Q_t
-                #Ch1_c_corr = Ch1_c_t/Ch2_c_t
                 Ch1_c_corr = np.transpose(np.transpose(Ch1_c_t)/Ch2_c)
-                Ch1_c_corr_av = Ch1_c_corr if not self.average else np.mean(Ch1_c_corr, axis=0)
+                if not self.average:
+                    Ch1_c_corr_av = Ch1_c_corr
+                else:
+                    Ch1_c_corr_av = np.mean(Ch1_c_corr, axis=0)
                 ChI_t_corr = np.real(Ch1_c_corr_av)
                 ChQ_t_corr = np.imag(Ch1_c_corr_av)
                 self.write_in_database('ChI_trace_corr', ChI_t_corr)
@@ -199,8 +193,8 @@ class DemodSPTask(InstrumentTask):
         """Update the database entries based on the enabled channels.
 
         """
-        #TODO: how do we add the corrected I, Q Chc_I and Chc_Q to the database
-        #      correctly?
+        # TODO: how do we add the corrected I, Q Chc_I and Chc_Q
+        # to the database correctly?
         entries = {'Ch1_I': 1.0, 'Ch1_Q': 1.0, 'Chc_I': 1.0, 'Chc_Q': 1.0}
         if self.ch1_trace:
             entries['Ch1_trace'] = np.array([0, 1])

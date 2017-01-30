@@ -15,7 +15,6 @@ from __future__ import (division, unicode_literals, print_function,
 import re
 from textwrap import fill
 from inspect import cleandoc
-import time
 
 from visa import VisaTypeError
 

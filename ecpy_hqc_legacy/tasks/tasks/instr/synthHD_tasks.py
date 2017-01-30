@@ -37,6 +37,7 @@ class SynthHDsetChannelInterface(TaskInterface):
         """Make sure the specified channel does exists on the instrument.
 
         """
-        test, traceback = super(SynthHDsetChannelInterface, self).check(*args,
+        test, traceback = super(SynthHDsetChannelInterface, self).check(
+                                                                      *args,
                                                                       **kwargs)
         return test, traceback

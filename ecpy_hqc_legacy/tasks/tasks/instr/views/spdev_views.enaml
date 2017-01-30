@@ -32,7 +32,7 @@ enamldef DemodSpView(InstrView): view:
     constraints = [vbox(
                     grid([instr_label, traces, after, duration],
                          [instr_selection, traces_val, after_val,
-                          duration_val]),
+                          duration_val, average]),
                     hbox(demod1,demod2)),
                     demod1.width == demod2.width]
 
@@ -48,7 +48,7 @@ enamldef DemodSpView(InstrView): view:
     QtLineCompleter: after_val:
         text := task.delay
         entries_updater << task.list_accessible_database_entries
-        tool_tip = EVALUATER_TOOLTIP
+        tool_tip = 'Set to 0 when using Alazar \n ' + EVALUATER_TOOLTIP
 
     Label: duration:
         text = 'Duration (ns)'
@@ -56,6 +56,12 @@ enamldef DemodSpView(InstrView): view:
         text := task.duration
         entries_updater << task.list_accessible_database_entries
         tool_tip = EVALUATER_TOOLTIP
+
+    CheckBox: average:
+        text = 'Average'
+        checked := task.average
+        tool_tip = '''Check if you want averaged data,
+                    i.e: only one (I_avg,Q_avg) per acquisition'''
 
     GroupBox: demod1:
         title = 'Channel 1 demodulation settings'

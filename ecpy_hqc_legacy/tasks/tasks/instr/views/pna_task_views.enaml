@@ -248,3 +248,9 @@ enamldef PNAGetTraceView(InstrView): view:
         checked := task.already_measured
         tool_tip = fill("Check if you do not want to run a new measurement "
                         "before recording what is on the PNA screen.")
+
+enamldef ZNBGetTraceView(InstrView): view:
+    """View for the PNAGetTraceTask.
+
+    """
+    constraints = [factory(auto_grid_layout)]

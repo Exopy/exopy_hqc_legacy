@@ -19,7 +19,7 @@ from inspect import cleandoc
 
 import numpy as np
 from atom.api import (Unicode, Int, Bool, Enum, set_default,
-                      Value, List)
+                      Value, List, Str)
 
 from ecpy.tasks.api import InstrumentTask, TaskInterface, validators
 from ecpy.utils.atom_util import ordered_dict_to_pref, ordered_dict_from_pref
@@ -390,8 +390,8 @@ class PNASweepTask(SingleChannelPNATask):
             else:
                 data.append(self.channel_driver.read_raw_data(meas_name))
 
-        names = [self.sweep_type] + ['_'.join(measure)
-                                     for measure in self.measures]
+        names = [str(self.sweep_type)] + [str('_'.join(meas))
+                                          for meas in self.measures]
         final_arr = np.rec.fromarrays(data, names=names)
         self.write_in_database('sweep_data', final_arr)
 
@@ -412,8 +412,8 @@ class PNASweepTask(SingleChannelPNATask):
 
         data = [np.array([0.0, 1.0])] + \
             [np.array([0.0, 1.0]) for meas in self.measures]
-        names = [self.sweep_type] + ['_'.join(meas)
-                 for meas in self.measures]
+        names = [str(self.sweep_type)] + [str('_'.join(meas))
+                                          for meas in self.measures]
         final_arr = np.rec.fromarrays(data, names=names)
 
         self.write_in_database('sweep_data', final_arr)
@@ -463,7 +463,6 @@ class PNAGetTraces(InstrumentTask):
         on channel and tracenb.
 
         """
-
         channel_driver = self.driver.get_channel(channelnb)
 
         try:
@@ -480,10 +479,11 @@ class PNAGetTraces(InstrumentTask):
                np.absolute(complexdata),
                np.unwrap(np.angle(complexdata))]
 
-        return np.rec.fromarrays(aux, names=['Freq (GHz)', measname+' real',
-                                             measname+' imag',
-                                             measname+' abs',
-                                             measname+' phase'])
+        return np.rec.fromarrays(aux, names=[str('Freq (GHz)'),
+                                             str(measname+' real'),
+                                             str(measname+' imag'),
+                                             str(measname+' abs'),
+                                             str(measname+' phase')])
 
     def check(self, *args, **kwargs):
         """Create meaningful database entries.
@@ -495,7 +495,41 @@ class PNAGetTraces(InstrumentTask):
         sweep_data = {}
         for trace in traces:
             data = [np.array([0.0, 1.0]), np.array([1.0, 2.0])]
-            sweep_data[trace] = np.rec.fromarrays(data, names=['a', 'b'])
+            sweep_data[trace] = np.rec.fromarrays(data,
+                                                  names=[str('a'), str('b')])
 
         self.write_in_database('sweep_data', sweep_data)
+        return test, traceback
+
+
+class ZNBGetTraces(SingleChannelPNATask):
+    """ Get the traces that are displayed right now (no new acquisition).
+
+    """
+
+    database_entries = set_default({'sweep_data': {}})
+
+    def perform(self):
+        tr_data = {}
+        channels = self.driver.defined_channels
+        for channel in channels:
+            driverchannel = self.driver.get_channel(channel)
+            measures = driverchannel.list_existing_measures()
+            x_axis = driverchannel.sweep_x_axis
+            for measure in measures:
+                meas_name = measure['name']
+                data = driverchannel.read_formatted_data(meas_name)
+                aux = [x_axis, data]
+
+                tr_data[meas_name] = np.rec.fromarrays(aux,
+                                        names=[str('Freq (GHz)'),
+                                               str(meas_name+' data')])
+
+        self.write_in_database('sweep_data', tr_data)
+
+    def check(self, *args, **kwargs):
+        """Create meaningful database entries.
+
+        """
+        test, traceback = super(ZNBGetTraces, self).check(*args, **kwargs)
         return test, traceback

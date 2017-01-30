@@ -14,26 +14,16 @@ This module defines drivers for Alazar using DLL Library.
 To read well the Dll of the Alazar9351, Visual C++ Studio is needed.
 
 """
-import os
 import time
 import math
 from subprocess import call
-from inspect import cleandoc
 
 import numpy as np
-from pyclibrary import CLibrary
 
 from ..dll_tools import DllInstrument
 from ..driver_tools import InstrIOError
 import atsapi as ats
 
-# TODO : getting it ot work
-# - properly get the headers directory and dll directory see sp_adq14 _setup_librar, we have three headers not just one
-# -
-
-# TODO : cleanup
-# - remove DMABuffer use numpy array instead
-# - clean long lines
 
 class Alazar935x(DllInstrument):
 
@@ -45,12 +35,8 @@ class Alazar935x(DllInstrument):
         super(Alazar935x, self).__init__(connection_infos, caching_allowed,
                                          caching_permissions, auto_open)
 
-        cache_path = unicode(os.path.join(os.path.dirname(__file__),
-                                          'Alazar.pycctypes.libc'))
-        headers = [os.path.join(connection_infos.get('header_dir', ''), h)
-                   for h in ['AlazarError.h', 'AlazarCmd.h', 'AlazarApi.h']]
-
-        self.board = ats.Board()
+        if auto_open:
+            self.open_connection()
 
     def open_connection(self):
         """Do not need to open a connection
@@ -60,6 +46,7 @@ class Alazar935x(DllInstrument):
             call("TASKKILL /F /IM AlazarDSO.exe", shell=True)
         except Exception:
             pass
+        self.board = ats.Board()
 
     def close_connection(self):
         """Do not need to close a connection
@@ -68,15 +55,14 @@ class Alazar935x(DllInstrument):
         pass
 
     def configure_board(self):
-
+        """
+        """
         board = self.board
-        # TODO: Select clock parameters as required to generate this
-        # sample rate
         self.samplesPerSec = 500000000
-        board.setCaptureClock(    ats.EXTERNAL_CLOCK_10MHz_REF, # ZL: changed from EXTERNAL_CLOCK_10MHz_REF
-                                  500e6, # ZL: changed from 500000000
-                                  ats.CLOCK_EDGE_RISING,
-                                  1)
+        board.setCaptureClock(ats.EXTERNAL_CLOCK_10MHz_REF,
+                              500e6, #
+                              ats.CLOCK_EDGE_RISING,
+                              1)
         # TODO: Select channel A input parameters as required.
         board.inputControl(ats.CHANNEL_A,
                            ats.AC_COUPLING,
@@ -109,8 +95,7 @@ class Alazar935x(DllInstrument):
                                   ats.TRIGGER_SLOPE_POSITIVE,
                                   128)
         # TODO: Select external trigger parameters as required.
-        board.setExternalTrigger(ats.DC_COUPLING,
-                                     ats.ETR_5V)
+        board.setExternalTrigger(ats.DC_COUPLING, ats.ETR_5V)
 
         # TODO: Set trigger delay as required.
         triggerDelay_sec = 0.
@@ -281,5 +266,3 @@ class Alazar935x(DllInstrument):
             decrease amplification'''
             raise InstrIOError(mes)
         return (dataA, dataB)
-
-DRIVERS = {'Alazar935x': Alazar935x}

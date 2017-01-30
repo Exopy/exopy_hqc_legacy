@@ -19,10 +19,9 @@ from inspect import cleandoc
 
 import numpy as np
 from atom.api import (Unicode, Int, Bool, Enum, set_default,
-                      Value, List, Str)
+                      Value, List)
 
 from ecpy.tasks.api import InstrumentTask, TaskInterface, validators
-from ecpy.utils.atom_util import ordered_dict_to_pref, ordered_dict_from_pref
 
 
 def check_channels_presence(task, channels, *args, **kwargs):
@@ -521,9 +520,8 @@ class ZNBGetTraces(SingleChannelPNATask):
                 data = driverchannel.read_formatted_data(meas_name)
                 aux = [x_axis, data]
 
-                tr_data[meas_name] = np.rec.fromarrays(aux,
-                                        names=[str('Freq (GHz)'),
-                                               str(meas_name+' data')])
+                names = [str('Freq (GHz)'), str(meas_name+' data')]
+                tr_data[meas_name] = np.rec.fromarrays(aux, names=names)
 
         self.write_in_database('sweep_data', tr_data)
 
@@ -532,4 +530,23 @@ class ZNBGetTraces(SingleChannelPNATask):
 
         """
         test, traceback = super(ZNBGetTraces, self).check(*args, **kwargs)
+        tr_data = {}
+        if kwargs.get('test_instr'):
+            with self.test_driver() as instr:
+                if instr is None:
+                    return True, traceback
+                channels = instr.defined_channels
+                for channel in channels:
+                    driverchannel = self.driver.get_channel(channel)
+                    measures = driverchannel.list_existing_measures()
+                    for measure in measures:
+                        meas_name = measure['name']
+
+                        names = [str('Freq (GHz)'), str(meas_name+' data')]
+                        fake_data = [np.array([5, 6]), np.array([0, 1])]
+                        tr_data[meas_name] = np.rec.fromarrays(fake_data,
+                                                               names=names)
+
+        self.write_in_database('sweep_data', tr_data)
+
         return test, traceback

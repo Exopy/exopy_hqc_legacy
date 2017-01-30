@@ -45,22 +45,8 @@ class BaseSetAWGParametersView(BaseInstrumentView):
 
 enamldef SetAWGParametersView(BaseSetAWGParametersView): view:
 
-    title << task.task_name
-    constraints << [vbox(hbox(driver_lab, driver_val,
-                              profile_lab, profile_val, spacer),
+    constraints << [vbox(hbox(instr_label, instr_selection, spacer),
                          *inc.objects)]
-
-    Label:  driver_lab:
-        text = 'Driver'
-    ObjectCombo: driver_val:
-        items << sorted(drivers)
-        selected := task.selected_driver
-
-    Label:  profile_lab:
-        text = 'Instr'
-    ObjectCombo: profile_val:
-        items << sorted(profiles)
-        selected := task.selected_profile
 
     Include: inc:
         objects << list(i_views)

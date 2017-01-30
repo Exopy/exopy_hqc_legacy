@@ -418,7 +418,7 @@ class AWG(VisaInstrument):
 
         """
         super(AWG, self).reopen_connection()
-        self.write('*CLS') # As this does not seem to work poll the output
+        self.write('*CLS')  # As this does not seem to work poll the output
         while True:
             try:
                 self.read()
@@ -450,7 +450,6 @@ class AWG(VisaInstrument):
                                                                    looplength))
 
         header = "WLIS:WAV:DATA '{}',0,{},".format(name, looplength)
-        #
         self._driver.write_binary_values(header, waveform, datatype='B')
         self.write('*WAI')
 
@@ -551,6 +550,7 @@ class AWG(VisaInstrument):
         if abs(result - value) > 10**-12:
             raise InstrIOError(cleandoc('''Instrument did not set correctly
                                         the sampling frequency'''))
+
     @instrument_property
     @secure_communication()
     def running(self):

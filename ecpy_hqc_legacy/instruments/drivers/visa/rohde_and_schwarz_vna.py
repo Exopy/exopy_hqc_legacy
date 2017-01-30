@@ -36,13 +36,15 @@ FORMATTING_DICT = {'PHAS': lambda x: np.angle(x, deg=True),
 
 
 class ZNB20ChannelError(Exception):
-    """
+    """ZNB20 channel related error.
+
     """
     pass
 
 
 class ZNB20Channel(BaseInstrument):
-    """
+    """Object representing a channel on the ZNB20.
+
     """
     caching_permissions = {'frequency': True,
                            'power': True,

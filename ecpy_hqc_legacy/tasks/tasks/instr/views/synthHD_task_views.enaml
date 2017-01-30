@@ -6,15 +6,13 @@
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Views for the PNA tasks.
+"""Views for the WindfreakTech SynthHD RF source interfaces.
 
 """
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
-import re
-from textwrap import fill
-from enaml.widgets.api import (Label)
+from enaml.widgets.api import Label
 from enaml.stdlib.fields import IntField
 
 enamldef ISynthHDChannelLabel(Label):

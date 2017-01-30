@@ -60,7 +60,8 @@ class RohdeSchwarzSMB100A(VisaInstrument):
 
         super(RohdeSchwarzSMB100A, self).__init__(connection_info,
                                                   caching_allowed,
-                                                caching_permissions, auto_open)
+                                                  caching_permissions,
+                                                  auto_open)
         self.frequency_unit = 'GHz'
         self.write_termination = '\n'
         self.read_termination = '\n'
@@ -68,7 +69,8 @@ class RohdeSchwarzSMB100A(VisaInstrument):
     @instrument_property
     @secure_communication()
     def frequency(self):
-        """Frequency getter method
+        """Frequency of the output signal.
+
         """
         freq = self.ask_for_values('FREQ?')
         if freq:
@@ -79,26 +81,28 @@ class RohdeSchwarzSMB100A(VisaInstrument):
     @frequency.setter
     @secure_communication()
     def frequency(self, value):
-        """Frequency setter method
+        """Frequency setter method.
+
         """
         unit = self.frequency_unit
         self.write('FREQ {}{}'.format(value, unit))
         result = self.ask_for_values('FREQ?')
         if result:
             if unit == 'GHz':
-                result[0] /= 10**9
+                result[0] /= 1e9
             elif unit == 'MHz':
-                result[0] /= 10**6
+                result[0] /= 1e6
             elif unit == 'KHz':
-                result[0] /= 10**3
-            if abs(result[0] - value) > 10**-12:
-                mes = 'Instrument did not set correctly the frequency'
+                result[0] /= 1e3
+            if abs(result[0] - value) > 1e-12:
+                mes = 'Instrument did not set correctly the frequency.'
                 raise InstrIOError(mes)
 
     @instrument_property
     @secure_communication()
     def power(self):
-        """Power getter method
+        """Power of the output signal.
+
         """
         power = self.ask_for_values('POWER?')[0]
         if power is not None:
@@ -109,17 +113,19 @@ class RohdeSchwarzSMB100A(VisaInstrument):
     @power.setter
     @secure_communication()
     def power(self, value):
-        """Power setter method
+        """Power setter method.
+
         """
         self.write('POWER {}'.format(value))
         result = self.ask_for_values('POWER?')[0]
-        if abs(result - value) > 10**-12:
+        if abs(result - value) > 1e-12:
             raise InstrIOError('Instrument did not set correctly the power')
 
     @instrument_property
     @secure_communication()
     def output(self):
-        """Output getter method
+        """Output state of the source.
+
         """
         output = self.ask_for_values(':OUTP?')
         if output is not None:
@@ -131,7 +137,8 @@ class RohdeSchwarzSMB100A(VisaInstrument):
     @output.setter
     @secure_communication()
     def output(self, value):
-        """Output setter method
+        """Output setter method.
+
         """
         on = re.compile('on', re.IGNORECASE)
         off = re.compile('off', re.IGNORECASE)

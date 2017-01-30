@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# This file comes AlazarTech SDK and was edited by EcpyHqcLegacy Authors
+# see AUTHORS for more details.
+#
+# -----------------------------------------------------------------------------
 '''Python interface to the AlazarTech SDK.
 
 This module provides a thin wrapper on top of the AlazarTech C
@@ -14,6 +20,10 @@ Attributes:
   DMABuffer: Holds a memory buffer suitable for data transfer with
   digitizers.
 '''
+
+# EcpyHqcLegacy modifications:
+# - use numpy for memory allocation in DMABuffer
+# - remove tk WaitBar
 
 from ctypes import *
 import numpy as np
@@ -344,53 +354,8 @@ TIMESTAMP_RESET_ALWAYS = 1
 POWER_OFF = 0
 POWER_ON = 1
 
-class WaitBar:
-    '''Simple class that provides similar functionnality to MATLAB's waitbar.'''
-    class WaitBarFrame(tk.Frame):
-        '''A Tk Frame that shows a progress bar and a cancel button.'''
-        def __init__(self, master=None):
-            self.userCancelled = False
-            self.progress = 0
-            self.displayedProgress = 0
-            tk.Frame.__init__(self, master)
-            self.grid()
-            self.createWidgets()
-            self.after(15, self.updateGUI)
 
-        def updateGUI(self):
-            while self.displayedProgress < self.progress:
-                self.displayedProgress += 1
-                self.progressBar.step()
-            self.after(15, self.updateGUI)
-
-        def cancelAcquisition(self):
-            print("Cancelling acquisition. Please wait.")
-            self.userCancelled = True
-            self.quit()
-
-        def createWidgets(self):
-            self.progressBar = ttk.Progressbar(self, length=200)
-            self.progressBar.grid(padx=10, pady=10)
-            self.cancelButton = tk.Button(self,
-                                          text='Cancel',
-                                          command=self.cancelAcquisition)
-            self.cancelButton.grid(padx=10, pady=10)
-
-    def __init__(self):
-        thread.start_new_thread(self.createAndRunFrame, ())
-
-    def createAndRunFrame(self):
-        self.frame = WaitBar.WaitBarFrame()
-        self.frame.master.title('Alazar Acquisition')
-        self.frame.mainloop()
-
-    def hasUserCancelled(self):
-        return self.frame.userCancelled
-
-    def setProgress(self, progress):
-        self.frame.progress = int(progress * 100)
-
-class DMABuffer:
+class DMABuffer(object):
     '''Buffer suitable for DMA transfers.
 
     AlazarTech digitizers use direct memory access (DMA) to transfer
@@ -412,43 +377,12 @@ class DMABuffer:
     def __init__(self, bytes_per_sample, size_bytes):
         self.size_bytes = size_bytes
 
-        cSampleType = c_uint8
         npSampleType = np.uint8
         if bytes_per_sample > 1:
-            cSampleType = c_uint16
             npSampleType = np.uint16
 
-        self.addr = None
-        if os.name == 'nt':
-            MEM_COMMIT = 0x1000
-            PAGE_READWRITE = 0x4
-            windll.kernel32.VirtualAlloc.argtypes = [c_void_p, c_long, c_long, c_long]
-            windll.kernel32.VirtualAlloc.restype = c_void_p
-            self.addr = windll.kernel32.VirtualAlloc(
-                0, c_long(size_bytes), MEM_COMMIT, PAGE_READWRITE)
-        elif os.name == 'posix':
-            libc.valloc.argtypes = [c_long]
-            libc.valloc.restype = c_void_p
-            self.addr = libc.valloc(size_bytes)
-            print("Allocated data : " + str(self.addr))
-        else:
-            raise Exception("Unsupported OS")
-
-
-        ctypes_array = (cSampleType * (size_bytes // bytes_per_sample)).from_address(self.addr)
-        self.buffer = np.frombuffer(ctypes_array, dtype=npSampleType)
-        pointer, read_only_flag = self.buffer.__array_interface__['data']
-
-    def __exit__(self):
-        if os.name == 'nt':
-            MEM_RELEASE = 0x8000
-            windll.kernel32.VirtualFree.argtypes = [c_void_p, c_long, c_long]
-            windll.kernel32.VirtualFree.restype = c_int
-            windll.kernel32.VirtualFree(c_void_p(self.addr), 0, MEM_RELEASE);
-        elif os.name == 'posix':
-            libc.free(self.addr)
-        else:
-            raise Exception("Unsupported OS")
+        self.buffer = np.empty(size_bytes, npSampleType)
+        self.addr = self.buffer.ctypes.data_as(c_void_p)
 
 
 # Load libraries

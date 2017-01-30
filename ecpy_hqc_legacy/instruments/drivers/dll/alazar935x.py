@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
-# =============================================================================
-# module : alazar935x.py
-# author : Benjamin Huard & Nathanael Cottet & Sébastien Jezouin
-# license : MIT license
-# =============================================================================
-"""
-
-This module defines drivers for Alazar using DLL Library.
+# -----------------------------------------------------------------------------
+# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+#
+# Distributed under the terms of the BSD license.
+#
+# The full license is in the file LICENCE, distributed with this software.
+# -----------------------------------------------------------------------------
+"""This module defines drivers for Alazar using DLL Library.
 
 :Contains:
     Alazar935x
 
-To read well the Dll of the Alazar9351, Visual C++ Studio is needed.
+Visual C++ runtime needs to be installed to be able to load the dll.
 
 """
+from __future__ import (division, unicode_literals, print_function,
+                        absolute_import)
+
+import sys
 import math
 from subprocess import call
 
@@ -21,10 +25,13 @@ import numpy as np
 
 from ..dll_tools import DllInstrument
 from ..driver_tools import InstrIOError
-import atsapi as ats
+from . import atsapi as ats
 
 
 class Alazar935x(DllInstrument):
+    """Driver for Alazar cards of the 935x series.
+
+    """
 
     library = 'ATSApi.dll'
 
@@ -38,11 +45,12 @@ class Alazar935x(DllInstrument):
             self.open_connection()
 
     def open_connection(self):
-        """Do not need to open a connection
+        """Close Alazar app and create the underlying driver.
 
         """
         try:
-            call("TASKKILL /F /IM AlazarDSO.exe", shell=True)
+            if sys.platform == 'win32':
+                call("TASKKILL /F /IM AlazarDSO.exe", shell=True)
         except Exception:
             pass
         self.board = ats.Board()
@@ -54,12 +62,13 @@ class Alazar935x(DllInstrument):
         pass
 
     def configure_board(self):
-        """
+        """Set standard parameters.
+
         """
         board = self.board
-        self.samplesPerSec = 500000000
+        self.samples_per_sec = 500000000
         board.setCaptureClock(ats.EXTERNAL_CLOCK_10MHz_REF,
-                              self.samplesPerSec,
+                              self.samples_per_sec,
                               ats.CLOCK_EDGE_RISING,
                               1)
 
@@ -90,7 +99,8 @@ class Alazar935x(DllInstrument):
         board.setExternalTrigger(ats.DC_COUPLING, ats.ETR_5V)
 
         triggerDelay_sec = 0.
-        triggerDelay_samples = int(triggerDelay_sec * self.samplesPerSec + 0.5)
+        triggerDelay_samples = int(triggerDelay_sec * self.samples_per_sec +
+                                   0.5)
         board.setTriggerDelay(triggerDelay_samples)
 
         board.setTriggerTimeOut(0)
@@ -99,67 +109,93 @@ class Alazar935x(DllInstrument):
                              0)
 
     def get_traces(self, channels, duration, delay, records_per_capture,
-                   retry=True, average=0):
+                   retry=True, average=False):
+        """Acquire traces and average if asked to.
 
+        Parameters
+        ----------
+        channels : tuple
+            Tuple of boolean indicating which channels are active.
+
+        duration : float
+            Time during which to acquire the data (in seconds)
+
+        delay : float
+            Time to wait after a trigger before starting next measure
+            (in seconds).
+
+        records_per_capture : int
+            Number of records to acquire (per channel)
+
+        retry : bool, optional
+            Should acquisition be tried again if first attempt fails.
+
+        average : bool, optional
+            Should traces be averaged.
+
+        Returns
+        -------
+        data : list
+            List containing the acquired data per channel, average or not based
+            on the average parameter.
+
+        """
         board = self.board
-        timeaftertrig = duration
-        recordsPerCapture = records_per_capture
 
-        # both channels are always acquired
-        channels = ats.CHANNEL_A | ats.CHANNEL_B
-        channelCount = 0
+        # Acquired only specified channels
+        channels = (ats.CHANNEL_A if channels[0] else 0 |
+                    ats.CHANNEL_B if channels[1] else 0)
+        channel_count = 0
         for c in ats.channels:
-            channelCount += (c & channels == c)
+            channel_count += (c & channels == c)
 
-        postTriggerSamples = int(self.samplesPerSec*timeaftertrig)
-        if postTriggerSamples % 32 == 0:
-            postTriggerSamples = int(postTriggerSamples)
+        post_trigger_samples = int(self.samples_per_sec*duration)
+        if post_trigger_samples % 32 == 0:
+            post_trigger_samples = int(post_trigger_samples)
         else:
-            postTriggerSamples = int((postTriggerSamples)/32 + 1)*32
-        # determine the number of records per buffer
-        memorySize_samples, bitsPerSample = board.getChannelInfo()
+            post_trigger_samples = int((post_trigger_samples)/32 + 1)*32
+        # Determine the number of records per buffer
+        memory_size_samples, bits_per_sample = board.getChannelInfo()
 
         # No pre-trigger samples in NPT mode
-        preTriggerSamples = 0
-        bytesPerSample = (bitsPerSample.value + 7) // 8
-        samplesPerRecord = preTriggerSamples + postTriggerSamples
-        bytesPerRecord = bytesPerSample * samplesPerRecord
+        pre_trigger_samples = 0
+        bytes_per_sample = (bits_per_sample.value + 7) // 8
+        samples_per_record = pre_trigger_samples + post_trigger_samples
+        bytes_per_record = bytes_per_sample * samples_per_record
 
         # See remark page 93 in ATS-SDK-Guide 7.1.4
         # + following email exchange with Alazar
         # engineer Romain Deterre
-        bytesPerBufferMax = 1e6
-        rPB = int(math.floor(bytesPerBufferMax /
-                  (bytesPerRecord * channelCount)))
-        recordsPerBuffer = np.min([rPB, recordsPerCapture])
-        bytesPerBuffer = bytesPerRecord * recordsPerBuffer * channelCount
+        bytes_per_buffer_max = 1e6
+        rPB = int(bytes_per_buffer_max // (bytes_per_record * channel_count))
+        records_per_buffer = np.min([rPB, records_per_capture])
+        bytes_per_buffer = bytes_per_record*records_per_buffer*channel_count
 
-        buffersPerAcquisition = int(math.ceil(float(recordsPerCapture) /
-                                              recordsPerBuffer))
-        records_to_ignore = buffersPerAcquisition*recordsPerBuffer \
-            - recordsPerCapture
+        buffers_per_acquisition = int(math.ceil(records_per_capture /
+                                                records_per_buffer))
+        records_to_ignore = (buffers_per_acquisition*bytes_per_buffer -
+                             records_per_capture)
 
-        bufferCount = 4
-
+        buffer_count = 4
         # Allocate DMA buffers
         buffers = []
-        for i in range(bufferCount):
-            buffers.append(ats.DMABuffer(bytesPerSample, bytesPerBuffer))
+        for i in range(buffer_count):
+            buffers.append(ats.DMABuffer(bytes_per_sample, bytes_per_buffer))
 
         # Set the record size
-        board.setRecordSize(preTriggerSamples, postTriggerSamples)
+        board.setRecordSize(pre_trigger_samples, post_trigger_samples)
 
         # I need to define a "new" recordsPerAcquisition which is an integer
         # number of recordsPerBuffer, otherwise Alazar throws an error
         # We will take care of this below
-        recordsPerAcquisition = recordsPerBuffer * buffersPerAcquisition
+        records_per_acquisition = records_per_buffer * buffers_per_acquisition
 
         # Configure the board to make an NPT AutoDMA acquisition
         board.beforeAsyncRead(channels,
-                              -preTriggerSamples,
-                              samplesPerRecord,
-                              recordsPerBuffer,
-                              recordsPerAcquisition,
+                              -pre_trigger_samples,
+                              samples_per_record,
+                              records_per_buffer,
+                              records_per_acquisition,
                               ats.ADMA_EXTERNAL_STARTCAPTURE | ats.ADMA_NPT)
 
         # Post DMA buffers to board
@@ -167,37 +203,42 @@ class Alazar935x(DllInstrument):
             board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
 
         board.startCapture()  # Start the acquisition
-        buffersCompleted = 0
-        bytesTransferred = 0
+        buffers_completed = 0
 
-        dataA = np.empty((recordsPerCapture, samplesPerRecord))
-        dataB = np.empty((recordsPerCapture, samplesPerRecord))
+        if not average:
+            data = [np.empty((records_per_capture, samples_per_record))
+                    for i in range(channel_count)]
+        else:
+            data = [np.zeros(samples_per_record) for i in range(channel_count)]
 
-        while buffersCompleted < buffersPerAcquisition:
+        while buffers_completed < buffers_per_acquisition:
 
             # Wait for the buffer at the head of the list of available
             # buffers to be filled by the board.
-            buffer = buffers[buffersCompleted % len(buffers)]
+            buffer = buffers[buffers_completed % len(buffers)]
             board.waitAsyncBufferComplete(buffer.addr, timeout_ms=5000)
-            data = np.reshape(buffer.buffer,
-                              (recordsPerBuffer*channelCount, -1))
+            rbuf = np.reshape(buffer.buffer,
+                              (records_per_buffer*channel_count, -1))
 
             # making sure we only grab the number of records we asked for
-            if buffersCompleted < buffersPerAcquisition-1:
+            if buffers_completed < buffers_per_acquisition-1:
                 records_to_ignore_val = 0
             else:
                 records_to_ignore_val = records_to_ignore
-            dataA[buffersCompleted*recordsPerBuffer: \
-                (buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val] \
-                = data[:recordsPerBuffer-records_to_ignore_val]
-            dataB[buffersCompleted*recordsPerBuffer: \
-                (buffersCompleted+1)*recordsPerBuffer-records_to_ignore_val] \
-                = data[recordsPerBuffer:2*recordsPerBuffer-records_to_ignore_val]
 
-            buffersCompleted += 1
-            bytesTransferred += buffer.size_bytes
+            start = buffers_completed*records_per_buffer
+            stop = start + records_per_buffer-records_to_ignore_val
+            for i in range(channel_count):
+                if average:
+                    data[i] += np.sum(rbuf[i*records_per_buffer:
+                                           (i+1)*records_per_buffer -
+                                           records_to_ignore_val], 0)
+                else:
+                    data[i][start:stop] = rbuf[i*records_per_buffer:
+                                               (i+1)*records_per_buffer -
+                                               records_to_ignore_val]
 
-            # Update progress bar
+            buffers_completed += 1
 
             # Add the buffer to the end of the list of available buffers.
             board.postAsyncBuffer(buffer.addr, buffer.size_bytes)
@@ -205,15 +246,28 @@ class Alazar935x(DllInstrument):
         # Abort transfer.
         board.abortAsyncRead()
 
+        if average:
+            for c in range(channel_count):
+                data[c] /= records_per_capture
+
         # Check card is not saturated
         maxADC = 2**16-100
         minADC = 100
-        maxA = np.max(dataA)
-        maxB = np.max(dataB)
-        minA = np.min(dataA)
-        minB = np.min(dataB)
-        if maxA > maxADC or maxB > maxADC or minA < minADC or minB < minADC:
+        if any(np.max(data[i]) > maxADC or np.min(data[i]) < minADC for i in
+               range(channel_count)):
             mes = '''Channel A or B are saturated: increase input range or
             decrease amplification'''
             raise InstrIOError(mes)
-        return (dataA, dataB)
+
+        # XXX convert to volt
+
+        i = 0
+        data = []
+        for c in channels:
+            if c:
+                data.append(data[i])
+                i += 1
+            else:
+                data.append(np.zeros(2))
+
+        return data

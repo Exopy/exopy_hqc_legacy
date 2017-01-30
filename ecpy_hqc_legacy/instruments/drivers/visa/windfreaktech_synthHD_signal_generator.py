@@ -29,8 +29,7 @@ CONVERSION_FACTORS = {'GHz': {'Hz': 1e9, 'kHz': 1e6, 'MHz': 1e3, 'GHz': 1},
 
 
 class SynthHD(VisaInstrument):
-    """
-    Driver for WindFreakTech's synthHD SignalGenerator, using the VISA library.
+    """Driver for WindFreakTech's synthHD SignalGenerator.
 
     This driver does not give access to all the functionnality of the
     instrument but you can extend it if needed. See the documentation of
@@ -52,6 +51,7 @@ class SynthHD(VisaInstrument):
         Fixed power of the output signal.
     output : bool, instrument_property
         State of the output 'ON'(True)/'OFF'(False).
+
     """
 
     def __init__(self, connection_info, caching_allowed=True,
@@ -66,7 +66,8 @@ class SynthHD(VisaInstrument):
     @instrument_property
     @secure_communication()
     def channel(self):
-        """Frequency getter method
+        """Selected channel.
+
         """
         self.write('C?')
         output = self.read()
@@ -80,7 +81,8 @@ class SynthHD(VisaInstrument):
     @channel.setter
     @secure_communication()
     def channel(self, value):
-        """Frequency setter method
+        """Channel setter method.
+
         """
         self.write('C'+format(value))
         self.write('C?')
@@ -96,7 +98,8 @@ class SynthHD(VisaInstrument):
     @instrument_property
     @secure_communication()
     def frequency(self):
-        """Frequency getter method
+        """Frequency of the output signal.
+
         """
         self.write('f?')
         freq = self.read()
@@ -109,7 +112,8 @@ class SynthHD(VisaInstrument):
     @frequency.setter
     @secure_communication()
     def frequency(self, value):
-        """Frequency setter method
+        """Frequency setter method.
+
         """
         unit = self.frequency_unit
         valueMHz = value*CONVERSION_FACTORS[unit]['MHz']
@@ -117,7 +121,7 @@ class SynthHD(VisaInstrument):
         self.write('f'+str(valueMHz_format))
         self.write('f?')  # asks for frequency of current channel
         result = float(self.read())  # returns frequency in MHz
-        if abs(result - valueMHz) > 10**-12:
+        if abs(result - valueMHz) > 1e-12:
             mes = 'Instrument did not set correctly the frequency'
             raise InstrIOError(mes)
         self.check_calibration()
@@ -125,7 +129,8 @@ class SynthHD(VisaInstrument):
     @instrument_property
     @secure_communication()
     def power(self):
-        """Power getter method
+        """Power of the output signal.
+
         """
         self.write('W?')
         power = self.read()
@@ -138,7 +143,8 @@ class SynthHD(VisaInstrument):
     @power.setter
     @secure_communication()
     def power(self, value):
-        """Power setter method
+        """Power setter method.
+
         """
         self.write('W'+str('{:.4f}'.format(value)))
         self.write('W?')
@@ -150,7 +156,8 @@ class SynthHD(VisaInstrument):
     @instrument_property
     @secure_communication()
     def output(self):
-        """Output getter method
+        """Output state.
+
         """
         self.write('E?r?')
         outputE = self.read()
@@ -174,7 +181,8 @@ class SynthHD(VisaInstrument):
     @output.setter
     @secure_communication()
     def output(self, value):
-        """Output setter method
+        """Output setter method.
+
         """
         on = re.compile('on', re.IGNORECASE)
         off = re.compile('off', re.IGNORECASE)
@@ -195,6 +203,13 @@ class SynthHD(VisaInstrument):
         self.check_calibration()
 
     def check_calibration(self):
+        """Validate that the source is calibrated and phase locked.
+
+        Raises
+        ------
+        InstrIOError: raised if the source is not calibrated or phase locked.
+
+        """
         self.write('V')
         output = self.read()
         if not int(output[0]):

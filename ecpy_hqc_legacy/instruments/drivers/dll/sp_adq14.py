@@ -146,7 +146,7 @@ class SPADQ14(DllInstrument):
         self._dll.SetTriggerEdge(self._cu_id, self._id, 2, 1)
 
     def get_traces(self, channels, duration, delay, records_per_capture,
-                   retry=True):
+                   retry=True, average=False):
         """Acquire the average signal on both channels.
 
         Parameters
@@ -166,6 +166,15 @@ class SPADQ14(DllInstrument):
 
         retry : bool, optional
             Should acquisition be tried again if data recuperation fails.
+
+        average : bool, optional
+            Should traces be averaged.
+
+        Returns
+        -------
+        data : list
+            List containing the acquired data per channel, average or not based
+            on the average parameter.
 
         """
         # Set trigger delay
@@ -214,7 +223,10 @@ class SPADQ14(DllInstrument):
         while retrieved_records < records_per_capture:
             # Wait for a record to be acquired.
             n_records = (acq_records(cu, id_) - retrieved_records)
-            if not n_records:
+
+            # If we are not averaging we wait for all records to be acquired.
+            if not n_records or (not average and
+                                 n_records < retrieved_records):
                 time.sleep(1e-6)
                 continue
             if not get_data(cu, id_, buffers_ptr,
@@ -240,25 +252,33 @@ class SPADQ14(DllInstrument):
                     msg = 'Failed to retrieve data from ADQ14'
                     raise RuntimeError(msg)
 
-            for c in chs:
-                avg[c] += np.sum(
-                    np.reshape(buffers[c],
-                               (-1, samples_per_record))[:n_records], 0)
+            if average:
+                for c in chs:
+                    avg[c] += np.sum(
+                        np.reshape(buffers[c],
+                                   (-1, samples_per_record))[:n_records], 0)
 
             retrieved_records += n_records
 
-        for c in chs:
-            avg[c] /= records_per_capture
+        if average:
+            for c in chs:
+                avg[c] /= records_per_capture
 
         self._dll.DisarmTrigger(self._cu_id, self._id)
         self._dll.MultiRecordClose(self._cu_id, self._id)
 
         # Get the offset in volt for each channel is ignored.
         # The range is 1.9 Vpp according to the data sheet 2**16 = 65536
-        for c in chs:
-            avg[c] *= 1.9/65535
+        if average:
+            for c in chs:
+                avg[c] *= 1.9/65535
+        else:
+            for c in chs:
+                b = buffers[c]
+                b.reshape((-1, samples_per_record))
+                b *= 1.9/65535
 
-        return avg
+        return avg if average else buffers
 
     def _setup_library(self):
         """Load and initialize the dll.

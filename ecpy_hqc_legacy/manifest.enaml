@@ -236,7 +236,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaTCPIP': {'resource_class': 'INSTR'}
                                        }
                     Driver:
-                        driver = 'rohde_and_schwarz_signal_generators:RohdeSchwarzSMB100A'
+                        driver = ('rohde_and_schwarz_signal_generators:'
+                                  'RohdeSchwarzSMB100A')
                         model = 'SMB100A'
                         connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
                                        }
@@ -286,6 +287,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'save_tasks:SaveArrayTask'
                     view = 'views.save_views:SaveArrayView'
+
             Tasks:
                 path = 'instr'
                 group = 'instr'
@@ -323,8 +325,6 @@ enamldef HqcLegacyManifest(PluginManifest):
                         views = ['views.synthHD_task_views:ISynthHDChannelLabel',
                                  'views.synthHD_task_views:ISynthHDChannelValue']
                         instruments = ['ecpy_hqc_legacy.Legacy.SynthHD']
-
-
                 Task:
                     task = 'rf_tasks:SetRFPowerTask'
                     view = 'views.rf_views:RFPowerView'

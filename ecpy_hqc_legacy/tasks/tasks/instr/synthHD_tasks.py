@@ -32,12 +32,3 @@ class SynthHDsetChannelInterface(TaskInterface):
         channel = self.channel
         task.driver.channel = channel
         task.i_perform()
-
-    def check(self, *args, **kwargs):
-        """Make sure the specified channel does exists on the instrument.
-
-        """
-        test, traceback = super(SynthHDsetChannelInterface, self).check(
-                                                                      *args,
-                                                                      **kwargs)
-        return test, traceback

@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+#
+# Distributed under the terms of the BSD license.
+#
+# The full license is in the file LICENCE, distributed with this software.
+# -----------------------------------------------------------------------------
+"""Views for the PNA tasks.
+
+"""
+from __future__ import (division, unicode_literals, print_function,
+                        absolute_import)
+
+import re
+from textwrap import fill
+from enaml.widgets.api import (Label)
+from enaml.stdlib.fields import IntField
+
+enamldef ISynthHDChannelLabel(Label):
+    """Label for the channel selection.
+
+    """
+    attr interface
+    attr root
+    attr index = 2
+    text = 'Channel'
+
+
+enamldef ISynthHDChannelValue(IntField):
+    """Value for the channel selection.
+
+    """
+    attr interface
+    attr root
+    hug_width = 'strong'
+    value := interface.channel
+

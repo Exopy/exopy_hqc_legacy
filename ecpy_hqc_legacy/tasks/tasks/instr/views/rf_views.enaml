@@ -107,3 +107,19 @@ enamldef RFSetOnOffView(InstrView): view:
             text := task.switch
             entries_updater << task.list_accessible_database_entries
             tool_tip = EVALUATER_TOOLTIP
+
+enamldef PulseModulationView(InstrView): view:
+    """View for the RFFrequencyTask.
+
+    """
+    #: Attribute set by the parent view if the task is embedded inside a
+    #: LoopTask
+    attr in_loop : bool = False
+
+    constraints << [factory(auto_grid_layout)]
+
+    Label: pm_state_lab:
+        text = 'Pulse modulation state'
+    CheckBox: pm_state_val:
+        checked := task.pm_state
+        tool_tip = fill("Activate pulse modulation by ticking the box ", 60)

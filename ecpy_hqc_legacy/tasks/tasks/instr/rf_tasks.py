@@ -153,3 +153,28 @@ class SetRFOnOffTask(InterfaceableTaskMixin, InstrumentTask):
         else:
             self.driver.output = 'Off'
             self.write_in_database('output', 0)
+
+
+class SetPulseModulationTask(InterfaceableTaskMixin, InstrumentTask):
+    """Set the pulse modulation state of the RF source.
+
+    """
+    # pulse modulation state
+    pm_state = Bool(False).tag(pref=True)
+
+    database_entries = set_default({'pm_state': False})
+
+    def check(self, *args, **kwargs):
+        """Add the unit into the database.
+
+        """
+        test, traceback = super(SetPulseModulationTask, self).check(*args,
+                                                                    **kwargs)
+        return test, traceback
+
+    def i_perform(self):
+        """Default interface for simple sources.
+
+        """
+        self.driver.pm_state = self.pm_state
+        self.write_in_database('pm_state', self.pm_state)

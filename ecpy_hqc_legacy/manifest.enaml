@@ -360,6 +360,10 @@ enamldef HqcLegacyManifest(PluginManifest):
                                  'views.synthHD_task_views:ISynthHDChannelValue']
                         instruments = ['ecpy_hqc_legacy.Legacy.SynthHD']
                 Task:
+                    task = 'rf_tasks:SetPulseModulationTask'
+                    view = 'views.rf_views:PulseModulationView'
+                    instruments = ['ecpy_hqc_legacy.Legacy.RohdeSchwarzSMB100A']
+                Task:
                     task = 'pna_tasks:PNASinglePointMeasureTask'
                     view = 'views.pna_task_views:PNASinglePointView'
                     instruments = ['ecpy_hqc_legacy.Legacy.AgilentPNA',

@@ -156,3 +156,34 @@ class RohdeSchwarzSMB100A(VisaInstrument):
             mess = fill(cleandoc('''The invalid value {} was sent to
                         switch_on_off method''').format(value), 80)
             raise VisaTypeError(mess)
+
+    @instrument_property
+    @secure_communication()
+    def pm_state(self):
+        """Pulse modulation source getter method
+        """
+        pm_state_value = self.ask_for_values('SOURce:PULM:STATE?')[0]
+        if pm_state_value is not None:
+            return bool(pm_state_value)
+        else:
+            raise InstrIOError
+
+    @pm_state.setter
+    @secure_communication()
+    def pm_state(self, value):
+        """Pulse modulation source setter method
+        """
+        if value:
+            self.write('SOURce:PULM:STATE ON')
+        elif not value:
+            self.write('SOURce:PULM:STATE OFF')
+        else:
+            mess = fill(cleandoc('''The invalid value {} was sent to pulse
+                                  modulation state setter
+                                  method''').format(value), 80)
+            raise VisaTypeError(mess)
+
+        pm_state_value = self.pm_state
+        if not pm_state_value == value:
+            raise InstrIOError('''Instrument did not set pulse modulation
+                                correctly''')

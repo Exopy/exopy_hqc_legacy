@@ -81,7 +81,7 @@ class Alazar935x(DllInstrument):
 
         board.inputControl(ats.CHANNEL_B,
                            ats.AC_COUPLING,
-                           ats.INPUT_RANGE_PM_40_MV,
+                           ats.INPUT_RANGE_PM_100_MV,
                            ats.IMPEDANCE_50_OHM)
 
         board.setBWLimit(ats.CHANNEL_B, 0)

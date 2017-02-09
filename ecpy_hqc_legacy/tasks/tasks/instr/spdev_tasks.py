@@ -81,10 +81,21 @@ class DemodSPTask(InstrumentTask):
 
         p1 = locs['freq_1']*locs['duration']*1e-3 if self.ch1_enabled else 1.
         p2 = locs['freq_2']*locs['duration']*1e-3 if self.ch2_enabled else 1.
+        #  THIS CHECK DOES NOT WORK FOR ALAZAR. We need to recalculate the nb
+        #  of samples per trace so that it is multiple of 32. The nb of samples
+        #  is hence modified after this check is performed.
         if (not p1.is_integer() or not p2.is_integer()):
             test = False
             msg = ('The duration must be an integer times the period of the '
                    'demodulations.')
+            traceback[self.get_error_path() + '-' + n] = msg
+
+        sampling_rate = self.format_and_eval_string(self.sampling_rate)
+        s1 = sampling_rate % locs['freq_1']*1e6 if self.ch1_enabled else 0
+        s2 = sampling_rate % locs['freq_2']*1e6 if self.ch2_enabled else 0
+        if s1 != 0 or s2 != 0:
+            msg = ('The sampling rate must be a multiple of the demodulation '
+                   'frequency.')
             traceback[self.get_error_path() + '-' + n] = msg
 
         if self.ch1_enabled and self.ch1_trace:
@@ -110,6 +121,7 @@ class DemodSPTask(InstrumentTask):
         records_number = self.format_and_eval_string(self.records_number)
         delay = self.format_and_eval_string(self.delay)*1e-9
         duration = self.format_and_eval_string(self.duration)*1e-9
+        sampling_rate = self.format_and_eval_string(self.sampling_rate)
 
         channels = (self.ch1_enabled, self.ch2_enabled)
 
@@ -212,6 +224,15 @@ class DemodSPTask(InstrumentTask):
 
                 self.write_in_database('Chc_I_trace', chc_i_t_av)
                 self.write_in_database('Chc_Q_trace', chc_q_t_av)
+
+        print(self.database_entries.copy())
+
+        del ch1
+        del ch2
+        del s1
+        del c1
+        del s2
+        del c2
 
     def _post_setattr_ch1_enabled(self, old, new):
         """Update the database entries based on the enabled channels.

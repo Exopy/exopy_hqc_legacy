@@ -381,7 +381,7 @@ class DMABuffer(object):
         if bytes_per_sample > 1:
             npSampleType = np.uint16
 
-        self.buffer = np.empty(size_bytes, npSampleType)
+        self.buffer = np.empty(size_bytes//bytes_per_sample, npSampleType)
         self.addr = self.buffer.ctypes.data_as(c_void_p)
 
 

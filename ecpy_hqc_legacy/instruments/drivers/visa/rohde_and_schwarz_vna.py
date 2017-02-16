@@ -812,14 +812,16 @@ class ZNB20(VisaInstrument):
         for channel in self.defined_channels:
             self.write('INITiate{}:CONTinuous OFF'.format(channel))
 
-        for channel in self.defined_channels:
-            result = self.ask('SENSe{}:SWEep:MODE?'.format(channel))
-
-            if result != 'HOLD':
-                raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
-                    channel {} sweep mode while setting all defined channels
-                    to HOLD, instead channel mode is {}'''.
-                                   format(channel, result)))
+#==============================================================================
+#         for channel in self.defined_channels:
+#             result = self.ask('SENSe{}:SWEep:MODE?'.format(channel))
+#
+#             if result != 'HOLD':
+#                 raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
+#                     channel {} sweep mode while setting all defined channels
+#                     to HOLD, instead channel mode is {}'''.
+#                                    format(channel, result)))
+#==============================================================================
 
     @secure_communication()
     def clear_averaging(self):

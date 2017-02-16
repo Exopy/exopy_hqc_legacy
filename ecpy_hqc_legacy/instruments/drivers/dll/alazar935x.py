@@ -74,7 +74,7 @@ class Alazar935x(DllInstrument):
 
         board.inputControl(ats.CHANNEL_A,
                            ats.AC_COUPLING,
-                           ats.INPUT_RANGE_PM_100_MV,
+                           ats.INPUT_RANGE_PM_200_MV,
                            ats.IMPEDANCE_50_OHM)
 
         board.setBWLimit(ats.CHANNEL_A, 0)
@@ -142,12 +142,14 @@ class Alazar935x(DllInstrument):
         """
         board = self.board
 
+
         # Acquired only specified channels
-        channels = (ats.CHANNEL_A if channels[0] else 0 |
-                    ats.CHANNEL_B if channels[1] else 0)
-        channel_count = 0
-        for c in ats.channels:
-            channel_count += (c & channels == c)
+
+        channel_count = channels[0] + channels[1]
+        cA = ats.CHANNEL_A if channels[0] else 0
+        cB = ats.CHANNEL_B if channels[1] else 0
+        channels_tuple = channels
+        channels = cA | cB
 
         post_trigger_samples = int(self.samples_per_sec*duration)
         if post_trigger_samples % 32 == 0:
@@ -157,9 +159,13 @@ class Alazar935x(DllInstrument):
         # Determine the number of records per buffer
         memory_size_samples, bits_per_sample = board.getChannelInfo()
 
+
+
         # No pre-trigger samples in NPT mode
         pre_trigger_samples = 0
         bytes_per_sample = (bits_per_sample.value + 7) // 8
+
+
         samples_per_record = pre_trigger_samples + post_trigger_samples
         bytes_per_record = bytes_per_sample * samples_per_record
 
@@ -173,7 +179,7 @@ class Alazar935x(DllInstrument):
 
         buffers_per_acquisition = int(math.ceil(records_per_capture /
                                                 records_per_buffer))
-        records_to_ignore = (buffers_per_acquisition*bytes_per_buffer -
+        records_to_ignore = (buffers_per_acquisition*records_per_buffer -
                              records_per_capture)
 
         buffer_count = 4
@@ -218,8 +224,8 @@ class Alazar935x(DllInstrument):
             buffer = buffers[buffers_completed % len(buffers)]
             board.waitAsyncBufferComplete(buffer.addr, timeout_ms=5000)
             rbuf = np.reshape(buffer.buffer,
-                              (records_per_buffer*channel_count, -1))
-
+                              (records_per_buffer*channel_count,
+                               samples_per_record))
             # making sure we only grab the number of records we asked for
             if buffers_completed < buffers_per_acquisition-1:
                 records_to_ignore_val = 0
@@ -262,12 +268,15 @@ class Alazar935x(DllInstrument):
         # XXX convert to volt
 
         i = 0
-        data = []
-        for c in channels:
+        data_f = []
+        for c in channels_tuple:
             if c:
-                data.append(data[i])
+                if average:
+                    data_f.append(np.array([data[i]]))
+                else:
+                    data_f.append(data[i])
                 i += 1
             else:
-                data.append(np.zeros(2))
+                data_f.append(np.zeros(2))
 
-        return data
+        return data_f

@@ -30,9 +30,9 @@ enamldef DemodSpView(InstrView): view:
 
     """
     constraints = [vbox(
-                    grid([instr_label, traces, after, duration],
+                    grid([instr_label, traces, after, duration, average],
                          [instr_selection, traces_val, after_val,
-                          duration_val, average]),
+                          duration_val, average_val]),
                     hbox(demod1,demod2)),
                     demod1.width == demod2.width]
 
@@ -57,9 +57,11 @@ enamldef DemodSpView(InstrView): view:
         entries_updater << task.list_accessible_database_entries
         tool_tip = EVALUATER_TOOLTIP
 
-    CheckBox: average:
+    Label: average:
         text = 'Average'
-        checked := task.average
+    ObjectCombo: average_val:
+        items << ['No avg','Avg before demod','Avg after demod']
+        selected := task.average
         tool_tip = fill("Check if you want averaged data, "
                         "i.e: only one (I_avg,Q_avg) per acquisition.")
 
@@ -81,10 +83,14 @@ enamldef DemodSpView(InstrView): view:
 
     GroupBox: demod2:
         title = 'Channel 2 demodulation settings'
-        constraints = [vbox(hbox(en2, tr2), hbox(dfreq2, dfreq2_val))]
+        constraints = [vbox(hbox(en2, ref2, tr2), hbox(dfreq2, dfreq2_val))]
         CheckBox: en2:
             text = 'Enable channel'
             checked := task.ch2_enabled
+        CheckBox: ref2:
+            text = 'Use as ref'
+            checked := task.ref2
+            enabled << (task.ch2_enabled and task.ch1_enabled)
         CheckBox: tr2:
             text = 'Keep trace'
             checked := task.ch2_trace

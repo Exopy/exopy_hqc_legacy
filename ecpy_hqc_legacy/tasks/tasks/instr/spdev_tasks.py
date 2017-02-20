@@ -50,7 +50,7 @@ class DemodSPTask(InstrumentTask):
     freq_2 = Unicode('50').tag(pref=True, feval=VAL_REAL)
 
     #: Time during which to acquire data after a trigger (ns).
-    duration = Unicode('0').tag(pref=True, feval=VAL_REAL)
+    duration = Unicode('1000').tag(pref=True, feval=VAL_REAL)
 
     #: Time to wait after a trigger before starting acquisition (ns).
     delay = Unicode('0').tag(pref=True, feval=VAL_REAL)
@@ -60,6 +60,9 @@ class DemodSPTask(InstrumentTask):
 
     #: Reference
     ref2 = Bool(False).tag(pref=True)
+
+    #: Sampling rate
+    sampling_rate = Unicode('500000000').tag(pref=True, feval=VAL_INT)
 
     database_entries = set_default({'Ch1_I': 1.0, 'Ch1_Q': 1.0,
                                     'Ch2_I': 1.0, 'Ch2_Q': 1.0})
@@ -137,7 +140,7 @@ class DemodSPTask(InstrumentTask):
             f1 = self.format_and_eval_string(self.freq_1)*1e6
 
             # Remove point that do not belong to a full period.
-            samples_per_period = int(500e6/f1)
+            samples_per_period = int(sampling_rate/f1)
             samples_per_trace = int(ch1.shape[-1])
             if (samples_per_trace % samples_per_period) != 0:
                 extra = samples_per_trace % samples_per_period
@@ -164,7 +167,7 @@ class DemodSPTask(InstrumentTask):
             f2 = self.format_and_eval_string(self.freq_2)*1e6
 
             # Remove point that do not belong to a full period.
-            samples_per_period = int(500e6/f2)
+            samples_per_period = int(sampling_rate/f2)
             samples_per_trace = int(ch2.shape[-1])
             if (samples_per_trace % samples_per_period) != 0:
                 extra = samples_per_trace % samples_per_period
@@ -197,7 +200,7 @@ class DemodSPTask(InstrumentTask):
             self.write_in_database('Chc_I', chc_i_av)
             self.write_in_database('Chc_Q', chc_q_av)
             if self.ch1_trace:
-                samples_per_period = int(500e6/f1)
+                samples_per_period = int(sampling_rate/f1)
                 samples_per_trace = int(ch1.shape[-1])
                 ch1_c1 = ch1*c1
                 ch1_s1 = ch1*s1
@@ -224,15 +227,6 @@ class DemodSPTask(InstrumentTask):
 
                 self.write_in_database('Chc_I_trace', chc_i_t_av)
                 self.write_in_database('Chc_Q_trace', chc_q_t_av)
-
-        print(self.database_entries.copy())
-
-        del ch1
-        del ch2
-        del s1
-        del c1
-        del s2
-        del c2
 
     def _post_setattr_ch1_enabled(self, old, new):
         """Update the database entries based on the enabled channels.

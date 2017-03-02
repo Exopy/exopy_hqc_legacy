@@ -60,10 +60,14 @@ enamldef DemodSpView(InstrView): view:
     Label: average:
         text = 'Average'
     ObjectCombo: average_val:
-        items << ['No avg','Avg before demod','Avg after demod']
+        items << list(task.get_member('average').items)
         selected := task.average
-        tool_tip = fill("Check if you want averaged data, "
-                        "i.e: only one (I_avg,Q_avg) per acquisition.")
+        tool_tip = """No avg: return raw traces and I,Q pairs \n
+                      Avg before demod: average raw traces, then return
+                      averaged trace and average I,Q \n
+                      Avg after demod: calculate one I,Q per trace,
+                      then average. This allows to use a ref Iref,Qref
+                      and correct each I,Q pair by the ref, then average"""
 
     GroupBox: demod1:
         title = 'Channel 1 demodulation settings'

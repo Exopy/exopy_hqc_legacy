@@ -239,6 +239,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                         driver = ('rohde_and_schwarz_signal_generators:'
                                   'RohdeSchwarzSMB100A')
                         model = 'SMB100A'
+                        kind = 'RF source'
                         connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
                                        }
             Drivers:

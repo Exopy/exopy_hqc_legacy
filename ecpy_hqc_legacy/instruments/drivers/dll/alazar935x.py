@@ -142,7 +142,6 @@ class Alazar935x(DllInstrument):
         """
         board = self.board
 
-
         # Acquired only specified channels
 
         channel_count = channels[0] + channels[1]
@@ -159,12 +158,9 @@ class Alazar935x(DllInstrument):
         # Determine the number of records per buffer
         memory_size_samples, bits_per_sample = board.getChannelInfo()
 
-
-
         # No pre-trigger samples in NPT mode
         pre_trigger_samples = 0
         bytes_per_sample = (bits_per_sample.value + 7) // 8
-
 
         samples_per_record = pre_trigger_samples + post_trigger_samples
         bytes_per_record = bytes_per_sample * samples_per_record

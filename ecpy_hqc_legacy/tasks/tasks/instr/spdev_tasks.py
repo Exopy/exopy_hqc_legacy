@@ -14,7 +14,7 @@ from __future__ import (division, unicode_literals, print_function,
 
 import numbers
 import numpy as np
-from atom.api import (Bool, Unicode, set_default)
+from atom.api import (Bool, Unicode, Enum, set_default)
 
 from ecpy.tasks.api import InstrumentTask, validators
 
@@ -28,8 +28,14 @@ class DemodSPTask(InstrumentTask):
 
     """
 
-    # return averaged data or single shot data
-    average = Unicode('Avg before demod').tag(pref=True)
+    # No avg: return raw traces/I,Q pairs,
+    # Avg before demod: average raw traces, then return
+    # averaged trace / average I,Q
+    # Avg after demod: calculate one I,Q per trace, then average.
+    # This allows to use a ref Iref,Qref
+    # and correct each I,Q pair by the ref, then average
+    average = Enum('No avg', 'Avg before demod',
+                   'Avg after demod').tag(pref=True)
 
     #: Should the acquisition on channel 1 be enabled
     ch1_enabled = Bool(True).tag(pref=True)
@@ -58,10 +64,12 @@ class DemodSPTask(InstrumentTask):
     #: Number of records to acquire (one per trig)
     records_number = Unicode('1000').tag(pref=True, feval=VAL_INT)
 
-    #: Reference
+    #: Reference: when using average after demod, we can use ch2 as a ref, and
+    # correct every I,Q from ch1 by Iref, Qref from ch2. This interferometric
+    # measurement eliminates many sources of noise
     ref2 = Bool(False).tag(pref=True)
 
-    #: Sampling rate
+    #: Sampling rate in samples per second
     sampling_rate = Unicode('500000000').tag(pref=True, feval=VAL_INT)
 
     database_entries = set_default({'Ch1_I': 1.0, 'Ch1_Q': 1.0,
@@ -88,15 +96,16 @@ class DemodSPTask(InstrumentTask):
         #  of samples per trace so that it is multiple of 32. The nb of samples
         #  is hence modified after this check is performed.
         if (not p1.is_integer() or not p2.is_integer()):
-            test = False
             msg = ('The duration must be an integer times the period of the '
-                   'demodulations.')
+                   'demodulations. The duration will be truncated to match '
+                   'this constraint')
             traceback[self.get_error_path() + '-' + n] = msg
 
         sampling_rate = self.format_and_eval_string(self.sampling_rate)
         s1 = sampling_rate % locs['freq_1']*1e6 if self.ch1_enabled else 0
         s2 = sampling_rate % locs['freq_2']*1e6 if self.ch2_enabled else 0
-        if s1 != 0 or s2 != 0:
+        if s1 or s2:
+            test = False
             msg = ('The sampling rate must be a multiple of the demodulation '
                    'frequency.')
             traceback[self.get_error_path() + '-' + n] = msg
@@ -128,18 +137,17 @@ class DemodSPTask(InstrumentTask):
 
         channels = (self.ch1_enabled, self.ch2_enabled)
 
-        ch = self.driver.get_traces(channels, duration, delay,
-                                    records_number, average=avg_bef_demod)
+        traces = self.driver.get_traces(channels, duration, delay,
+                                        records_number, average=avg_bef_demod)
 
         average = False if self.average == 'No avg' else True
 
-        ch1 = ch[0]
-        ch2 = ch[1]
+        ch1, ch2 = traces
 
         if self.ch1_enabled:
             f1 = self.format_and_eval_string(self.freq_1)*1e6
 
-            # Remove point that do not belong to a full period.
+            # Remove points that do not belong to a full period.
             samples_per_period = int(sampling_rate/f1)
             samples_per_trace = int(ch1.shape[-1])
             if (samples_per_trace % samples_per_period) != 0:

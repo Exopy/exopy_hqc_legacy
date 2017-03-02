@@ -160,30 +160,35 @@ class RohdeSchwarzSMB100A(VisaInstrument):
     @instrument_property
     @secure_communication()
     def pm_state(self):
-        """Pulse modulation source getter method
+        """Pulse modulation getter method
+
         """
-        pm_state_value = self.ask_for_values('SOURce:PULM:STATE?')[0]
-        if pm_state_value is not None:
-            return bool(pm_state_value)
+        pm_state = self.ask_for_values('SOURce:PULM:STATE?')
+        if pm_state is not None:
+            return bool(pm_state[0])
         else:
-            raise InstrIOError
+            mes = 'Signal generator did not return its pulse modulation state'
+            raise InstrIOError(mes)
 
     @pm_state.setter
     @secure_communication()
     def pm_state(self, value):
-        """Pulse modulation source setter method
-        """
-        if value:
-            self.write('SOURce:PULM:STATE ON')
-        elif not value:
-            self.write('SOURce:PULM:STATE OFF')
-        else:
-            mess = fill(cleandoc('''The invalid value {} was sent to pulse
-                                  modulation state setter
-                                  method''').format(value), 80)
-            raise VisaTypeError(mess)
+        """Pulse modulation setter method.
 
-        pm_state_value = self.pm_state
-        if not pm_state_value == value:
-            raise InstrIOError('''Instrument did not set pulse modulation
-                                correctly''')
+        """
+        on = re.compile('on', re.IGNORECASE)
+        off = re.compile('off', re.IGNORECASE)
+        if on.match(value) or value == 1:
+            self.write('SOURce:PULM:STATE ON')
+            if self.ask('SOURce:PULM:STATE?') != '1':
+                raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the pulse modulation state'''))
+        elif off.match(value) or value == 0:
+            self.write('SOURce:PULM:STATE OFF')
+            if self.ask('SOURce:PULM:STATE?') != '0':
+                raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the pulse modulation state'''))
+        else:
+            mess = fill(cleandoc('''The invalid value {} was sent to
+                        switch_on_off method''').format(value), 80)
+            raise VisaTypeError(mess)

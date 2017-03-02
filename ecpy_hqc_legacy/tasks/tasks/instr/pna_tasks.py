@@ -379,11 +379,7 @@ class PNASweepTask(SingleChannelPNATask):
         self.driver.fire_trigger(self.channel)
         time.sleep(waiting_time)
         while not self.driver.check_operation_completion():
-            time.sleep(0.001*waiting_time)
-
-        #RL Some more sleep to ensure we have all the trace
-        #time.sleep(0.008+0.25*waiting_time)
-        #time.sleep(0.008+0.15*waiting_time+points+1/self.if_bandwidth)
+            time.sleep(0.1*waiting_time)
 
         data = [np.linspace(start, stop, points)]
         for i, meas_name in enumerate(meas_names):

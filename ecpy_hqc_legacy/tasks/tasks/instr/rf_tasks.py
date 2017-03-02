@@ -156,25 +156,44 @@ class SetRFOnOffTask(InterfaceableTaskMixin, InstrumentTask):
 
 
 class SetPulseModulationTask(InterfaceableTaskMixin, InstrumentTask):
-    """Set the pulse modulation state of the RF source.
+    """Switch on/off the pulse modulation of the source.
 
     """
-    # pulse modulation state
-    pm_state = Bool(False).tag(pref=True)
+    # Desired state of the output, runtime value can be 0 or 1.
+    switch = Unicode('Off').tag(pref=True, feval=validators.SkipLoop())
 
-    database_entries = set_default({'pm_state': False})
+    database_entries = set_default({'pm_state': 0})
 
     def check(self, *args, **kwargs):
-        """Add the unit into the database.
+        """Validate the value of the switch.
 
         """
         test, traceback = super(SetPulseModulationTask, self).check(*args,
                                                                     **kwargs)
+
+        if test and self.switch:
+            try:
+                switch = self.format_and_eval_string(self.switch)
+            except Exception:
+                return False, traceback
+
+            if switch not in ('Off', 'On', 0, 1):
+                test = False
+                traceback[self.get_error_path() + '-switch'] =\
+                    '{} is not an acceptable value.'.format(self.switch)
+
         return test, traceback
 
-    def i_perform(self):
-        """Default interface for simple sources.
+    def i_perform(self, switch=None):
+        """Default interface behavior.
 
         """
-        self.driver.pm_state = self.pm_state
-        self.write_in_database('pm_state', self.pm_state)
+        if switch is None:
+            switch = self.format_and_eval_string(self.switch)
+
+        if switch == 'On' or switch == 1:
+            self.driver.pm_state = 'On'
+            self.write_in_database('pm_state', 1)
+        else:
+            self.driver.pm_state = 'Off'
+            self.write_in_database('pm_state', 0)

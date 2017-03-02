@@ -15,6 +15,8 @@ from __future__ import (division, unicode_literals, print_function,
 import logging
 from inspect import cleandoc
 import numpy as np
+import re
+from textwrap import fill
 
 try:
     from visa import ascii, single, double
@@ -26,6 +28,7 @@ except ImportError:
 from ..driver_tools import (BaseInstrument, InstrIOError, InstrError,
                             secure_communication, instrument_property)
 from ..visa_tools import VisaInstrument
+from visa import VisaTypeError
 
 
 FORMATTING_DICT = {'PHAS': lambda x: np.angle(x, deg=True),
@@ -953,3 +956,39 @@ class ZNB20(VisaInstrument):
         if result.lower() != value.lower()[:len(result)]:
             raise InstrIOError(cleandoc('''ZNB20 did not set correctly the
                 data format'''))
+
+    @instrument_property
+    @secure_communication()
+    def output(self):
+        """Output state of the source.
+
+        """
+        output = self.ask_for_values(':OUTP?')
+        if output is not None:
+            return bool(output[0])
+        else:
+            mes = 'ZNB signal generator did not return its output'
+            raise InstrIOError(mes)
+
+    @output.setter
+    @secure_communication()
+    def output(self, value):
+        """Output setter method.
+
+        """
+        on = re.compile('on', re.IGNORECASE)
+        off = re.compile('off', re.IGNORECASE)
+        if on.match(value) or value == 1:
+            self.write(':OUTPUT ON')
+            if self.ask(':OUTPUT?') != '1':
+                raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the output'''))
+        elif off.match(value) or value == 0:
+            self.write(':OUTPUT OFF')
+            if self.ask(':OUTPUT?') != '0':
+                raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the output'''))
+        else:
+            mess = fill(cleandoc('''The invalid value {} was sent to
+                        switch_on_off method''').format(value), 80)
+            raise VisaTypeError(mess)

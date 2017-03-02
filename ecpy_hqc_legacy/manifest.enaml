@@ -352,7 +352,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                     instruments = ['ecpy_hqc_legacy.Legacy.AgilentPSG',
                                    'ecpy_hqc_legacy.Legacy.AnritsuMG3694',
                                    'ecpy_hqc_legacy.Legacy.LabBrickLMS103',
-                                   'ecpy_hqc_legacy.Legacy.RohdeSchwarzSMB100A']
+                                   'ecpy_hqc_legacy.Legacy.RohdeSchwarzSMB100A',
+                                   'ecpy_hqc_legacy.Legacy.ZNB20']
                     metadata = {'loopable': True}
                     Interface:
                         interface = 'synthHD_tasks:SynthHDsetChannelInterface'

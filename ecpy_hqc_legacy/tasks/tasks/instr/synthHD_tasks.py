@@ -6,7 +6,7 @@
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Task perform measurements with a synthHD.
+"""Interface allowing to use RF tasks with synthHD generator.
 
 """
 from __future__ import (division, unicode_literals, print_function,

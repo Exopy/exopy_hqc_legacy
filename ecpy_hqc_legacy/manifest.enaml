@@ -187,6 +187,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
+
                 Drivers:
                     manufacturer = 'Tektronix'
                     Driver:

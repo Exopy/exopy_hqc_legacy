@@ -44,6 +44,12 @@ class CS4(VisaInstrument):
                  the instrument settings. One should also check that
                  the switch heater current is correct.'''))
 
+    def open_connection(self, **para):
+        super(CS4, self).open_connection(**para)
+        if not para:
+            self.write_termination = '\n'
+            self.read_termination = '\n'
+
     @secure_communication()
     def make_ready(self):
         """Setup the correct unit and range.
@@ -79,7 +85,7 @@ class CS4(VisaInstrument):
             sleep(post_switch_wait)
             self.activity = 'To zero'
             wait = abs(self.target_field) / self.field_sweep_rate
-            wait /= FIELD_CURRENT_RATIO
+            wait /= self.field_current_ratio
             sleep(wait)
             niter = 0
             while abs(self.target_field) >= OUT_FLUC:
@@ -159,7 +165,7 @@ class CS4(VisaInstrument):
             # careful, need to specify slow after a fast sweep !
             self.write('SWEEP UP SLOW')
 
-        wait /= (60 * FIELD_CURRENT_RATIO)
+        wait /= (60 * self.field_current_ratio)
         sleep(wait)
         niter = 0
         while abs(self.target_field - target) >= OUT_FLUC:

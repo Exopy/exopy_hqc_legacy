@@ -34,6 +34,7 @@ class LegacyStarter(BaseStarter):
 
         """
         c = self.format_connection_infos(connection)
+        c.update(settings)
         driver = None
         try:
             driver = driver_cls(c)

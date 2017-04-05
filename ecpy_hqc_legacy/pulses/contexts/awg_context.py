@@ -9,12 +9,12 @@
 """Context compiling sequences for the Tektronix AWG5014.
 
 """
+import sys
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
 import numpy as np
 from atom.api import Unicode, Float, Bool, set_default
-import sys
 
 from ecpy_pulses.pulses.api import BaseContext, TIME_CONVERSION
 

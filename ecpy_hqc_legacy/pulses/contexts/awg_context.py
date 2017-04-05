@@ -14,8 +14,14 @@ from __future__ import (division, unicode_literals, print_function,
 
 import numpy as np
 from atom.api import Unicode, Float, Bool, set_default
+import sys
 
 from ecpy_pulses.pulses.api import BaseContext, TIME_CONVERSION
+
+if sys.version_info >= (3,):
+    to_bytes = np.ndarray.tobytes
+else:
+    to_bytes = lambda x: bytearray(np.ndarray.tobytes(x))
 
 
 class AWG5014Context(BaseContext):
@@ -171,7 +177,7 @@ class AWG5014Context(BaseContext):
             aux = np.empty(2*sequence_length, dtype=np.uint8)
             aux[::2] = array % 2**8
             aux[1::2] = array // 2**8
-            to_send[int(channel[-1])] = aux.tobytes()
+            to_send[int(channel[-1])] = to_bytes(aux)
 
         # Build seuence infos
         name = self._cache['sequence_name']

@@ -12,12 +12,12 @@
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
-from traceback import format_exc
 from ast import literal_eval
 from itertools import chain
 from atom.api import (Unicode, Int, List, Dict)
 
 from ecpy.utils.atom_util import HasPrefAtom, tagged_members
+from ecpy.utils.traceback import format_exc
 from ecpy.tasks.api import (InstrumentTask, InterfaceableTaskMixin,
                             InstrTaskInterface)
 

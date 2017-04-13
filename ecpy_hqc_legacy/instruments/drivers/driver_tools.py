@@ -37,7 +37,8 @@ import inspect
 from inspect import cleandoc
 from textwrap import fill
 from functools import wraps
-from traceback import format_exc
+
+from ecpy.utils.traceback import format_exc
 
 
 class InstrError(Exception):

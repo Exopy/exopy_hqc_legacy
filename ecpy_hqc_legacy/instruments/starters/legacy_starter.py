@@ -12,8 +12,7 @@
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
-from traceback import format_exc
-
+from ecpy.utils.traceback import format_exc
 from ecpy.instruments.api import BaseStarter
 
 

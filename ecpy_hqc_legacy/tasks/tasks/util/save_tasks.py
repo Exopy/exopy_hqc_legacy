@@ -18,7 +18,6 @@ import logging
 import numbers
 from inspect import cleandoc
 from collections import OrderedDict
-from traceback import format_exc
 
 import numpy
 import h5py
@@ -26,6 +25,7 @@ from atom.api import Unicode, Enum, Value, Bool, Int, Typed, List, set_default
 
 from ecpy.tasks.api import SimpleTask, validators
 from ecpy.utils.atom_util import ordered_dict_from_pref, ordered_dict_to_pref
+from ecpy.utils.traceback import format_exc
 
 
 class SaveTask(SimpleTask):

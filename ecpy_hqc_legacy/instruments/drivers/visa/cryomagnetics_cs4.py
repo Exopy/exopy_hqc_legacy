@@ -168,7 +168,7 @@ class CS4(VisaInstrument):
             wait = 60 * abs(self.target_field - target) / self.field_sweep_rate
             # need to specify slow after a fast sweep !
             self.write('SWEEP UP SLOW')
-        
+
         sleep(wait)
         niter = 0
         while abs(self.target_field - target) >= OUT_FLUC:

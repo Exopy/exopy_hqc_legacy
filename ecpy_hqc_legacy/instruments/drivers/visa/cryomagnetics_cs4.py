@@ -68,8 +68,7 @@ class CS4(VisaInstrument):
         """Ramp up the field to the specified value.
 
         """
-        # sweeping rate is converted from T/min to A/sec
-        self.field_sweep_rate = rate / (60 * self.field_current_ratio)
+        self.field_sweep_rate = rate
 
         if abs(self.persistent_field - value) >= OUT_FLUC:
 
@@ -84,8 +83,7 @@ class CS4(VisaInstrument):
             self.heater_state = 'Off'
             sleep(post_switch_wait)
             self.activity = 'To zero'
-            wait = abs(self.target_field) / self.field_sweep_rate
-            wait /= self.field_current_ratio
+            wait = 60 * abs(self.target_field) / self.field_sweep_rate
             sleep(wait)
             niter = 0
             while abs(self.target_field) >= OUT_FLUC:
@@ -119,26 +117,32 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def field_sweep_rate(self):
-        """Rate at which to ramp the field.
+        """Rate at which to ramp the field (T/min).
 
         """
-        return float(self.ask('RATE? 0'))
+        # converted from A/s to T/min
+        rate = float(self.ask('RATE? 0'))
+        return rate * (60 * self.field_current_ratio)
 
     @field_sweep_rate.setter
     @secure_communication()
     def field_sweep_rate(self, rate):
+        # converted from T/min to A/s
+        rate /= 60 * self.field_current_ratio
         self.write('RATE 0 {}'.format(rate))
 
     @instrument_property
     def fast_sweep_rate(self):
-        """Rate at which to ramp the field when the switch heater is off.
+        """Rate at which to ramp the field when the switch heater is off (T/min).
 
         """
-        return float(self.ask('RATE? 5'))
+        rate = float(self.ask('RATE? 5'))
+        return rate * (60 * self.field_current_ratio)
 
     @field_sweep_rate.setter
     @secure_communication()
     def fast_sweep_rate(self, rate):
+        rate /= 60 * self.field_current_ratio
         self.write('RATE 5 {}'.format(rate))
 
     @instrument_property
@@ -151,21 +155,20 @@ class CS4(VisaInstrument):
     @target_field.setter
     @secure_communication()
     def target_field(self, target):
-        """Sweep the output intensity to reach the specified ULIM (in A)
+        """Sweep the output intensity to reach the specified ULIM (in T)
         at a rate depending on the intensity, as defined in the range(s).
 
         """
         self.write('ULIM {}'.format(target))
 
         if self.heater_state == 'Off':
-            wait = abs(self.target_field - target) / self.fast_sweep_rate
+            wait = 60 * abs(self.target_field - target) / self.fast_sweep_rate
             self.write('SWEEP UP FAST')
         else:
-            wait = abs(self.target_field - target) / self.field_sweep_rate
-            # careful, need to specify slow after a fast sweep !
+            wait = 60 * abs(self.target_field - target) / self.field_sweep_rate
+            # need to specify slow after a fast sweep !
             self.write('SWEEP UP SLOW')
-
-        wait /= (60 * self.field_current_ratio)
+        
         sleep(wait)
         niter = 0
         while abs(self.target_field - target) >= OUT_FLUC:

@@ -120,10 +120,17 @@ class DemodSPTask(InstrumentTask):
             phi2 = np.linspace(0, 2*np.pi*locs['freq_2']*locs['duration'], p2)
             self.write_in_database('Ch2_trace', np.sin(phi2))
 
+        if ((self.ref2 and self.average == 'Avg before demod') or
+                (self.ref2 and not (self.ch1_enabled and self.ch2_enabled))):
+            test = False
+            msg = ('Using channel 2 as ref requires not to average before '
+                   'demod and both channel to be enabled')
+            traceback[self.get_error_path() + '-reference'] = msg
+
         return test, traceback
 
     def perform(self):
-        """Acquire the averaged trace and compute the demodualted
+        """Acquire the averaged trace and compute the demodulated
         signal for both channels.
 
         """
@@ -131,7 +138,8 @@ class DemodSPTask(InstrumentTask):
             self.driver.owner = self.name
             self.driver.configure_board()
 
-        avg_bef_demod = True if self.average == 'Avg before demod' else False
+        avg_bef_demod = self.average == 'Avg before demod'
+        avg_aft_demod = self.average == 'Avg after demod'
 
         num_loop = int(self.format_and_eval_string(self.num_loop))
         records_number = self.format_and_eval_string(self.records_number)
@@ -145,89 +153,82 @@ class DemodSPTask(InstrumentTask):
         traces = self.driver.get_traces(channels, duration, delay,
                                         records_number, average=avg_bef_demod)
 
-        average = False if self.average == 'No avg' else True
+        def treat_channel_data(index):
+            """Treat the data of a channel.
 
-        ch1, ch2 = traces
-
-        #  RL save space
-        pack = 1
-
-        if self.ch1_enabled:
-            f1 = self.format_and_eval_string(self.freq_1)*1e6
+            """
+            ch = traces[index-1]
+            freq = self.format_and_eval_string(getattr(self,
+                                                       'freq_%d' % index))*1e6
 
             # Remove points that do not belong to a full period.
-            samples_per_period = int(sampling_rate*pack/f1)
-            samples_per_trace = int(ch1.shape[-1])
+            samples_per_period = int(sampling_rate/freq)
+            samples_per_trace = int(ch.shape[-1])
             if (samples_per_trace % samples_per_period) != 0:
                 extra = samples_per_trace % samples_per_period
-                ch1 = ch1.T[:-extra].T
+                ch = ch.T[:-extra].T
 
-            ntraces1, nsamples1 = np.shape(ch1)
-            ch1 = ch1.reshape(int(ntraces1/num_loop), num_loop, nsamples1)
-            phi1 = np.linspace(0, 2*np.pi*f1*((nsamples1-1)*2e-9), nsamples1)
-            c1 = np.cos(phi1)
-            s1 = np.sin(phi1)
+            if not avg_bef_demod:
+                ntraces, nsamples = np.shape(ch)
+                ch = ch.reshape(int(ntraces/num_loop), num_loop, nsamples)
+            else:
+                nsamples = np.shape(ch)[0]
+            phi = np.linspace(0, 2*np.pi*freq*((nsamples-1)*2e-9), nsamples)
+            cosin = np.cos(phi)
+            sinus = np.sin(phi)
             # The mean value of cos^2 is 0.5 hence the factor 2 to get the
             # amplitude.
-            ch1_i = 2*np.mean(ch1*c1, axis=2)
-            ch1_q = 2*np.mean(ch1*s1, axis=2)
-            ch1_i_av = ch1_i.T[0] if not average else np.mean(ch1_i, axis=0)
-            ch1_q_av = ch1_q.T[0] if not average else np.mean(ch1_q, axis=0)
-            self.write_in_database('Ch1_I', ch1_i_av)
-            self.write_in_database('Ch1_Q', ch1_q_av)
+            if not avg_bef_demod:
+                ch_i = 2*np.mean(ch*cosin, axis=2)
+                ch_q = 2*np.mean(ch*sinus, axis=2)
+                ch_i_av = ch_i.T[0] if not avg_aft_demod else np.mean(ch_i,
+                                                                      axis=0)
+                ch_q_av = ch_q.T[0] if not avg_aft_demod else np.mean(ch_q,
+                                                                      axis=0)
+            else:
+                ch_i = None
+                ch_q = None
+                ch_i_av = 2*np.mean(ch*cosin)
+                ch_q_av = 2*np.mean(ch*sinus)
+            self.write_in_database('Ch%d_I' % index, ch_i_av)
+            self.write_in_database('Ch%d_Q' % index, ch_q_av)
 
-            if self.ch1_trace:
-                ch1_av = ch1 if not average else np.mean(ch1, axis=0)
-                self.write_in_database('Ch1_trace', ch1_av)
+            if getattr(self, 'ch%d_trace' % index):
+                ch_av = ch if not avg_aft_demod else np.mean(ch, axis=0)
+                self.write_in_database('Ch%d_trace' % index, ch_av)
+
+            return freq, cosin, sinus, ch_i, ch_q
+
+        if self.ch1_enabled:
+            freq, cosin, sinus, ch1_i, ch1_q = treat_channel_data(1)
 
         if self.ch2_enabled:
-            f2 = self.format_and_eval_string(self.freq_2)*1e6
-
-            # Remove point that do not belong to a full period.
-            samples_per_period = int(sampling_rate*pack/f2)
-            samples_per_trace = int(ch2.shape[-1])
-            if (samples_per_trace % samples_per_period) != 0:
-                extra = samples_per_trace % samples_per_period
-                ch2 = ch2.T[:-extra].T
-
-            ntraces2, nsamples2 = np.shape(ch2)
-            ch2 = ch2.reshape(int(ntraces2/num_loop), num_loop, nsamples2)
-            phi2 = np.linspace(0, 2*np.pi*f2*((nsamples2-1)*2e-9), nsamples2)
-            c2 = np.cos(phi2)
-            s2 = np.sin(phi2)
-            # The mean value of cos^2 is 0.5 hence the factor 2 to get the
-            # amplitude.
-            ch2_i = 2*np.mean(ch2*c2, axis=2)
-            ch2_q = 2*np.mean(ch2*s2, axis=2)
-            ch2_i_av = ch2_i.T[0] if not average else np.mean(ch2_i, axis=0)
-            ch2_q_av = ch2_q.T[0] if not average else np.mean(ch2_q, axis=0)
-            self.write_in_database('Ch2_I', ch2_i_av)
-            self.write_in_database('Ch2_Q', ch2_q_av)
-            if self.ch2_trace:
-                ch2_av = ch2 if not average else np.mean(ch2, axis=0)
-                self.write_in_database('Ch2_trace', ch2_av)
+            _, _, _, ch2_i, ch2_q = treat_channel_data(2)
 
         if self.ref2:
             ch2_c = ch2_i + 1j*ch2_q
             normed = (ch1_i + 1j*ch1_q)/ch2_c
             chc_i = np.real(normed)
             chc_q = np.imag(normed)
-            # ZL RL: quick fix for single shot data, need to do this properly
-            # chc_i.T[0]
-            chc_i_av = chc_i if not average else np.mean(chc_i, axis=0)
-            chc_q_av = chc_q if not average else np.mean(chc_q, axis=0)
+            # TODO ZL RL: quick fix for single shot data, need to do this
+            # properly chc_i.T[0]
+            chc_i_av = chc_i if not avg_aft_demod else np.mean(chc_i, axis=0)
+            chc_q_av = chc_q if not avg_aft_demod else np.mean(chc_q, axis=0)
             self.write_in_database('Chc_I', chc_i_av)
             self.write_in_database('Chc_Q', chc_q_av)
             if self.ch1_trace:
-                samples_per_period = int(sampling_rate/f1)
+                ch1 = traces[0]
+                ntraces1, _ = np.shape(ch1)
+                samples_per_period = int(sampling_rate/freq)
+
                 samples_per_trace = int(ch1.shape[-1])
-                ch1_c1 = ch1*c1
-                ch1_s1 = ch1*s1
+                ch1_c1 = ch1*cosin
+                ch1_s1 = ch1*sinus
 
                 # We crunch a single dimension to compute I and Q per period
                 shape = (int(ntraces1/num_loop), num_loop,
-                         samples_per_trace//(samples_per_period*pack),
-                         pack*samples_per_period)
+                         samples_per_trace//(samples_per_period),
+                         samples_per_period)
 
                 ch1_c1 = ch1_c1.reshape(shape)
                 ch1_i_t = 2*np.mean(ch1_c1, axis=3)
@@ -239,7 +240,7 @@ class DemodSPTask(InstrumentTask):
                 chc_i_t = np.real(chc_c_t)
                 chc_q_t = np.imag(chc_c_t)
 
-                if not average:
+                if not avg_aft_demod:
                     chc_i_t_av = np.swapaxes(chc_i_t, 0, 1)[0]
                     chc_q_t_av = np.swapaxes(chc_q_t, 0, 1)[0]
                 else:

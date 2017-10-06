@@ -203,8 +203,6 @@ class SPADQ14(DllInstrument):
             avg.append(np.zeros(samples_per_record) if c else np.zeros(1))
 
         chs = tuple([i for i, c in enumerate(channels) if c])
-        buffers = buffers
-        avg = avg
         buffers_ptr = (ctypes.c_void_p*2)(*(b.ctypes.data_as(ctypes.c_void_p)
                                             for b in buffers))
 

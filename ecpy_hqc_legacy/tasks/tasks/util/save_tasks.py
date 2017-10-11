@@ -481,7 +481,7 @@ class _HDF5File(h5py.File):
     def close(self):
         for dataset in self.keys():
             oldshape = self[dataset].shape
-            newshape = (self.attrs['countCalls'], ) + oldshape[1:]
+            newshape = (self.attrs['count_calls'], ) + oldshape[1:]
             self[dataset].resize(newshape)
         super(_HDF5File, self).close()
 
@@ -619,7 +619,7 @@ class SaveFileHDF5Task(SimpleTask):
 
         """
         err_path = self.get_error_path
-        test, traceback = super(SaveFileTask, self).check(*args, **kwargs)
+        test, traceback = super(SaveFileHDF5Task, self).check(*args, **kwargs)
         try:
             full_folder_path = self.format_string(self.folder)
             filename = self.format_string(self.filename)

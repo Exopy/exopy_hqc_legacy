@@ -273,7 +273,7 @@ enamldef SaveFileHDF5View(BaseTaskView):
             Label: lines_lab:
                 text = 'Approximate number of calls'
             Field: lines_val:
-                text := task.callsEstimation
+                text := task.calls_estimation
                 tool_tip = fill(cleandoc('''Estimate how many times this task will be called
                                             during the measure. An order of magnitude estimate is
                                             enough (one or one thousand ?). This helps h5py

@@ -288,10 +288,12 @@ class TinyBilt(VisaInstrument):
     def defined_channels(self):
         """
         """
-        channels = self.ask_for_values('I:L?')
-        if channels:
-            defined_channels = channels[::2]
+        channels = self.ask('I:L?')
 
+        if channels:
+            defined_channels = np.array([s.split(',')
+                                         for s in channels.split(';')],
+                                        dtype=np.uint)[:, 0]
             return defined_channels
         else:
             raise InstrIOError(cleandoc('''Instrument did not return

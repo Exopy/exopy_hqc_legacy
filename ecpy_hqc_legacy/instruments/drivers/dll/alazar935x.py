@@ -238,6 +238,7 @@ class Alazar935x(DllInstrument):
                     data[i] += np.sum(rbuf[i*records_per_buffer:
                                            (i+1)*records_per_buffer -
                                            records_to_ignore_val], 0)
+                    data[i] /= records_per_capture
                 else:
                     data[i][start:stop] = rbuf[i*records_per_buffer:
                                                (i+1)*records_per_buffer -
@@ -251,10 +252,6 @@ class Alazar935x(DllInstrument):
         # Abort transfer.
         board.abortAsyncRead()
 
-        if average:
-            for c in range(channel_count):
-                data[c] /= records_per_capture
-
         # Check card is not saturated
         maxADC = 2**16-100
         minADC = 100
@@ -266,16 +263,14 @@ class Alazar935x(DllInstrument):
 
         # XXX convert to volt
 
-        i = 0
         data_f = []
-        for c in channels_tuple:
+        for i, c in enumerate(channels_tuple):
             if c:
                 if average:
-                    data_f.append(np.array([data[i]]))
+                    data_f.append(np.array(data[i]))
                 else:
                     data_f.append(data[i])
-                i += 1
             else:
-                data_f.append(np.zeros(2))
+                data_f.append(np.zeros(1))
 
         return data_f

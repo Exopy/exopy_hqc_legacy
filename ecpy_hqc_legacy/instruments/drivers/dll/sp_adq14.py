@@ -271,10 +271,9 @@ class SPADQ14(DllInstrument):
             for c in chs:
                 avg[c] *= 1.9/65535
         else:
-            for c in chs:
-                b = buffers[c]
-                b.reshape((-1, samples_per_record))
-                b *= 1.9/65535
+            buffers = [np.reshape(b.astype(np.float32, copy=False),
+                                  (-1, samples_per_record)) * 1.9/65535
+                       for b in buffers]
 
         return avg if average else buffers
 

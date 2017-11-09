@@ -20,7 +20,7 @@ import enaml
 from ecpy.tasks.api import RootTask
 from ecpy.tasks.tasks.logic.loop_task import LoopTask
 from ecpy.testing.util import show_and_close_widget
-from ecpy_hqc_legacy.tasks.tasks.instr.set_dc_voltage_task\
+from ecpy_hqc_legacy.tasks.tasks.instr.dc_tasks\
     import (SetDCVoltageTask, MultiChannelVoltageSourceInterface)
 
 with enaml.imports():
@@ -188,7 +188,7 @@ class TestSetDCVoltageTask(object):
 
 @pytest.mark.ui
 def test_set_dc_voltage_view(windows, root_view, task_workbench):
-    """Test RFPowerView widget outisde of a LoopTask.
+    """Test SetDCVoltageView widget outisde of a LoopTask.
 
     """
     task = SetDCVoltageTask(name='Test')
@@ -197,8 +197,8 @@ def test_set_dc_voltage_view(windows, root_view, task_workbench):
 
 
 @pytest.mark.ui
-def test_rf_power_view2(windows, root_view, task_workbench):
-    """Test RFPowerView widget inside of a LoopTask.
+def test_set_dc_voltage_view2(windows, root_view, task_workbench):
+    """Test SetDCVoltageView widget inside of a LoopTask.
 
     """
     task = SetDCVoltageTask(name='Test')

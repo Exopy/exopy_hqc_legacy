@@ -130,7 +130,9 @@ class YokogawaGS200(VisaInstrument):
     @instrument_property
     @secure_communication()
     def current(self):
-        """Current getter method. NB: does not check the current function.
+        """Current getter method.
+
+        NB: does not check the current function.
 
         """
         current = self.ask_for_values(":SOURce:LEVel?")[0]

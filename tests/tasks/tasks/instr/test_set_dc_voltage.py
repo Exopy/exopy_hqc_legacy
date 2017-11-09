@@ -25,7 +25,7 @@ from ecpy_hqc_legacy.tasks.tasks.instr.dc_tasks\
 
 with enaml.imports():
     from ecpy.tasks.tasks.logic.views.loop_view import LoopView
-    from ecpy_hqc_legacy.tasks.tasks.instr.views.set_dc_voltage_view\
+    from ecpy_hqc_legacy.tasks.tasks.instr.views.dc_views\
         import SetDcVoltageView
 
 from .instr_helper import InstrHelper, InstrHelperStarter, PROFILES, DRIVERS

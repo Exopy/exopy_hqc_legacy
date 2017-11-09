@@ -441,7 +441,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                    'ecpy_hqc_legacy.Legacy.ZVA24']
                 Task:
                     task = 'dc_tasks:SetDCVoltageTask'
-                    view = 'views.set_dc_voltage_view:SetDcVoltageView'
+                    view = 'views.dc_views:SetDcVoltageView'
                     instruments = ['ecpy_hqc_legacy.Legacy.YokogawaGS200',
                                    'ecpy_hqc_legacy.Legacy.Yokogawa7651']
                     metadata = {'loopable': True}

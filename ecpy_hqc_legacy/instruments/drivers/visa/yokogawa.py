@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -57,6 +57,7 @@ class YokogawaGS200(VisaInstrument):
     @secure_communication()
     def voltage(self):
         """Voltage getter method. NB: does not check the current function.
+
         """
         voltage = self.ask_for_values(":SOURce:LEVel?")[0]
         if voltage is not None:
@@ -68,6 +69,7 @@ class YokogawaGS200(VisaInstrument):
     @secure_communication()
     def voltage(self, set_point):
         """Voltage setter method. NB: does not check the current function.
+
         """
         self.write(":SOURce:LEVel {}".format(set_point))
         value = self.ask_for_values('SOURce:LEVel?')[0]
@@ -129,6 +131,7 @@ class YokogawaGS200(VisaInstrument):
     @secure_communication()
     def current(self):
         """Current getter method. NB: does not check the current function.
+
         """
         current = self.ask_for_values(":SOURce:LEVel?")[0]
         if current is not None:
@@ -139,7 +142,10 @@ class YokogawaGS200(VisaInstrument):
     @current.setter
     @secure_communication()
     def current(self, set_point):
-        """Current setter method. NB: does not check the current function.
+        """Current setter method.
+
+        NB: does not check the current function.
+
         """
         self.write(":SOURce:LEVel {}".format(set_point))
         value = self.ask_for_values('SOURce:LEVel?')[0]
@@ -197,6 +203,7 @@ class YokogawaGS200(VisaInstrument):
     @secure_communication()
     def function(self):
         """Function getter method
+
         """
         value = self.ask('SOURce:FUNCtion?')
         if value is not None:
@@ -208,6 +215,7 @@ class YokogawaGS200(VisaInstrument):
     @secure_communication()
     def function(self, mode):
         """Function setter method
+
         """
         volt = re.compile('VOLT', re.IGNORECASE)
         curr = re.compile('CURR', re.IGNORECASE)
@@ -238,6 +246,7 @@ class YokogawaGS200(VisaInstrument):
     @secure_communication()
     def output(self):
         """Output getter method
+
         """
         value = self.ask_for_values(':OUTPUT?')
         if value is not None:
@@ -249,9 +258,13 @@ class YokogawaGS200(VisaInstrument):
     @secure_communication()
     def output(self, value):
         """Output setter method
+
         """
         on = re.compile('on', re.IGNORECASE)
         off = re.compile('off', re.IGNORECASE)
+        # output is only switched on if voltage or current is 0
+        # note that self.voltage gets the source level, which is the voltage
+        # in voltage mode, and the current in current mode.
         if self.voltage == 0:
             if on.match(value) or value == 1:
                 self.write(':OUTPUT ON')

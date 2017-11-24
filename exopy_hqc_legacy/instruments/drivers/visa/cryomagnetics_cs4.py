@@ -60,35 +60,60 @@ class CS4(VisaInstrument):
         # set lower limit to lowest value
         self.write('LLIM -7')
 
-    def go_to_field(self, value, rate, auto_stop_heater=True,
-                    post_switch_wait=30):
+    def evaluate_state(self, value):
+        """Evaluate if a sweep in needed, and if the heater need to be
+        turned on.
+        """
+        state = {'sw_needed': abs(self.persistent_field - value) >= OUT_FLUC,
+                 'heater_off': self.heater_state == 'Off'}
+
+
+    def check_success(self, target, time):
+        """Check that the magnetic field is at target value.
+        """
+        niter = 0
+        while abs(self.out_field - target) >= OUT_FLUC:
+        sleep(5)
+        niter += 1
+        if niter > MAXITER:
+            raise InstrIOError(cleandoc('''CS4 didn't set the
+                field to {} after {} sec'''.format(target, time + 5 * MAXITER)))
+
+    def prepare_heater_on(self):
+        """
+        """
+        # heater off: fast sweep rate
+        span = abs(self.out_field - self.persistent_field)
+        self.out_field = self.persistent_field
+        return (self.out_field, span, self.fast_sweep_rate)
+
+    def heater_on(self):
+        """Turn heater on.
+        """
+        self.heater_state = 'On'
+        sleep(1)
+
+    def go_to_field(self, value, rate):
         """Ramp up the field to the specified value.
 
         """
-        self.field_sweep_rate = rate
+        # heater on: "slow" (specified) sweep rate
+        self.sweep_field_rate = rate
+        span = abs(self.out_field - value)
+        self.out_field = value
+        return (value, span, rate)
 
-        if abs(self.persistent_field - value) >= OUT_FLUC:
 
-            if self.heater_state == 'Off':
-                self.target_field = self.persistent_field
-                self.heater_state = 'On'
-                sleep(1)
+    def stop_heater(self, post_switch_wait):
+        """Stop heater and sweep out field to 0.
+        """
+        # heater off: fast swep rate
+        self.heater_state = 'Off'
+        sleep(post_switch_wait)
+        sw_span = abs(self.out_field)
+        self.out_field = 0.
+        return 0., sw_span, self.fast_sweep_rate
 
-            self.target_field = value
-
-        if auto_stop_heater:
-            self.heater_state = 'Off'
-            sleep(post_switch_wait)
-            self.activity = 'To zero'
-            wait = 60 * abs(self.target_field) / self.field_sweep_rate
-            sleep(wait)
-            niter = 0
-            while abs(self.target_field) >= OUT_FLUC:
-                sleep(5)
-                niter += 1
-                if niter > MAXITER:
-                    raise InstrIOError(cleandoc('''CS4 didn't set the
-                        field to zero after {} sec'''.format(5 * MAXITER)))
 
     def check_connection(self):
         pass
@@ -130,7 +155,8 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def fast_sweep_rate(self):
-        """Rate at which to ramp the field when the switch heater is off (T/min).
+        """Rate at which to ramp the field when the switch heater is off
+        (T/min).
 
         """
         rate = float(self.ask('RATE? 5'))
@@ -143,27 +169,25 @@ class CS4(VisaInstrument):
         self.write('RATE 5 {}'.format(rate))
 
     @instrument_property
-    def target_field(self):
+    def out_field(self):
         """Field that the source will try to reach.
 
         """
+        # in T
         return float(self.ask('IOUT?').strip(' T'))
 
-    @target_field.setter
+    @out_field.setter
     @secure_communication()
-    def target_field(self, target):
+    def out_field(self, target):
         """Sweep the output intensity to reach the specified ULIM (in T)
         at a rate depending on the intensity, as defined in the range(s).
 
         """
         self.write('ULIM {}'.format(target))
-
         if self.heater_state == 'Off':
-            wait = 60 * abs(self.target_field - target) / self.fast_sweep_rate
             self.write('SWEEP UP FAST')
         else:
-            wait = 60 * abs(self.target_field - target) / self.field_sweep_rate
-            # need to specify slow after a fast sweep !
+            # need to specify slow in case there was a fast sweep before
             self.write('SWEEP UP SLOW')
 
         sleep(wait)

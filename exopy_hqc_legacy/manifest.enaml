@@ -185,6 +185,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
                 Drivers:
+                    manufacturer = 'Cryomagnetics'
+                    settings = {'MagnetConversionSetting': {}}
+                    Driver:
+                        driver = 'cryomagnetics_g4:C4G'
+                        model  = '4G-100'
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaRS232': {'resource_class': 'INSTR'}
+                                       }
+                Drivers:
                     manufacturer = 'Tektronix'
                     Driver:
                         driver = 'tektro_awg:AWG'

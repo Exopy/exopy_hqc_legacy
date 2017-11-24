@@ -6,7 +6,7 @@
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Tests for the ApplyMagFieldTask
+"""Tests for the PNA tasks
 
 """
 from multiprocessing import Event

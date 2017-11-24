@@ -53,6 +53,9 @@ _GET_HEATER_DICT = {0: 'Off Magnet at Zero',
                     5: 'Heater Fault',
                     8: 'No Switch Fitted'}
 
+OUT_FLUC = 2e-4
+MAXITER = 10
+
 
 class IPS12010(VisaInstrument):
     """Driver for the superconducting magnet power supply IPS120-10
@@ -80,35 +83,54 @@ class IPS12010(VisaInstrument):
         self.set_communications_protocol(False, True)
         self.set_mode('TESLA')
 
-    def go_to_field(self, value, rate, auto_stop_heater=True,
-                    post_switch_wait=30):
+    def evaluate_state(self, value):
+        """Evaluate if a sweep in needed, and if the heater need to be
+        turned on.
+        """
+        state = {'sw_needed': abs(self.target_field - value) >= OUT_FLUC,
+                 'heater_off': self.heater_state == 'OFF'}
+
+    def check_success(self, target, time):
+        """Check that the magnetic field is at target value.
+        """
+        it = 0
+        while self.check_output() == 'Changing' and it < MAXITER:
+            sleep(5)
+            it += 1
+        if abs(self.out_field - target) >= OUT_FLUC:
+            raise InstrIOError(cleandoc('''IPS120-10 didn't set the
+                field to {} after {} sec'''.format(target, time)))
+
+    def prepare_heater_on(self):
         """
         """
-        if self.target_field != value:
-            waiting_time = abs(value - self.target_field)/rate*60
-            self.field_sweep_rate = rate
+        span = abs(self.target_field - self.persistent_field)
+        self.activity = 'To set point'
+        return (self.target_field, span, self.field_sweep_rate)
 
-            if self.heater_state == 'OFF':
-                self.target_field = self.persistent_field
-                self.activity = 'To set point'
-                sleep(1)
-                while self.check_output() == 'Changing':
-                    sleep(1)
-                self.heater_state = 'ON'
-                sleep(1)
+    def heater_on(self):
+        """
+        """
+        self.heater_state = 'ON'
+        sleep(1)
 
-            self.target_field = value
-            sleep(waiting_time)
-            while self.check_output() == 'Changing':
-                sleep(1)
+    def go_to_field(self, value, rate):
+        """Sweep to target field
+        """
+        self.sweep_field_rate = rate
+        self.target_field = value
+        span = abs(self.persistent_field - value)
+        self.activity = 'To set point'
+        return (value, span, rate)
 
-        if auto_stop_heater:
-            self.heater_state = 'OFF'
-            sleep(post_switch_wait)
-            self.activity = 'To zero'
-            sleep(1)
-            while self.check_output() == 'Changing':
-                sleep(1)
+    def stop_heater(self, post_switch_wait):
+        """Stop heater and sweep out field to 0.
+        """
+        self.heater_state = 'OFF'
+        sleep(post_switch_wait)
+        sw_span = abs(self.out_field)
+        self.activity = 'To zero'
+        return 0., sw_span, self.field_sweep_rate
 
     def check_output(self):
         """

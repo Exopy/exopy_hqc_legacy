@@ -9,6 +9,7 @@
 """Task to apply a magnetic field.
 
 """
+from time import sleep
 import numbers
 
 from atom.api import (Unicode, Float, Bool, set_default)
@@ -37,7 +38,7 @@ class ApplyMagFieldTask(InstrumentTask):
     parallel = set_default({'activated': True, 'pool': 'instr'})
     database_entries = set_default({'field': 0.01})
 
-    def watchful_wait(self, target, sweep_span, rate):
+    def set_supervision(self, target, sweep_span, rate):
         """Wait for a field sweep, listening for a stop command
         Check the target field is reached in the end.
         When a stop is recieved, update task parameters to stop.
@@ -53,19 +54,21 @@ class ApplyMagFieldTask(InstrumentTask):
 
         """
         wait = 60 * sweep_span / rate
-        wait_step = 30
+        wait_step = 10
         time = 0
         while not self.root.should_stop.is_set() and time < wait:
+            print('stop?', self.root.should_stop.is_set())
             sleep(wait_step)
             time += wait_step
-
+            print(time)
         if self.root.should_stop.is_set():
+            print('entering stop')
             # the update all the parameters to stop here:
-            self.target = self.driver.persistent_field
+            self.driver.target = self.driver.persistent_field
             self.auto_stop_heater = False
             return False
 
-        self.driver.check_success(self, target, time)
+        self.driver.check_success(target, time)
         return True
 
     def perform(self, target_value=None):
@@ -81,21 +84,23 @@ class ApplyMagFieldTask(InstrumentTask):
         if target_value is None:
             target_value = self.format_and_eval_string(self.field)
 
-        (sw_needed, heater_on) = self.driver.evaluate_state(target_value)
+        (sw_needed, heater_off) = self.driver.evaluate_state(target_value)
         if sw_needed:
             # turn heater on
             if heater_off:
                 target, sw_span, rate = self.driver.prepare_heater_on()
-                if self.watchful_set(target, sw_span, rate):
-                    self.heater_on()
+                if self.set_supervision(target, sw_span, rate):
+                    self.driver.heater_on()
+                else:
+                    pass
 
             # set the magnetic field
-            target, sw_span, rate = self.go_to_field(target_value, self.rate)
-            self.watchful_set(target, sw_span, rate)
+            target, sw_span, rate = self.driver.go_to_field(target_value, self.rate)
+            self.set_supervision(target, sw_span, rate)
 
         # turn off heater
         if self.auto_stop_heater:
-            target, sw_span, rate = self.stop_heater(self.post_switch_wait)
-            self.watchful_set(target, sw_span, rate)
+            target, sw_span, rate = self.driver.stop_heater(self.post_switch_wait)
+            self.set_supervision(target, sw_span, rate)
 
         self.write_in_database('field', target_value)

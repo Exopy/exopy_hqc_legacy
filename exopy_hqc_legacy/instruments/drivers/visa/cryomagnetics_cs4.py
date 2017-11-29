@@ -11,6 +11,7 @@
 """
 from inspect import cleandoc
 from time import sleep
+from collections import OrderedDict
 
 from ..driver_tools import (InstrIOError, secure_communication,
                             instrument_property)
@@ -64,20 +65,23 @@ class CS4(VisaInstrument):
         """Evaluate if a sweep in needed, and if the heater need to be
         turned on.
         """
-        state = {'sw_needed': abs(self.persistent_field - value) >= OUT_FLUC,
-                 'heater_off': self.heater_state == 'Off'}
-
+        sw_needed = (abs(self.persistent_field - value) >= OUT_FLUC)
+        state = OrderedDict()
+        state['sw_needed'] = sw_needed 
+        state['heater_off'] = self.heater_state == 'Off'
+        return state.values()
 
     def check_success(self, target, time):
         """Check that the magnetic field is at target value.
         """
         niter = 0
         while abs(self.out_field - target) >= OUT_FLUC:
-        sleep(5)
-        niter += 1
-        if niter > MAXITER:
-            raise InstrIOError(cleandoc('''CS4 didn't set the
-                field to {} after {} sec'''.format(target, time + 5 * MAXITER)))
+            sleep(5)
+            niter += 1
+            if niter > MAXITER:
+                raise InstrIOError(cleandoc('''CS4 didn't set the field 
+                      to {} after {} sec'''.format(target, 
+                      time + 5 * MAXITER)))
 
     def prepare_heater_on(self):
         """
@@ -85,7 +89,7 @@ class CS4(VisaInstrument):
         # heater off: fast sweep rate
         span = abs(self.out_field - self.persistent_field)
         self.out_field = self.persistent_field
-        return (self.out_field, span, self.fast_sweep_rate)
+        return (self.persistent_field, span, self.fast_sweep_rate)
 
     def heater_on(self):
         """Turn heater on.
@@ -98,7 +102,7 @@ class CS4(VisaInstrument):
 
         """
         # heater on: "slow" (specified) sweep rate
-        self.sweep_field_rate = rate
+        self.field_sweep_rate = rate
         span = abs(self.out_field - value)
         self.out_field = value
         return (value, span, rate)
@@ -112,6 +116,7 @@ class CS4(VisaInstrument):
         sleep(post_switch_wait)
         sw_span = abs(self.out_field)
         self.out_field = 0.
+        print('fast sweep rate', self.fast_sweep_rate)
         return 0., sw_span, self.fast_sweep_rate
 
 
@@ -159,6 +164,7 @@ class CS4(VisaInstrument):
         (T/min).
 
         """
+        print('evaluating rate')
         rate = float(self.ask('RATE? 5'))
         return rate * (60 * self.field_current_ratio)
 

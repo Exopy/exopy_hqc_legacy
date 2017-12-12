@@ -64,7 +64,6 @@ class C4G(CS4):
         """Last known value of the magnet field, in T.
 
         """
-        print(self.ask('IMAG?'))
         return float(self.ask('IMAG?').strip('kG')) / 10
 
     @instrument_property
@@ -82,19 +81,3 @@ class C4G(CS4):
         # converted from T/min to A/s
         rate /= 60 * self.field_current_ratio
         self.write('RATE 0 {};'.format(rate))
-        
-    @instrument_property
-    def fast_sweep_rate(self):
-        """Rate at which to ramp the field when the switch heater is off
-        (T/min).
-
-        """
-        print('evaluating rate in g4')
-        rate = float(self.ask('RATE? 5'))
-        return rate * (60 * self.field_current_ratio)
-
-    @field_sweep_rate.setter
-    @secure_communication()
-    def fast_sweep_rate(self, rate):
-        rate /= 60 * self.field_current_ratio
-        self.write('RATE 5 {}'.format(rate))

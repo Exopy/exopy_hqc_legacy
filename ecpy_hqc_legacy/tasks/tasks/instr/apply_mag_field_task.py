@@ -58,19 +58,20 @@ class ApplyMagFieldTask(InstrumentTask):
         wait = 60 * sweep_span / rate
         wait_step = 10
         time = 0
-        while not self.root.should_stop.is_set() and time < wait:
-            print('stop?', self.root.should_stop.is_set())
+        while time < wait and not self.root.should_stop.is_set():
             sleep(wait_step)
             time += wait_step
             print(time)
             
+        print('Wait over. Flag status %s' % self.root.should_stop.is_set())
+            
         if self.root.should_stop.is_set():
-            print('entering stop')
-            # the update all the parameters to stop here:
-            self.driver.target = self.driver.persistent_field
+            # update all the parameters to stop here:
+            print('stopping at %s' % self.driver.out_field)
+            self.driver.out_field = self.driver.out_field
             self.auto_stop_heater = False
             return False
-
+        
         self.driver.check_success(target, time)
         return True
 
@@ -104,6 +105,7 @@ class ApplyMagFieldTask(InstrumentTask):
         # turn off heater
         if self.auto_stop_heater:
             target, sw_span, rate = self.driver.stop_heater(self.post_switch_wait)
+            print('stop heater rate %s %s' % (rate, self.driver.fast_sweep_rate))
             self.set_supervision(target, sw_span, rate)
 
         self.write_in_database('field', target_value)

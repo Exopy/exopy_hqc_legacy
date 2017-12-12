@@ -171,9 +171,10 @@ class CS4(VisaInstrument):
         rate = float(self.ask('RATE? 5'))
         return rate * (60 * self.field_current_ratio)
 
-    @field_sweep_rate.setter
+    @fast_sweep_rate.setter
     @secure_communication()
     def fast_sweep_rate(self, rate):
+        print('setting the fast rate')
         rate /= 60 * self.field_current_ratio
         self.write('RATE 5 {}'.format(rate))
 

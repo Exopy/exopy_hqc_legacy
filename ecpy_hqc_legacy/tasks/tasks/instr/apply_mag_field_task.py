@@ -62,16 +62,14 @@ class ApplyMagFieldTask(InstrumentTask):
             sleep(wait_step)
             time += wait_step
             print(time)
-            
-        print('Wait over. Flag status %s' % self.root.should_stop.is_set())
-            
+
         if self.root.should_stop.is_set():
             # update all the parameters to stop here:
-            print('stopping at %s' % self.driver.out_field)
-            self.driver.out_field = self.driver.out_field
+            self.driver.stop_sweep()
+            self.driver.heater_off()
             self.auto_stop_heater = False
             return False
-        
+
         self.driver.check_success(target, time)
         return True
 
@@ -104,7 +102,7 @@ class ApplyMagFieldTask(InstrumentTask):
 
         # turn off heater
         if self.auto_stop_heater:
-            target, sw_span, rate = self.driver.stop_heater(self.post_switch_wait)
+            target, sw_span, rate = self.driver.stop(self.post_switch_wait)
             print('stop heater rate %s %s' % (rate, self.driver.fast_sweep_rate))
             self.set_supervision(target, sw_span, rate)
 

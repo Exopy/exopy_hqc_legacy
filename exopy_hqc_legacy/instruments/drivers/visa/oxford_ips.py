@@ -94,7 +94,7 @@ class IPS12010(VisaInstrument):
         while self.check_output() == 'Changing' and it < MAXITER:
             sleep(5)
             it += 1
-        if abs(self.out_field - target) >= OUT_FLUC:
+        if abs(self.persistent_field - target) >= OUT_FLUC:
             raise InstrIOError(cleandoc('''IPS120-10 didn't set the
                 field to {} after {} sec'''.format(target, time)))
 
@@ -111,6 +111,12 @@ class IPS12010(VisaInstrument):
         self.heater_state = 'ON'
         sleep(1)
 
+    def heater_off(self):
+        """
+        """
+        self.heater_state = 'OFF'
+        sleep(1)
+
     def go_to_field(self, value, rate):
         """Sweep to target field
         """
@@ -120,12 +126,19 @@ class IPS12010(VisaInstrument):
         self.activity = 'To set point'
         return (value, span, rate)
 
-    def stop_heater(self, post_switch_wait):
+    def stop_sweep(self):
+        """Stop the field sweep at the current value.
+
+        """
+        self.driver.target_field = self.driver.persistent_field
+        self.activity = 'To set point'
+
+    def stop(self, post_switch_wait):
         """Stop heater and sweep out field to 0.
         """
         self.heater_state = 'OFF'
         sleep(post_switch_wait)
-        sw_span = abs(self.out_field)
+        sw_span = abs(self.persistent_field)
         self.activity = 'To zero'
         return 0., sw_span, self.field_sweep_rate
 
@@ -351,6 +364,23 @@ class IPS12010(VisaInstrument):
     @field_sweep_rate.setter
     @secure_communication()
     def field_sweep_rate(self, rate):
+        """
+        """
+        # tesla/min
+        result = self.ask("T{}".format(rate))
+        if result.startswith('?'):
+            raise InstrIOError(cleandoc('''IPS120-10 did not set the
+                    rate field to {}'''.format(rate)))
+
+    @instrument_property
+    def fast_sweep_rate(self):
+        """
+        """
+        return float(self.read_parameter('Field sweep rate'))
+
+    @field_sweep_rate.setter
+    @secure_communication()
+    def fast_sweep_rate(self, rate):
         """
         """
         # tesla/min

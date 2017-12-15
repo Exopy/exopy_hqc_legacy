@@ -67,7 +67,7 @@ class CS4(VisaInstrument):
         """
         sw_needed = (abs(self.persistent_field - value) >= OUT_FLUC)
         state = OrderedDict()
-        state['sw_needed'] = sw_needed 
+        state['sw_needed'] = sw_needed
         state['heater_off'] = self.heater_state == 'Off'
         return state.values()
 
@@ -79,8 +79,8 @@ class CS4(VisaInstrument):
             sleep(5)
             niter += 1
             if niter > MAXITER:
-                raise InstrIOError(cleandoc('''CS4 didn't set the field 
-                      to {} after {} sec'''.format(target, 
+                raise InstrIOError(cleandoc('''CS4 didn't set the field
+                      to {} after {} sec'''.format(target,
                       time + 5 * MAXITER)))
 
     def prepare_heater_on(self):
@@ -97,6 +97,12 @@ class CS4(VisaInstrument):
         self.heater_state = 'On'
         sleep(1)
 
+    def heater_off(self):
+        """Turn heater off.
+        """
+        self.heater_state = 'Off'
+        sleep(1)
+
     def go_to_field(self, value, rate):
         """Ramp up the field to the specified value.
 
@@ -107,9 +113,15 @@ class CS4(VisaInstrument):
         self.out_field = value
         return (value, span, rate)
 
+    def stop_sweep(self):
+        """Stop the field sweep at the current value.
 
-    def stop_heater(self, post_switch_wait):
+        """
+        self.driver.out_field = self.driver.out_field
+
+    def stop(self, post_switch_wait):
         """Stop heater and sweep out field to 0.
+
         """
         # heater off: fast swep rate
         self.heater_state = 'Off'

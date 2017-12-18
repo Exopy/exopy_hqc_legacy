@@ -11,12 +11,21 @@
 """
 from types import MethodType
 
-from exopy_hqc_legacy.instruments.drivers.driver_tools import BaseInstrument
+from exopy_hqc_legacy.instruments.drivers.driver_tools import (BaseInstrument,
+                                                               InstrJob)
 
 
 PROFILES = 'exopy.instruments.profiles'
 
 DRIVERS = 'exopy.instruments.drivers'
+
+
+class DummyJob(InstrJob):
+    """Job checking nothing.
+
+    """
+    def __init__(self):
+        super(DummyJob, self).__init__(lambda: True, 0.1, lambda: None)
 
 
 class HelperMeta(type):

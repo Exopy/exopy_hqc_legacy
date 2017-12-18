@@ -25,7 +25,8 @@ with enaml.imports():
     from exopy_hqc_legacy.tasks.tasks.instr.views.apply_mag_field_view\
         import ApplyMagFieldView
 
-from .instr_helper import InstrHelper, InstrHelperStarter, PROFILES, DRIVERS
+from .instr_helper import (InstrHelper, InstrHelperStarter, DummyJob,
+                           PROFILES, DRIVERS)
 
 
 class TestApplyMagFieldTask(object):
@@ -39,11 +40,16 @@ class TestApplyMagFieldTask(object):
         self.root.run_time[DRIVERS] = {'Test': (InstrHelper,
                                                 InstrHelperStarter())}
         self.root.run_time[PROFILES] =\
-            {'Test1': {'connections': {'C': {'owner': []}},
-                       'settings': {'S': {'make_ready': [None],
-                                          'go_to_field': [None],
-                                          'check_connection': [True]}}
-                       }
+            {'Test1':
+                {'connections': {'C': {'owner': [],
+                                       'output_fluctuations': 1e-6,
+                                       'heater_state': []}},
+                 'settings': {'S': {'sweep_to_field': [DummyJob(),  DummyJob(),
+                                                       DummyJob()],
+                                    'sweep_to_persistent_field': [DummyJob()],
+                                    'read_persistent_field': [1],
+                                    'check_connection': [True]}}
+                 }
              }
 
         # This is set simply to make sure the test of InstrTask pass.
@@ -82,18 +88,6 @@ class TestApplyMagFieldTask(object):
 
         self.root.prepare()
         self.task.perform()
-        assert self.root.get_from_database('Test_field') == 2.0
-
-    def test_perform2(self):
-        """Test multiple run when connection is maintained.
-
-        """
-        self.task.field = '2.0'
-
-        self.root.prepare()
-        self.task.perform()
-        self.task.perform()
-        # In case of fail make_ready would be called twice.
         assert self.root.get_from_database('Test_field') == 2.0
 
 

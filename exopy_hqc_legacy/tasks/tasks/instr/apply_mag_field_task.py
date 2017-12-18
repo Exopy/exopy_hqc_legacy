@@ -9,7 +9,6 @@
 """Task to apply a magnetic field.
 
 """
-from time import sleep
 import numbers
 
 from atom.api import (Unicode, Float, Bool, set_default)
@@ -38,38 +37,11 @@ class ApplyMagFieldTask(InstrumentTask):
     parallel = set_default({'activated': True, 'pool': 'instr'})
     database_entries = set_default({'field': 0.01})
 
-    def set_supervision(self, target, sweep_span, rate):
-        """Wait for a field sweep, listening for a stop command
-        Check the target field is reached in the end.
-        When a stop is recieved, update task parameters to stop.
-
-        target : float
-            Target field in T
-
-        sweep_span : float
-            Span of the magnetic field sweep in T
-
-        rate : float
-            Sweep rate in T/min
+    def check_for_interruption(self):
+        """Check if the user required an interruption.
 
         """
-        wait = 60 * sweep_span / rate
-        wait_step = 10
-        time = 0
-        while time < wait and not self.root.should_stop.is_set():
-            sleep(wait_step)
-            time += wait_step
-            print(time)
-        print('Wait over. Flag status %s' % self.root.should_stop.is_set())
-        if self.root.should_stop.is_set():
-            # update all the parameters to stop here:
-            self.driver.stop_sweep()
-            self.driver.heater_off()
-            self.auto_stop_heater = False
-            return False
-
-        self.driver.check_success(target, time)
-        return True
+        return self.root.should_stop.is_set()
 
     def perform(self, target_value=None):
         """Apply the specified magnetic field.
@@ -79,29 +51,38 @@ class ApplyMagFieldTask(InstrumentTask):
         if (self.driver.owner != self.name or
                 not self.driver.check_connection()):
             self.driver.owner = self.name
-            self.driver.make_ready()
 
         if target_value is None:
             target_value = self.format_and_eval_string(self.field)
 
-        (sw_needed, heater_off) = self.driver.evaluate_state(target_value)
-        if sw_needed:
-            # turn heater on
-            if heater_off:
-                target, sw_span, rate = self.driver.prepare_heater_on()
-                if self.set_supervision(target, sw_span, rate):
-                    self.driver.heater_on()
-                else:
-                    pass
+        driver = self.driver
+        normal_end = True
+        if (abs(driver.read_persistent_field() - target_value) >
+                driver.output_fluctuations):
+            job = driver.sweep_to_persistent_field()
+            if job.wait_for_completion(self.check_for_interruption,
+                                       timeout=60, refresh_time=1):
+                driver.heater_state = 'On'
+            else:
+                return False
 
             # set the magnetic field
-            target, sw_span, rate = self.driver.go_to_field(target_value, self.rate)
-            self.set_supervision(target, sw_span, rate)
+            job = driver.sweep_to_field(target_value, self.rate)
+            normal_end = job.wait_for_completion(self.check_for_interruption,
+                                                 timeout=60,
+                                                 refresh_time=10)
+
+        # Always close the switch heater when the ramp was interrupted.
+        if not normal_end:
+            driver.heater_state = 'Off'
+            self.write_in_database('field', driver.read_persistent_field())
+            return False
 
         # turn off heater
         if self.auto_stop_heater:
-            target, sw_span, rate = self.driver.stop(self.post_switch_wait)
-            print('stop heater rate %s %s' % (rate, self.driver.fast_sweep_rate))
-            self.set_supervision(target, sw_span, rate)
+            driver.heater_state = 'Off'
+            job = driver.sweep_to_field(0)
+            job.wait_for_completion(self.check_for_interruption,
+                                    timeout=60, refresh_time=1)
 
         self.write_in_database('field', target_value)

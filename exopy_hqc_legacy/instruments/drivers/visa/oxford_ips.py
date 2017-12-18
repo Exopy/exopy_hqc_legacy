@@ -12,7 +12,7 @@
 from inspect import cleandoc
 from time import sleep
 from ..driver_tools import (InstrIOError, secure_communication,
-                            instrument_property)
+                            instrument_property, InstrJob)
 from ..visa_tools import VisaInstrument
 
 _PARAMETER_DICT = {'Demand current': 0,
@@ -50,14 +50,16 @@ _GET_HEATER_DICT = {0: 'Off Magnet at Zero',
                     5: 'Heater Fault',
                     8: 'No Switch Fitted'}
 
-OUT_FLUC = 2e-4
-MAXITER = 10
-
 
 class IPS12010(VisaInstrument):
     """Driver for the superconducting magnet power supply IPS120-10
 
     """
+
+    #: Typical fluctuations at the ouput of the instrument.
+    #: We use a class variable since we expect this to be identical for all
+    #: instruments.
+    OUTPUT_FLUCTUATIONS = 2e-4
 
     caching_permissions = {'heater_state': True,
                            'target_current': True,
@@ -73,87 +75,81 @@ class IPS12010(VisaInstrument):
         self.write_termination = '\r'
         self.read_termination = '\r'
 
-    def make_ready(self):
+        if 'output_fluctuations' in connection_info:
+            self.output_fluctuations = connection_info['output_fluctuations']
+        else:
+            self.output_fluctuations = self.OUTPUT_FLUCTUATIONS
+
+    def open_connection(self, **para):
+        """Open the connection and set up the parameters.
+
         """
-        """
+        super(IPS12010, self).open_connection(**para)
         self.control = 'Remote & Unlocked'
         self.set_communications_protocol(False, True)
         self.set_mode('TESLA')
 
-    def evaluate_state(self, value):
-        """Evaluate if a sweep in needed, and if the heater need to be
-        turned on.
-        """
-        state = {'sw_needed': abs(self.target_field - value) >= OUT_FLUC,
-                 'heater_off': self.heater_state == 'OFF'}
+    def read_persistent_current(self):
+        """Read the current value of the persistent current.
 
-    def check_success(self, target, time):
-        """Check that the magnetic field is at target value.
         """
-        it = 0
-        while self.check_output() == 'Changing' and it < MAXITER:
-            sleep(5)
-            it += 1
-        if abs(self.persistent_field - target) >= OUT_FLUC:
-            raise InstrIOError(cleandoc('''IPS120-10 didn't set the
-                field to {} after {} sec'''.format(target, time)))
+        return float(self.read_parameter('Persistent magnet current'))
 
-    def prepare_heater_on(self):
-        """
-        """
-        span = abs(self.target_field - self.persistent_field)
-        self.activity = 'To set point'
-        return (self.target_field, span, self.field_sweep_rate)
+    def read_persistent_field(self):
+        """Read the current value of the persistent field.
 
-    def heater_on(self):
         """
-        """
-        self.heater_state = 'ON'
-        sleep(1)
+        return float(self.read_parameter('Persistent magnet field'))
 
-    def heater_off(self):
-        """
-        """
-        self.heater_state = 'OFF'
-        sleep(1)
+    def is_target_reached(self):
+        """Check whether the target field has been reached.
 
-    def go_to_field(self, value, rate):
-        """Sweep to target field
         """
-        self.sweep_field_rate = rate
+        status = self._get_status()
+        output = int(status[11])
+        if not output:
+            return (abs(self.read_persistent_field() - self.target_field) <
+                    self.output_fluctuations)
+        else:
+            return False
+
+    def sweep_to_persistent_field(self):
+        """Convenience function ramping the field to the persistent.
+
+        Once the value is reached one can safely turn on the switch heater.
+
+        """
+        return self.sweep_to_field(self.read_persistent_field())
+
+    def sweep_to_field(self, value, rate=None):
+        """Convenience function to ramp up the field to the specified value.
+
+        """
+        # Set rate. Always the fast sweep rate if the switch heater is off.
+        if rate is not None:
+            self.field_sweep_rate = rate
+        rate = (self.field_sweep_rate if self.heater_state == 'Off' else
+                self.fast_sweep_rate)
+
+        # Start ramping.
         self.target_field = value
-        span = abs(self.persistent_field - value)
         self.activity = 'To set point'
-        return (value, span, rate)
+
+        # Create job.
+        span = abs(self.out_field - value)
+        wait = 60 * span / rate
+        job = InstrJob(self.is_target_reached, wait, cancel=self.stop_sweep)
+        return job
 
     def stop_sweep(self):
         """Stop the field sweep at the current value.
 
         """
-        self.driver.target_field = self.driver.persistent_field
-        self.activity = 'To set point'
-
-    def stop(self, post_switch_wait):
-        """Stop heater and sweep out field to 0.
-        """
-        self.heater_state = 'OFF'
-        sleep(post_switch_wait)
-        sw_span = abs(self.persistent_field)
-        self.activity = 'To zero'
-        return 0., sw_span, self.field_sweep_rate
-
-    def check_output(self):
-        """
-        """
-        status = self._get_status()
-        output = int(status[11])
-        if not output:
-            return 'Constant'
-        else:
-            return 'Changing'
+        self.activity = 'Hold'
 
     def get_full_heater_state(self):
-        """
+        """Get the complete status of the switch heater, including faults.
+
         """
         status = self._get_status()
         heat = int(status[8])
@@ -161,7 +157,10 @@ class IPS12010(VisaInstrument):
 
     @secure_communication()
     def set_mode(self, mode):
-        """
+        """Set the working mode of the source.
+
+        This determines whether the source uses T or A.
+
         """
         if mode == 'AMPS':
             result = self.ask('M8')
@@ -179,7 +178,11 @@ class IPS12010(VisaInstrument):
 
     @secure_communication()
     def set_communications_protocol(self, use_line_feed, extended_resolution):
-        """
+        """Set the instrument communication protocol.
+
+        The driver sets it to Q4 (no line feed and extended resolution) at
+        startup.
+
         """
         if use_line_feed:
             if extended_resolution:
@@ -194,7 +197,10 @@ class IPS12010(VisaInstrument):
 
     @secure_communication()
     def read_parameter(self, parameter):
-        """
+        """Read an instrument parameters.
+
+        The possible values of the argument are listed in _PARAMETER_DICT.
+
         """
         par = _PARAMETER_DICT.get(parameter, None)
         if par:
@@ -204,7 +210,8 @@ class IPS12010(VisaInstrument):
                 IPS120-10 read_parameter method'''.format(parameter)))
 
     def check_connection(self):
-        """
+        """Check the status of the connection.
+
         """
         control = self.control
         if (control == 'Local & Locked' or control == 'Local & Unlocked'):
@@ -214,7 +221,8 @@ class IPS12010(VisaInstrument):
 
     @instrument_property
     def heater_state(self):
-        """
+        """State of the switch heater.
+
         """
         status = self._get_status()
         heat = int(status[8])
@@ -228,7 +236,8 @@ class IPS12010(VisaInstrument):
     @heater_state.setter
     @secure_communication()
     def heater_state(self, state):
-        """
+        """State of the switch heater.
+
         """
         if state == 'ON':
             result = self.ask('H1')
@@ -243,10 +252,12 @@ class IPS12010(VisaInstrument):
         else:
             raise ValueError(cleandoc(''' Invalid parameter {} sent to
                 IPS120-10 set_heater_state method'''.format(state)))
+        sleep(1)
 
     @instrument_property
     def control(self):
-        """
+        """Parameter determining how the instrument interact with the outside.
+
         """
         status = self._get_status()
         control = int(status[6])
@@ -259,7 +270,8 @@ class IPS12010(VisaInstrument):
     @control.setter
     @secure_communication()
     def control(self, control):
-        """
+        """Parameter determining how the instrument interact with the outside.
+
         """
         value = _CONTROL_DICT.get(control, None)
         if value:
@@ -273,7 +285,8 @@ class IPS12010(VisaInstrument):
 
     @instrument_property
     def activity(self):
-        """
+        """Current activity of the power supply (idle, ramping).
+
         """
         status = self._get_status()
         act = int(status[4])
@@ -282,7 +295,8 @@ class IPS12010(VisaInstrument):
     @activity.setter
     @secure_communication()
     def activity(self, value):
-        """
+        """Current activity of the power supply (idle, ramping).
+
         """
         par = _ACTIVITY_DICT.get(value, None)
         if par:
@@ -295,27 +309,17 @@ class IPS12010(VisaInstrument):
                 IPS120-10 set_activity method'''.format(value)))
 
     @instrument_property
-    def persistent_current(self):
-        """
-        """
-        return float(self.read_parameter('Persistent magnet current'))
-
-    @instrument_property
-    def persistent_field(self):
-        """
-        """
-        return float(self.read_parameter('Persistent magnet field'))
-
-    @instrument_property
     def target_current(self):
-        """
+        """Current the source tries to reach when going to set point.
+
         """
         return float(self.read_parameter('Target current'))
 
     @target_current.setter
     @secure_communication()
     def target_current(self, target):
-        """
+        """Current the source tries to reach when going to set point.
+
         """
         result = self.ask("I{}".format(target))
         if result.startswith('?'):
@@ -324,14 +328,16 @@ class IPS12010(VisaInstrument):
 
     @instrument_property
     def current_sweep_rate(self):
-        """
+        """Rate at which to sweep the current when the switch heater is on.
+
         """
         return float(self.read_parameter('Current sweep rate'))
 
     @current_sweep_rate.setter
     @secure_communication()
     def current_sweep_rate(self, rate):
-        """
+        """Rate at which to sweep the current when the switch heater is on.
+
         """
         # amps/min
         result = self.ask("S{}".format(rate))
@@ -341,14 +347,16 @@ class IPS12010(VisaInstrument):
 
     @instrument_property
     def target_field(self):
-        """
+        """Field the source tries to reach when going to set point.
+
         """
         return float(self.read_parameter('Target field'))
 
     @target_field.setter
     @secure_communication()
     def target_field(self, target):
-        """
+        """Field the source tries to reach when going to set point.
+
         """
         result = self.ask("J{}".format(target))
         if result.startswith('?'):
@@ -357,14 +365,16 @@ class IPS12010(VisaInstrument):
 
     @instrument_property
     def field_sweep_rate(self):
-        """
+        """Rate at which to sweep the field when the switch heater is on.
+
         """
         return float(self.read_parameter('Field sweep rate'))
 
     @field_sweep_rate.setter
     @secure_communication()
     def field_sweep_rate(self, rate):
-        """
+        """Rate at which to sweep the field when the switch heater is on.
+
         """
         # tesla/min
         result = self.ask("T{}".format(rate))
@@ -374,14 +384,16 @@ class IPS12010(VisaInstrument):
 
     @instrument_property
     def fast_sweep_rate(self):
-        """
+        """Rate at which to sweep the field when the switch heater is off.
+
         """
         return float(self.read_parameter('Field sweep rate'))
 
-    @field_sweep_rate.setter
+    @fast_sweep_rate.setter
     @secure_communication()
     def fast_sweep_rate(self, rate):
-        """
+        """Rate at which to sweep the field when the switch heater is off.
+
         """
         # tesla/min
         result = self.ask("T{}".format(rate))
@@ -391,7 +403,8 @@ class IPS12010(VisaInstrument):
 
     @secure_communication()
     def _get_status(self):
-        """
+        """Get the status of the instrument.
+
         """
         status = self.ask('X')
         if status:

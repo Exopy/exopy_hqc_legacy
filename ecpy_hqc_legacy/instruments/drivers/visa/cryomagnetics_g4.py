@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -16,52 +16,39 @@ It is very close to the CS4 one but for a few bugs in the software:
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
-from inspect import cleandoc
-from time import sleep
-
-from ..driver_tools import (InstrIOError, secure_communication,
+from ..driver_tools import (secure_communication,
                             instrument_property)
-from ..visa_tools import VisaInstrument
 from .cryomagnetics_cs4 import CS4
-# TODO: check that sweep fast works...
-# it does but the fast_sweep_rate is not correctly given
+
 
 class C4G(CS4):
+    """Driver for the superconducting magnet power supply Cryomagnetics CG4.
 
-    @secure_communication()
-    def make_ready(self):
-    	""" Setting the used range to the whole current range
-
-    	"""
-    	self.write('RANGE 0 100;')
-    	super(C4G, self).make_ready()
+    """
 
     @instrument_property
-    def out_field(self):
+    def target_field(self):
         """Field that the source will try to reach, in T.
-        Iout is given in kG.
+
+        Iout is given in kG no matter the settings.
+
+        """
+        return float(self.ask('ULIM?;').strip('kG')) / 10
+
+    @target_field.setter
+    @secure_communication()
+    def target_field(self, target):
+        # convert target field from T to kG
+        self.write('ULIM {};'.format(target * 10))
+
+    def read_output_field(self):
+        """Read the current value of the output field.
 
         """
         return float(self.ask('IOUT?').strip('kG')) / 10
 
-    @out_field.setter
-    @secure_communication()
-    def out_field(self, target):
-        """Sweep the output intensity to reach the specified ULIM (in A)
-        at a rate depending on the intensity, as defined in the range(s).
-
-        """
-        # convert target field from T to kG
-        self.write('ULIM {}'.format(target * 10))
-        if self.heater_state == 'Off':
-            self.write('SWEEP UP FAST')
-        else:
-            # need to specify slow in case there was a fast sweep before
-            self.write('SWEEP UP SLOW')
-
-    @instrument_property
-    def persistent_field(self):
-        """Last known value of the magnet field, in T.
+    def read_persistent_field(self):
+        """Read the current value of the persistent field.
 
         """
         return float(self.ask('IMAG?').strip('kG')) / 10

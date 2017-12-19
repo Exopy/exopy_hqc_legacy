@@ -76,6 +76,7 @@ class ApplyMagFieldTask(InstrumentTask):
 
         # Always close the switch heater when the ramp was interrupted.
         if not normal_end:
+            job.cancel()
             driver.heater_state = 'Off'
             self.write_in_database('field', driver.read_persistent_field())
             return False

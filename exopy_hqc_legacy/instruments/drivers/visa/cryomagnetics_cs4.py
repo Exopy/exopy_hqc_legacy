@@ -20,8 +20,7 @@ from ..visa_tools import VisaInstrument
 _GET_HEATER_DICT = {'0': 'Off',
                     '1': 'On'}
 
-_ACTIVITY_DICT = {'To zero': 'ZERO',
-                  'To set point': 'UP',
+_ACTIVITY_DICT = {'To set point': 'UP',
                   'Hold': 'PAUSE'}
 
 
@@ -118,7 +117,7 @@ class CS4(VisaInstrument):
         self.activity = 'To set point'
 
         # Create job.
-        span = abs(self.out_field - value)
+        span = abs(self.read_output_field() - value)
         wait = 60 * span / rate
         job = InstrJob(self.is_target_reached, wait, cancel=self.stop_sweep)
         return job

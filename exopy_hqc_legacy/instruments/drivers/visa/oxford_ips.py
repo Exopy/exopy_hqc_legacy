@@ -20,7 +20,7 @@ _PARAMETER_DICT = {'Demand current': 0,
                    'Magnet current': 2,
                    'Target current': 5,
                    'Current sweep rate': 6,
-                   'Demand field': 7,
+                   'Demand field': 7,  # This is the output field !!!
                    'Target field': 8,
                    'Field sweep rate': 9,
                    'Software voltage limit': 15,
@@ -101,6 +101,12 @@ class IPS12010(VisaInstrument):
         """
         return float(self.read_parameter('Persistent magnet field'))
 
+    def read_output_field(self):
+        """Read the current value output field.
+
+        """
+        return float(self.read_parameter('Demand field'))
+
     def is_target_reached(self):
         """Check whether the target field has been reached.
 
@@ -108,7 +114,7 @@ class IPS12010(VisaInstrument):
         status = self._get_status()
         output = int(status[11])
         if not output:
-            return (abs(self.read_persistent_field() - self.target_field) <
+            return (abs(self.read_output_field() - self.target_field) <
                     self.output_fluctuations)
         else:
             return False
@@ -136,7 +142,7 @@ class IPS12010(VisaInstrument):
         self.activity = 'To set point'
 
         # Create job.
-        span = abs(self.out_field - value)
+        span = abs(self.read_output_field() - value)
         wait = 60 * span / rate
         job = InstrJob(self.is_target_reached, wait, cancel=self.stop_sweep)
         return job

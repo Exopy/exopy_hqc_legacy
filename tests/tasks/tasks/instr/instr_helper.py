@@ -15,12 +15,21 @@ from __future__ import (division, unicode_literals, print_function,
 from types import MethodType
 from future.utils import with_metaclass
 
-from ecpy_hqc_legacy.instruments.drivers.driver_tools import BaseInstrument
+from ecpy_hqc_legacy.instruments.drivers.driver_tools import (BaseInstrument,
+                                                              InstrJob)
 
 
 PROFILES = 'ecpy.instruments.profiles'
 
 DRIVERS = 'ecpy.instruments.drivers'
+
+
+class DummyJob(InstrJob):
+    """Job checking nothing.
+
+    """
+    def __init__(self):
+        super(DummyJob, self).__init__(lambda: True, 0.1, lambda: None)
 
 
 class HelperMeta(type):

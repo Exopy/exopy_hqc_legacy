@@ -112,9 +112,9 @@ class CS4(VisaInstrument):
         # Set rate. Always the fast sweep rate if the switch heater is off.
         if rate is not None:
             self.field_sweep_rate = rate
-        rate = (self.field_sweep_rate if self.heater_state == 'Off' else
+        rate = (self.field_sweep_rate if self.heater_state == 'On' else
                 self.fast_sweep_rate)
-
+        
         # Start ramping.
         self.target_field = value
         self.activity = 'To set point'

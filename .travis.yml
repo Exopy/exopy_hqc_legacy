@@ -42,7 +42,7 @@ before_install:
   - $CONDA_INSTALL pyqt numpy exopy h5py exopy_pulses pyclibrary pyvisa
 
   # Intall test tools
-  - $CONDA_INSTALL pytest
+  - $CONDA_INSTALL pytest pytest-qt
   - $PIP_INSTALL pytest-cov pytest-catchlog pytest-timeout
 
 install:

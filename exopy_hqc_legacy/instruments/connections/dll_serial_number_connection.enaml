@@ -51,7 +51,7 @@ enamldef DLLConnection(BaseConnection):
         text = 'Library directory'
     Field: lib_val:
         tool_tip = ('If left empty the program will look for it in the usual '
-                    'way used by your operating system')
+                    'locations used by your operating system')
         placeholder = 'automatic detection'
 
     ToolButton: lib_exp:

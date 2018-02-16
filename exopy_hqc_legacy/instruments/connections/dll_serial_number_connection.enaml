@@ -51,7 +51,9 @@ enamldef DLLConnection(BaseConnection):
         text = 'Library directory'
     Field: lib_val:
         tool_tip = ('If left empty the program will look for it in the usual '
-                    'used by your operating system')
+                    'way used by your operating system')
+        placeholder = 'automatic detection'
+
     ToolButton: lib_exp:
         hug_width = 'strong'
         icon = get_icon(workbench, 'folder-open')
@@ -68,6 +70,7 @@ enamldef DLLConnection(BaseConnection):
                     'used by your operating system')
     ToolButton: header_exp:
         hug_width = 'strong'
+        icon = get_icon(workbench, 'folder-open')
         text = 'E'
         clicked ::
             filt = ['*.h']

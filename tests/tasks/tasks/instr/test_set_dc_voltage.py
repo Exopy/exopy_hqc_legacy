@@ -9,9 +9,6 @@
 """Tests for the ApplyMagFieldTask
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
@@ -187,17 +184,17 @@ class TestSetDCVoltageTask(object):
 
 
 @pytest.mark.ui
-def test_set_dc_voltage_view(windows, root_view, task_workbench):
+def test_set_dc_voltage_view(exopy_qtbot, root_view, task_workbench):
     """Test SetDCVoltageView widget outisde of a LoopTask.
 
     """
     task = SetDCVoltageTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(SetDcVoltageView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, SetDcVoltageView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_set_dc_voltage_view2(windows, root_view, task_workbench):
+def test_set_dc_voltage_view2(exopy_qtbot, root_view, task_workbench):
     """Test SetDCVoltageView widget inside of a LoopTask.
 
     """
@@ -207,4 +204,4 @@ def test_set_dc_voltage_view2(windows, root_view, task_workbench):
     loop = LoopTask(name='r', task=task)
     root_view.task.add_child_task(0, loop)
     # XXX check for absence of target field
-    show_and_close_widget(LoopView(task=loop, root=root_view))
+    show_and_close_widget(exopy_qtbot, LoopView(task=loop, root=root_view))

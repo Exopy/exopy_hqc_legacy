@@ -16,10 +16,9 @@ build:
 requirements:
   build:
     - python
-    - future
   run:
     - python
-    - exopy >=0.1.0
+    - exopy >=0.2.0.dev
     - numpy
     - h5py
     - pyvisa

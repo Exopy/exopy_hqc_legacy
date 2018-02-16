@@ -9,9 +9,6 @@
 """Driver for the Rohde and Schwartz VNA ZVA24.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import logging
 from inspect import cleandoc
 import numpy as np
@@ -189,8 +186,8 @@ class ZVA24Channel(BaseInstrument):
                 except Exception:
                     self._pna.timeout = self._pna.timeout*2
                     logger = logging.getLogger(__name__)
-                    msg = cleandoc('''ZVA24 timeout increased to {} s
-                        This will make the ZVA24Channel diplay 420 error w/o issue''')
+                    msg = ('ZVA24 timeout increased to {} s. This will make '
+                           'the ZVA24Channel diplay 420 error w/o issue')
                     logger.info(msg.format(self._pna.timeout))
 
             if done != 1:

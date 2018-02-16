@@ -9,19 +9,12 @@
 """Context compiling sequences for the Tektronix AWG5014.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-import sys
-
 import numpy as np
 from atom.api import Unicode, Float, Bool, set_default
 
 from exopy_pulses.pulses.api import BaseContext, TIME_CONVERSION
 
-if sys.version_info >= (3,):
-    to_bytes = np.ndarray.tobytes
-else:
-    to_bytes = lambda x: bytearray(np.ndarray.tobytes(x))
+to_bytes = np.ndarray.tobytes
 
 
 class AWG5014Context(BaseContext):

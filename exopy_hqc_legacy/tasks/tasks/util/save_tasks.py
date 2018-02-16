@@ -9,9 +9,6 @@
 """Tasks to used to load a file in memory.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import os
 import errno
 import logging

@@ -9,9 +9,6 @@
 """Base classes for instrument relying on a custom dll for communication.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import ctypes
 import time
 from contextlib import contextmanager

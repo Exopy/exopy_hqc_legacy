@@ -9,9 +9,6 @@
 """Test the capabilities of the AWG5014Context.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from collections import OrderedDict
 
 import enaml
@@ -20,13 +17,13 @@ import numpy as np
 from exopy.testing.util import show_and_close_widget
 
 from exopy_pulses.pulses.sequences.base_sequences import (RootSequence,
-                                                         BaseSequence)
+                                                          BaseSequence)
 from exopy_pulses.pulses.pulse import Pulse
 from exopy_pulses.pulses.shapes.square_shape import SquareShape
 from exopy_pulses.pulses.shapes.modulation import Modulation
 
 from exopy_hqc_legacy.pulses.contexts.awg_context import (AWG5014Context,
-                                                         to_bytes)
+                                                          to_bytes)
 with enaml.imports():
     from exopy_hqc_legacy.pulses.contexts.views.awg_context_view\
         import AWG5014ContextView
@@ -344,11 +341,11 @@ class TestAWGContext(object):
                     self.driver.sequences['Test_Ch%d' % i])
 
 
-def test_awg5014_context_view(windows):
+def test_awg5014_context_view(exopy_qtbot):
     """Test displaying the context view.
 
     """
     root = RootSequence()
     context = AWG5014Context(sequence_name='Test')
     root.context = context
-    show_and_close_widget(AWG5014ContextView(context=context, sequence=root))
+    show_and_close_widget(exopy_qtbot, AWG5014ContextView(context=context, sequence=root))

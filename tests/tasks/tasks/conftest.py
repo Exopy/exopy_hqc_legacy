@@ -9,9 +9,6 @@
 """Configuration for the tests run on tasks.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import pytest
 import enaml
 

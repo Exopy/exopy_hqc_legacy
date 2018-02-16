@@ -9,9 +9,6 @@
 """Task to perform a lock-in measurement.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from time import sleep
 
 from atom.api import (Enum, Float, set_default)

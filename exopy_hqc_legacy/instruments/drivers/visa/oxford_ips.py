@@ -9,9 +9,6 @@
 """Drivers for oxford ips magnet supply using VISA library.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from inspect import cleandoc
 from time import sleep
 from ..driver_tools import (InstrIOError, secure_communication,

@@ -9,9 +9,6 @@
 """Tests for the ApplyMagFieldTask
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
@@ -163,10 +160,10 @@ class TestLockInMeasureTask(object):
 
 
 @pytest.mark.ui
-def test_lock_in_meas_view1(windows, root_view, task_workbench):
+def test_lock_in_meas_view1(exopy_qtbot, root_view, task_workbench):
     """Test LockInMeasView widget outisde of a LoopTask.
 
     """
     task = LockInMeasureTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(LockInMeasView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, LockInMeasView(task=task, root=root_view))

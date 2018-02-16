@@ -9,9 +9,6 @@
 """Views for the microwave sources related tasks.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from enaml.core.api import Conditional
 from enaml.widgets.api import (GroupBox, Label, Field, ObjectCombo, CheckBox)
 from enaml.stdlib.fields import FloatField

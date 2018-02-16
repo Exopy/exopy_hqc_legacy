@@ -9,9 +9,6 @@
 """Drivers for the Tektronik AWG5014 using VISA library.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import re
 import time
 import logging
@@ -375,8 +372,8 @@ class AWGChannel(BaseInstrument):
         with self.secure():
             self._AWG.write("SOURce{}:VOLTage:LEVel:IMMediate:OFFSet {}"
                             .format(self._channel, value))
-            msg = "SOURce{}:VOLTage:LEVel:IMMediate:OFFSet?"
-            result = self._AWG.ask_for_values(msg.format(self._channel))[0]
+            cmd = "SOURce{}:VOLTage:LEVel:IMMediate:OFFSet?"
+            result = self._AWG.ask_for_values(cmd.format(self._channel))[0]
             if abs(result - value) > 10**-12:
                 raise InstrIOError(cleandoc('''AWG channel {} did not set
                                             correctly the offset'''

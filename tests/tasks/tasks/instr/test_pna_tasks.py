@@ -9,9 +9,6 @@
 """Tests for the ApplyMagFieldTask
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
@@ -105,14 +102,14 @@ class TestPNASetRFFrequencyTask(object):
 
 
 @pytest.mark.ui
-def test_pna_frequency_view(windows, root_view, task_workbench):
+def test_pna_frequency_view(exopy_qtbot, root_view, task_workbench):
     """Test PNA frequency interface widget outisde of a LoopTask.
 
     """
     task = SetRFFrequencyTask(name='Test')
     task.interface = PNASetRFFrequencyInterface(task=task)
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(RFFrequencyView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, RFFrequencyView(task=task, root=root_view))
 
 
 class TestPNASetRFPowerTask(object):
@@ -181,14 +178,14 @@ class TestPNASetRFPowerTask(object):
 
 
 @pytest.mark.ui
-def test_pna_power_view(windows, root_view, task_workbench):
+def test_pna_power_view(exopy_qtbot, root_view, task_workbench):
     """Test PNA power interface widget outisde of a LoopTask.
 
     """
     task = SetRFPowerTask(name='Test')
     task.interface = PNASetRFPowerInterface(task=task)
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(RFPowerView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, RFPowerView(task=task, root=root_view))
 
 
 class TestPNASinglePointMeasureTask(object):
@@ -267,24 +264,24 @@ class TestPNASinglePointMeasureTask(object):
 
 
 @pytest.mark.ui
-def test_pna_single_point_view(windows, root_view, task_workbench):
+def test_pna_single_point_view(exopy_qtbot, root_view, task_workbench):
     """Test PNA single point meas view no measure.
 
     """
     task = PNASinglePointMeasureTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(PNASinglePointView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, PNASinglePointView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_pna_single_point_view2(windows, root_view, task_workbench):
+def test_pna_single_point_view2(exopy_qtbot, root_view, task_workbench):
     """Test PNA single point meas view.
 
     """
     task = PNASinglePointMeasureTask(name='Test')
     task.measures = [('S21', ''), ('S43', 'MLIN')]
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(PNASinglePointView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, PNASinglePointView(task=task, root=root_view))
 
 
 #class TestPNASweepTask(object):

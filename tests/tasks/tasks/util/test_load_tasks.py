@@ -9,9 +9,6 @@
 """Test the taskused to load files.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import os
 from multiprocessing import Event
 
@@ -109,26 +106,26 @@ class TestLoadArrayView(object):
         self.task = LoadArrayTask(name='Test')
         self.root.add_child_task(0, self.task)
 
-    def test_view(self, windows, root_view, task_workbench,
-                  process_and_sleep):
+    def test_view(self, exopy_qtbot, root_view, task_workbench,
+                  dialog_sleep):
         """Intantiate a view with no selected interface and select one after
 
         """
         view = LoadArrayView(task=self.task, root=root_view)
-        win = show_widget(view)
-        process_and_sleep()
+        win = show_widget(exopy_qtbot, view)
+        exopy_qtbot.wait(dialog_sleep)
 
         assert self.task.interface is None
 
         assert 'CSV' in view.file_formats
         self.task.selected_format = 'CSV'
-        process_and_sleep()
+        exopy_qtbot.wait(dialog_sleep)
         assert isinstance(self.task.interface, CSVLoadInterface)
 
         win.close()
 
-    def test_view2(self, windows, root_view, task_workbench,
-                   process_and_sleep):
+    def test_view2(self, exopy_qtbot, root_view, task_workbench,
+                   dialog_sleep):
         """Intantiate a view with a selected interface.
 
         """
@@ -139,9 +136,9 @@ class TestLoadArrayView(object):
         interface = self.task.interface
 
         view = LoadArrayView(task=self.task, root=root_view)
-        win = show_widget(view)
+        win = show_widget(exopy_qtbot, view)
 
-        process_and_sleep()
+        exopy_qtbot.wait(dialog_sleep)
 
         assert self.task.interface is interface
         win.close()

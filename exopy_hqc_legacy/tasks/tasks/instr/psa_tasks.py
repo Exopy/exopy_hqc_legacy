@@ -9,9 +9,6 @@
 """Tasks to handle a signal analyser.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import numbers
 from inspect import cleandoc
 
@@ -22,6 +19,7 @@ from atom.api import (Unicode, Int, set_default, Enum)
 from exopy.tasks.api import InstrumentTask, validators
 
 # XXX unfinished
+
 
 class PSAGetTrace(InstrumentTask):
     """ Get the trace displayed on the Power Spectrum Analyzer.

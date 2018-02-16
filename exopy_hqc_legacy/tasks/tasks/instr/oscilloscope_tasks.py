@@ -9,9 +9,6 @@
 """Task to apply a magnetic field.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import numbers
 
 import numpy as np
@@ -19,6 +16,7 @@ from atom.api import (Unicode, Bool, set_default, Enum)
 from exopy.tasks.api import InstrumentTask, validators
 
 # XXX unfinished
+
 
 class OscilloGetTraceTask(InstrumentTask):
     """ Get the trace displayed on the oscilloscope.

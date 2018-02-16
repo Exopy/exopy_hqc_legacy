@@ -9,9 +9,6 @@
 """Tasks to set the parameters of microwave sources..
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import numbers
 
 from atom.api import (Unicode, Bool, set_default, Enum)

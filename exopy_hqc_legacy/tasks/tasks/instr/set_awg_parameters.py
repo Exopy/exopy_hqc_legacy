@@ -9,9 +9,6 @@
 """Tasks to set the parameters of arbitrary waveform generators.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from ast import literal_eval
 from itertools import chain
 from atom.api import (Unicode, Int, List, Dict)

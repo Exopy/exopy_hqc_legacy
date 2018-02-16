@@ -9,7 +9,5 @@
 """Load exopy pulses fixtures.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
 
 pytest_plugins = str('exopy_pulses.testing.fixtures'),

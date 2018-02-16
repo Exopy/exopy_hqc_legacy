@@ -9,14 +9,11 @@
 """Driver for the ADQ14 digitizer card.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
 import os
 import time
 import atexit
 import ctypes
 import numpy as np
-from future.builtins import str
 
 from pyclibrary import CLibrary
 

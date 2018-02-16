@@ -9,11 +9,7 @@
 """Helpers to mock instruments
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from types import MethodType
-from future.utils import with_metaclass
 
 from exopy_hqc_legacy.instruments.drivers.driver_tools import BaseInstrument
 
@@ -32,7 +28,7 @@ class HelperMeta(type):
         return (cls, object, BaseInstrument)
 
 
-class InstrHelper(with_metaclass(HelperMeta, object)):
+class InstrHelper(object, metaclass=HelperMeta):
     """ False driver used for testing purposes.
 
     Parameters

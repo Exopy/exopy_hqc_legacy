@@ -9,9 +9,6 @@
 """Tests for the ApplyMagFieldTask
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
@@ -59,10 +56,10 @@ class TestSetDCVoltageTask(object):
 
 
 @pytest.mark.ui
-def test_meas_dc_voltage_view(windows, root_view, task_workbench):
+def test_meas_dc_voltage_view(exopy_qtbot, root_view, task_workbench):
     """Test MeasDCVoltView widget outisde of a LoopTask.
 
     """
     task = MeasDCVoltageTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(MeasDCVoltView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, MeasDCVoltView(task=task, root=root_view))

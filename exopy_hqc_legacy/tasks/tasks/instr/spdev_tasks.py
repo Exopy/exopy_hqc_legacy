@@ -9,9 +9,6 @@
 """Task perform measurements the SPDevices digitizers.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import numbers
 import numpy as np
 from atom.api import (Bool, Unicode, Enum, set_default)

@@ -9,9 +9,6 @@
 """Layout function used for instrument task views.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from enaml.layout.api import grid
 
 

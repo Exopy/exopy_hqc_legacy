@@ -9,9 +9,6 @@
 """Tests for the ApplyMagFieldTask
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
@@ -81,17 +78,17 @@ class TestSetRFFrequencyTask(object):
 
 
 @pytest.mark.ui
-def test_rf_frequency_view(windows, root_view, task_workbench):
+def test_rf_frequency_view(exopy_qtbot, root_view, task_workbench):
     """Test SetRFFrequencyTask widget outisde of a LoopTask.
 
     """
     task = SetRFFrequencyTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(RFFrequencyView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, RFFrequencyView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_rf_frequency_view2(windows, root_view, task_workbench):
+def test_rf_frequency_view2(exopy_qtbot, root_view, task_workbench):
     """Test SetRFFrequencyTask widget inside of a LoopTask.
 
     """
@@ -99,7 +96,7 @@ def test_rf_frequency_view2(windows, root_view, task_workbench):
     loop = LoopTask(name='r', task=task)
     root_view.task.add_child_task(0, loop)
     # XXX check for absence of target field
-    show_and_close_widget(LoopView(task=loop, root=root_view))
+    show_and_close_widget(exopy_qtbot, LoopView(task=loop, root=root_view))
 
 
 class TestSetRFPowerTask(object):
@@ -148,17 +145,17 @@ class TestSetRFPowerTask(object):
 
 
 @pytest.mark.ui
-def test_rf_power_view(windows, root_view, task_workbench):
+def test_rf_power_view(exopy_qtbot, root_view, task_workbench):
     """Test RFPowerView widget outisde of a LoopTask.
 
     """
     task = SetRFPowerTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(RFPowerView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, RFPowerView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_rf_power_view2(windows, root_view, task_workbench):
+def test_rf_power_view2(exopy_qtbot, root_view, task_workbench):
     """Test RFPowerView widget inside of a LoopTask.
 
     """
@@ -166,7 +163,7 @@ def test_rf_power_view2(windows, root_view, task_workbench):
     loop = LoopTask(name='r', task=task)
     root_view.task.add_child_task(0, loop)
     # XXX check for absence of target field
-    show_and_close_widget(LoopView(task=loop, root=root_view))
+    show_and_close_widget(exopy_qtbot, LoopView(task=loop, root=root_view))
 
 
 class TestSetRFOnOffTask(object):
@@ -215,17 +212,17 @@ class TestSetRFOnOffTask(object):
 
 
 @pytest.mark.ui
-def test_rf_output_view(windows, root_view, task_workbench):
+def test_rf_output_view(exopy_qtbot, root_view, task_workbench):
     """Test RFSetOnOffView widget outisde of a LoopTask.
 
     """
     task = SetRFOnOffTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(RFSetOnOffView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, RFSetOnOffView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_rf_output_view2(windows, root_view, task_workbench):
+def test_rf_output_view2(exopy_qtbot, root_view, task_workbench):
     """Test RFSetOnOffView widget inside of a LoopTask.
 
     """
@@ -233,4 +230,4 @@ def test_rf_output_view2(windows, root_view, task_workbench):
     loop = LoopTask(name='r', task=task)
     root_view.task.add_child_task(0, loop)
     # XXX check for absence of target field
-    show_and_close_widget(LoopView(task=loop, root=root_view))
+    show_and_close_widget(exopy_qtbot, LoopView(task=loop, root=root_view))

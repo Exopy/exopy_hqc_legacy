@@ -9,9 +9,6 @@
 """Drivers for Anapico SignalGenerator using VISA library.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import re
 from textwrap import fill
 from inspect import cleandoc

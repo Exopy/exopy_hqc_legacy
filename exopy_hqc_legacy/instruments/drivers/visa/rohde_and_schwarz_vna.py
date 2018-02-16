@@ -9,9 +9,6 @@
 """Driver for the Rohde and Schwartz VNA ZNB20.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import logging
 from inspect import cleandoc
 import numpy as np

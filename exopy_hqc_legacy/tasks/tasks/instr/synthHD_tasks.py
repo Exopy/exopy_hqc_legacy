@@ -9,9 +9,6 @@
 """Interface allowing to use RF tasks with synthHD generator.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from atom.api import Int
 
 from exopy.tasks.api import TaskInterface

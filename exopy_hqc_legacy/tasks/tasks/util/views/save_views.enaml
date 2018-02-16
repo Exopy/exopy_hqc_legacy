@@ -9,9 +9,6 @@
 """View of the task used to save data.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from enaml.layout.api import hbox, align, spacer, vbox, grid
 from enaml.widgets.api import (PushButton, Container, Label, Field, FileDialog,
                                GroupBox, ObjectCombo, Dialog, MultilineField,

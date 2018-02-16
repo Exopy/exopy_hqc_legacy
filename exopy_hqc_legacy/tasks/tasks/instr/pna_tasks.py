@@ -9,9 +9,6 @@
 """Task perform measurements with a VNA.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import time
 import re
 import numbers

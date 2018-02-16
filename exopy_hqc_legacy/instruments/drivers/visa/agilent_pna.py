@@ -9,9 +9,6 @@
 """Driver for the Keysight VNA (PNA).
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import logging
 from inspect import cleandoc
 import numpy as np
@@ -389,13 +386,11 @@ class AgilentPNAChannel(BaseInstrument):
                                           self._channel))
         if result:
             if abs(result[0] - value)/value > 10**-12:
-                raise InstrIOError(cleandoc('''PNA could not set the
-                    trace number {} on channel {}'''.format(value,
-                    self._channel)))
+                msg = 'PNA could not set the trace number {} on channel {}'
+                raise InstrIOError(msg.format(value, self._channel))
         else:
-            raise InstrIOError(cleandoc('''PNA could not set the
-                    trace number {} on channel {}'''.format(value,
-                    self._channel)))
+            msg = 'PNA could not set the trace number {} on channel {}'
+            raise InstrIOError(msg.format(value, self._channel))
 
     @instrument_property
     @secure_communication()
@@ -412,17 +407,17 @@ class AgilentPNAChannel(BaseInstrument):
                 'SENSe{}:FREQuency:STOP?'.format(self._channel))[0]*1e-9
             return np.linspace(sweep_start, sweep_stop, sweep_points)
         elif sweep_type == 'POW':
-            sweep_start = self._pna.ask_for_values('SOURce{}:POWer:STARt?' \
-                .format(self._channel))[0]
-            sweep_stop = self._pna.ask_for_values('SOURce{}:POWer:STOP?' \
-                .format(self._channel))[0]
+            sweep_start = self._pna.ask_for_values('SOURce{}:POWer:STARt?'
+                                                   .format(self._channel))[0]
+            sweep_stop = self._pna.ask_for_values('SOURce{}:POWer:STOP?'
+                                                  .format(self._channel))[0]
             return np.linspace(sweep_start, sweep_stop, sweep_points)
         elif sweep_type == 'LOG':
-            sweep_start = self._pna.ask_for_values('SENSe{}:FREQuency:STARt?' \
-                .format(self._channel))[0]*1e-9
-            sweep_stop = self._pna.ask_for_values('SENSe{}:FREQuency:STOP?' \
-                .format(self._channel))[0]*1e-9
-            return np.logspace(sweep_start, sweep_stop, sweep_points)
+            sweep_start = self._pna.ask_for_values('SENSe{}:FREQuency:STARt?'
+                                                   .format(self._channel))[0]
+            sweep_stop = self._pna.ask_for_values('SENSe{}:FREQuency:STOP?'
+                                                  .format(self._channel))[0]
+            return np.logspace(sweep_start*1e-9, sweep_stop*1e-9, sweep_points)
         else:
             raise InstrIOError(cleandoc('''Sweep type of PNA not yet
                 supported for channel {}'''.format(self._channel)))

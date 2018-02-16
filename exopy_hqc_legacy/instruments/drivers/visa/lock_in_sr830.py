@@ -9,9 +9,6 @@
 """Drivers for Stanford instrument lock-in SR830 using VISA library.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from ..driver_tools import (InstrIOError, secure_communication)
 from ..visa_tools import VisaInstrument
 

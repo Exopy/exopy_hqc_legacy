@@ -9,11 +9,7 @@
 """Tasks to operate on numpy.arrays.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import numpy as np
-from future.utils import raise_from
 from atom.api import (Enum, Unicode, set_default)
 from exopy.tasks.api import SimpleTask, validators
 
@@ -139,8 +135,7 @@ class ArrayFindValueTask(SimpleTask):
             ind = np.where(np.abs(array - val) < 1e-12)[0][0]
         except IndexError as e:
             msg = 'Could not find {} in array {} ({})'
-            raise_from(ValueError(msg.format(val, self.target_array, array)),
-                       e)
+            raise ValueError(msg.format(val, self.target_array, array)) from e
         self.write_in_database('index', ind)
 
     def check(self, *args, **kwargs):

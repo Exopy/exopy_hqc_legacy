@@ -30,9 +30,6 @@ the VISA library.
         resolved by attempting again to send a message.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import logging
 import inspect
 from inspect import cleandoc

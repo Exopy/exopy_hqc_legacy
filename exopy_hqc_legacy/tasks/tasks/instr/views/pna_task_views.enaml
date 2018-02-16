@@ -9,9 +9,6 @@
 """Views for the PNA tasks.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import re
 from textwrap import fill
 

@@ -9,9 +9,6 @@
 """Views for the WindfreakTech SynthHD RF source interfaces.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from enaml.widgets.api import Label
 from enaml.stdlib.fields import IntField
 

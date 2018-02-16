@@ -9,9 +9,6 @@
 """Task to apply a magnetic field.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import numbers
 
 from atom.api import (Unicode, Float, Bool, set_default)

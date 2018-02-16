@@ -14,9 +14,6 @@
 Visual C++ runtime needs to be installed to be able to load the dll.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import sys
 import math
 from subprocess import call

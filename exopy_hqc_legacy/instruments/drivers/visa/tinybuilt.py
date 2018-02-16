@@ -9,9 +9,6 @@
 """Drivers for the BILT rack BN100 with BE2100 cards using VISA library.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import re
 import time
 from textwrap import fill

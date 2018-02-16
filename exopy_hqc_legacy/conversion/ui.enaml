@@ -9,9 +9,6 @@
 """GUI used to select the files to convert to exopy format.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import os
 
 from enaml.widgets.api import (Window, Container, CheckBox, FileDialogEx,
@@ -65,7 +62,7 @@ enamldef Main(Window): main:
                         log.text += msg % (p, format_exc())
                     else:
                         log.text += '\nConverted %s\n' % p
-                  
+
                 main.paths = []
 
         MultilineField: log:

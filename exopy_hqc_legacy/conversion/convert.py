@@ -9,9 +9,6 @@
 """Routines to update a HQCMeas .ini file to the formats used by exopy.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import os
 import shutil
 from ast import literal_eval

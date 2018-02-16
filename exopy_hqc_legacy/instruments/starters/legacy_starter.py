@@ -9,9 +9,6 @@
 """The manifest contributing the extensions to the main application.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from exopy.utils.traceback import format_exc
 from exopy.instruments.api import BaseStarter
 

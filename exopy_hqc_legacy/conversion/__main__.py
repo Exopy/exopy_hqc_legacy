@@ -9,9 +9,6 @@
 """Start up script for HQCMeas .ini files to exopy converter tool.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import sys
 
 import enaml

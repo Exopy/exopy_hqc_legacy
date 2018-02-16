@@ -9,9 +9,6 @@
 """Tests for the ApplyMagFieldTask
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
@@ -101,17 +98,17 @@ class TestApplyMagFieldTask(object):
 
 
 @pytest.mark.ui
-def test_apply_mag_field_view1(windows, root_view, task_workbench):
+def test_apply_mag_field_view1(exopy_qtbot, root_view, task_workbench):
     """Test ApplyMagFieldView widget outisde of a LoopTask.
 
     """
     task = ApplyMagFieldTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(ApplyMagFieldView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, ApplyMagFieldView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_apply_mag_field_view2(windows, root_view, task_workbench):
+def test_apply_mag_field_view2(exopy_qtbot, root_view, task_workbench):
     """Test ApplyMagFieldView widget inside of a LoopTask.
 
     """
@@ -119,4 +116,4 @@ def test_apply_mag_field_view2(windows, root_view, task_workbench):
     loop = LoopTask(name='r', task=task)
     root_view.task.add_child_task(0, loop)
     # XXX check for absence of target field
-    show_and_close_widget(LoopView(task=loop, root=root_view))
+    show_and_close_widget(exopy_qtbot, LoopView(task=loop, root=root_view))

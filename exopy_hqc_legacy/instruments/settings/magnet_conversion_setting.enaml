@@ -9,9 +9,6 @@
 """Specific connection information edition widget for visa instruments with settings
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import os
 
 from enaml.widgets.api import Label

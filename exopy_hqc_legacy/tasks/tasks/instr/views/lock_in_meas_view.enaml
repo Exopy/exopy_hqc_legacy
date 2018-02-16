@@ -9,9 +9,6 @@
 """View for the LockInMeasTask.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from textwrap import fill
 
 from enaml.widgets.api import (GroupBox, Label, Field, ObjectCombo)

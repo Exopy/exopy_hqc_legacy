@@ -9,8 +9,6 @@
 """Compatibility package providing HQCMeas tasks and drivers in Exopy.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
 
 
 def list_manifests():

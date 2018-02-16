@@ -9,9 +9,6 @@
 """Driver for the Cryomagnetic superconducting magnet power supply CS4.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from inspect import cleandoc
 from time import sleep
 
@@ -139,7 +136,7 @@ class CS4(VisaInstrument):
         rate = float(self.ask('RATE? 5'))
         return rate * (60 * self.field_current_ratio)
 
-    @field_sweep_rate.setter
+    @fast_sweep_rate.setter
     @secure_communication()
     def fast_sweep_rate(self, rate):
         rate /= 60 * self.field_current_ratio
@@ -177,7 +174,6 @@ class CS4(VisaInstrument):
             if niter > MAXITER:
                 raise InstrIOError(cleandoc('''CS4 didn't set the field
                                                to {}'''.format(target)))
-
 
     @instrument_property
     def persistent_field(self):

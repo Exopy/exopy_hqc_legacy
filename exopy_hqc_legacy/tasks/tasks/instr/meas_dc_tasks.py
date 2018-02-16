@@ -9,9 +9,6 @@
 """Task to measure DC properties.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from time import sleep
 
 from atom.api import Float, set_default

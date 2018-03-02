@@ -59,17 +59,29 @@ class TinyBiltChannel(BaseInstrument):
         """ Output getter method
 
         """
+		
         with self.secure():
-            output = self._TB.ask_for_values('i{};OUTP?'
-                                             .format(self._channel))[0]
-            if output == 1:
-                return 'ON'
-            elif output == 0:
-                return 'OFF'
-            else:
+			if TB.ask('IMC?'):
+				output = self._TB.ask_for_values('i{};c{};OUTP?'
+												.format(self._channel(0),
+												self._channel(1))[0]
+				if output == 1:
+					return 'ON'
+				elif output == 0:
+					return 'OFF'
+				else:
                 mes = 'TinyBilt did not return its output'
-                raise InstrIOError(mes)
-
+					raise InstrIOError(mes)
+			else:
+				output = self._TB.ask_for_values('i{};OUTP?'
+												.format(self._channel))[0]
+				if output == 1:
+					return 'ON'
+				elif output == 0:
+					return 'OFF'
+				else:
+                mes = 'TinyBilt did not return its output'
+					raise InstrIOError(mes)
     @output.setter
     @secure_communication()
     def output(self, value):
@@ -78,23 +90,43 @@ class TinyBiltChannel(BaseInstrument):
         with self.secure():
             on = re.compile('on', re.IGNORECASE)
             off = re.compile('off', re.IGNORECASE)
-            if value == 1 or on.match(str(value)):
-
-                self._TB.write('i{};OUTP1'.format(self._channel))
-                if self._TB.ask_for_values('i{};OUTP?'
-                                           .format(self._channel))[0] != 1:
-                    raise InstrIOError(cleandoc('''Instrument did not set
+			if TB.ask('IMC?'):
+				if value == 1 or on.match(str(value)):
+					self._TB.write('i{};c{};OUTP1'.format(self._channel(0),
+															self._channel(1)))
+					if self._TB.ask_for_values('i{};c{};OUTP?'
+                                           .format(self._channel(0),
+													self._channel(1)))[0] != 1:
+						raise InstrIOError(cleandoc('''Instrument did not set
                                                 correctly the output'''))
-            elif value == 0 or off.match(str(value)):
-                self._TB.write('i{};OUTP0'.format(self._channel))
-                if self._TB.ask_for_values('i{};OUTP?'
+				elif value == 0 or off.match(str(value)):
+					self._TB.write('i{};OUTP0'.format(self._channel))
+					if self._TB.ask_for_values('i{};OUTP?'
                                            .format(self._channel))[0] != 0:
-                    raise InstrIOError(cleandoc('''Instrument did not set
+						raise InstrIOError(cleandoc('''Instrument did not set
                                                 correctly the output'''))
-            else:
-                mess = fill(cleandoc('''The invalid value {} was sent to
+				else:
+					mess = fill(cleandoc('''The invalid value {} was sent to
                             switch_on_off method''').format(value), 80)
-                raise VisaTypeError(mess)
+					raise VisaTypeError(mess)
+			
+			else:
+				if value == 1 or on.match(str(value)):
+					self._TB.write('i{};OUTP1'.format(self._channel))
+					if self._TB.ask_for_values('i{};OUTP?'
+                                           .format(self._channel))[0] != 1:
+						raise InstrIOError(cleandoc('''Instrument did not set
+                                                correctly the output'''))
+				elif value == 0 or off.match(str(value)):
+					self._TB.write('i{};OUTP0'.format(self._channel))
+					if self._TB.ask_for_values('i{};OUTP?'
+                                           .format(self._channel))[0] != 0:
+						raise InstrIOError(cleandoc('''Instrument did not set
+                                                correctly the output'''))
+				else:
+					mess = fill(cleandoc('''The invalid value {} was sent to
+                            switch_on_off method''').format(value), 80)
+					raise VisaTypeError(mess)
 
     @instrument_property
     @secure_communication()
@@ -268,7 +300,7 @@ class TinyBilt(VisaInstrument):
         self.read_termination = '\n'
 
     def get_channel(self, num):
-        """
+        """num: tuple containing (module_number,channel_number)
         """
         if num not in self.defined_channels:
             return None
@@ -283,15 +315,33 @@ class TinyBilt(VisaInstrument):
     @instrument_property
     @secure_communication()
     def defined_channels(self):
+        """defined
         """
-        """
-        channels = self.ask('I:L?')
+		if self.ask('IMC?'):
+			modules = self.ask('I:L?')
+			defined_modules = np.array([s.split(',')
+                                         for s in modules.split(';')],
+                                        dtype=np.uint)
+			for i in defined_modules[:,0]:
+				defined_channels = []
+				if defined_modules[i,1]=='2141':
+					defined_channels = defined_channels.extend([(i,1),(i,2),
+																(i,3),(i,4)])
+					
+					return defined_channels
+				else:
+					raise InstrIOError(cleandoc('''Driver not written for 
+													this type of module'''))
+			
+		
+		else:
+			channels = self.ask('I:L?')
 
-        if channels:
-            defined_channels = np.array([s.split(',')
+			if channels:
+				defined_channels = np.array([s.split(',')
                                          for s in channels.split(';')],
                                         dtype=np.uint)[:, 0]
-            return defined_channels
-        else:
-            raise InstrIOError(cleandoc('''Instrument did not return
+				return defined_channels
+			else:
+				raise InstrIOError(cleandoc('''Instrument did not return
                                             the defined channels'''))

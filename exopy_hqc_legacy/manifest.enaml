@@ -458,7 +458,11 @@ enamldef HqcLegacyManifest(PluginManifest):
                         views = ['views.dc_views:'
                                  'MultiChannelVoltageSourceILabel',
                                  'views.dc_views:'
-                                 'MultiChannelVoltageSourceIChannel']
+                                 'MultiChannelVoltageSourceIChannel',
+								 'views.dc_views:'
+                                 'MultiChannelVoltageSourceILabelModule',
+								 'views.dc_views:'
+                                 'MultiChannelVoltageSourceIModule']
                         instruments = ['exopy_hqc_legacy.Legacy.TinyBilt']
                 Task:
                     task = 'dc_tasks:SetDCCurrentTask'

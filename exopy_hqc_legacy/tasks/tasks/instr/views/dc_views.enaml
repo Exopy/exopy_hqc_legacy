@@ -80,7 +80,27 @@ enamldef MultiChannelVoltageSourceIChannel(IntField):
     """
     attr interface
     attr root
-    value := interface.channel
+    value := interface.channel[1]
+	
+
+enamldef MultiChannelVoltageSourceILabelModule(Label):
+    """Label for the multi channel interface.
+
+    """
+    attr interface
+    attr root
+    attr index = 3
+    text = 'Module'
+
+
+enamldef MultiChannelVoltageSourceIModule(IntField):
+    """Value for the multi channel interface.
+
+    """
+    attr interface
+    attr root
+    value := interface.channel[0]
+
 
 enamldef SetDcCurrentView(InstrView): view:
     """View for the SetDCCurrentTask.

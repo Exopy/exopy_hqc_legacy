@@ -118,7 +118,7 @@ class MultiChannelVoltageSourceInterface(TaskInterface):
 
     """
     #: Id of the channel to use.
-    channel = Int(1).tag(pref=True)
+    channel = (1,1).tag(pref=True)
 
     #: Reference to the driver for the channel.
     channel_driver = Value()

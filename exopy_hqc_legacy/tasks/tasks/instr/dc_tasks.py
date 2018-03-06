@@ -12,7 +12,7 @@
 import time
 import numbers
 
-from atom.api import (Float, Value, Unicode, Int, set_default)
+from atom.api import (Float, Value, Unicode, Int, set_default, Tuple)
 
 from exopy.tasks.api import (InstrumentTask, TaskInterface,
                             InterfaceableTaskMixin, validators)
@@ -118,7 +118,7 @@ class MultiChannelVoltageSourceInterface(TaskInterface):
 
     """
     #: Id of the channel to use.
-    channel = (1,1).tag(pref=True)
+    channel = Tuple(default=(1, 1)).tag(pref=True)
 
     #: Reference to the driver for the channel.
     channel_driver = Value()
@@ -130,7 +130,6 @@ class MultiChannelVoltageSourceInterface(TaskInterface):
         task = self.task
         if not self.channel_driver:
             self.channel_driver = task.driver.get_channel(self.channel)
-
         if self.channel_driver.owner != task.name:
             self.channel_driver.owner = task.name
             if hasattr(self.channel_driver, 'function') and\

@@ -61,16 +61,16 @@ class TinyBiltChannel(BaseInstrument):
         """
 		
         with self.secure():
-				output = self._TB.ask_for_values('i{};c{};OUTP?'
-												.format(self._channel[0],
-												self._channel[1])[0]
-				if output == 1:
-					return 'ON'
-				elif output == 0:
-					return 'OFF'
-				else:
+            output = self._TB.ask_for_values('i{};c{};OUTP?'
+                                               .format(self._channel[0],
+                                               self._channel[1]))[0]
+            if output == 1:
+                return 'ON'
+            elif output == 0:
+                return 'OFF'
+            else:
                 mes = 'TinyBilt did not return its output'
-					raise InstrIOError(mes)
+                raise InstrIOError(mes)
 
 					
     @output.setter
@@ -81,26 +81,26 @@ class TinyBiltChannel(BaseInstrument):
         with self.secure():
             on = re.compile('on', re.IGNORECASE)
             off = re.compile('off', re.IGNORECASE)
-				if value == 1 or on.match(str(value)):
-					self._TB.write('i{};c{};OUTP1'.format(self._channel[0],
-															self._channel[1]))
-					if self._TB.ask_for_values('i{};c{};OUTP?'
-                                           .format(self._channel[0],
-													self._channel[1]))[0] != 1:
-						raise InstrIOError(cleandoc('''Instrument did not set
+            if value == 1 or on.match(str(value)):
+                self._TB.write('i{};c{};OUTP1'.format(self._channel[0],
+														self._channel[1]))
+                if self._TB.ask_for_values('i{};c{};OUTP?'
+                                            .format(self._channel[0],
+                                            self._channel[1]))[0] != 1:
+                    raise InstrIOError(cleandoc('''Instrument did not set
                                                 correctly the output'''))
-				elif value == 0 or off.match(str(value)):
-					self._TB.write('i{};c{};OUTP0'.format(self._channel[0],
+            elif value == 0 or off.match(str(value)):
+                self._TB.write('i{};c{};OUTP0'.format(self._channel[0],
 															self._channel[1]))
-					if self._TB.ask_for_values('i{};c{};OUTP?'
-                                           .format(self._channel[0],
-													self._channel[1]))[0] != 0:
-						raise InstrIOError(cleandoc('''Instrument did not set
+                if self._TB.ask_for_values('i{};c{};OUTP?'
+                                            .format(self._channel[0],
+												self._channel[1]))[0] != 0:
+                    raise InstrIOError(cleandoc('''Instrument did not set
                                                 correctly the output'''))
-				else:
-					mess = fill(cleandoc('''The invalid value {} was sent to
+            else:
+                mess = fill(cleandoc('''The invalid value {} was sent to
                             switch_on_off method''').format(value), 80)
-					raise VisaTypeError(mess)
+                raise VisaTypeError(mess)
 			
 
     @instrument_property
@@ -238,6 +238,8 @@ class TinyBiltChannel(BaseInstrument):
         with self.secure():
             self._TB.write('i{};c{};Volt {}'.format(self._channel[0],
 													self._channel[1], value))
+            self._TB.write('i{};c{};trig:input:init'.format(self._channel[0],
+													self._channel[1]))
             result = round(self._TB.ask_for_values('i{};c{};Volt?'
                                                    .format(self._channel[0], 
 												   self._channel[1]))[0], 5)
@@ -308,23 +310,23 @@ class TinyBilt(VisaInstrument):
         """defined_channels is a list of tuple with format (module_number, 
 																channel_number)
         """
-			modules = self.ask('I:L?')
-			if modules:
-				defined_modules = np.array([s.split(',')
+        modules = self.ask('I:L?')
+        if modules:
+            defined_modules = np.array([s.split(',')
 											for s in modules.split(';')],
 											dtype=np.uint)
-				for i in defined_modules[:,0]:
-					defined_channels = []
-					if defined_modules[i-1,1]=='2141':
-						defined_channels.extend([(i,1), (i,2), (i,3), (i,4)])
-						return defined_channels
-					elif defined_modules[i-1,1]=='2101':
-						defined_channels.append((i,1))
-						return defined_channels
-					else:
-						raise InstrIOError(cleandoc('''Driver not written for 
+            defined_channels = []
+            for i in defined_modules[:,0].tolist():
+                if defined_modules[i-1,1]==2141:
+                    defined_channels.extend([(i,1), (i,2), (i,3), (i,4)])
+                elif defined_modules[i-1,1]==2101:
+                    defined_channels.append((i,1))
+                else:
+                    raise InstrIOError(cleandoc('''Driver not written for 
 													this type of module'''))
-			else:
-				raise InstrIOError(cleandoc('''Instrument did not return
+            return defined_channels
+                
+        else:
+            raise InstrIOError(cleandoc('''Instrument did not return
                                             the defined channels'''))
 											

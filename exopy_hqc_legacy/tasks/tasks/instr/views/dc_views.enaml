@@ -70,7 +70,6 @@ enamldef MultiChannelVoltageSourceILabel(Label):
     """
     attr interface
     attr root
-    attr index = 3
     text = 'Channel'
 
 
@@ -80,7 +79,10 @@ enamldef MultiChannelVoltageSourceIChannel(IntField):
     """
     attr interface
     attr root
-    value := interface.channel[1]
+    hug_width = 'medium'
+    value << interface.channel[1]
+    value ::
+        interface.channel = (interface.channel[0], change['value'])
 	
 
 enamldef MultiChannelVoltageSourceILabelModule(Label):
@@ -89,7 +91,7 @@ enamldef MultiChannelVoltageSourceILabelModule(Label):
     """
     attr interface
     attr root
-    attr index = 3
+    attr index = 2
     text = 'Module'
 
 
@@ -99,7 +101,10 @@ enamldef MultiChannelVoltageSourceIModule(IntField):
     """
     attr interface
     attr root
-    value := interface.channel[0]
+    hug_width = 'medium'
+    value << interface.channel[0]
+    value ::
+        interface.channel = (change['value'], interface.channel[1])
 
 
 enamldef SetDcCurrentView(InstrView): view:

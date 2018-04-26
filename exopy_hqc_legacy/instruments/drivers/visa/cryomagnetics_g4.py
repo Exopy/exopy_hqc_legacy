@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -13,9 +13,6 @@ It is very close to the CS4 one but for a few bugs in the software:
 (namely ULIM and RATE)
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from ..driver_tools import (secure_communication,
                             instrument_property)
 from .cryomagnetics_cs4 import CS4

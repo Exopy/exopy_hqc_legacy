@@ -14,6 +14,7 @@ from time import sleep
 
 from ..driver_tools import (InstrIOError, secure_communication,
                             instrument_property, InstrJob)
+
 from ..visa_tools import VisaInstrument
 
 
@@ -28,7 +29,6 @@ class CS4(VisaInstrument):
     """Driver for the superconducting magnet power supply Cryomagnetics CS4.
 
     """
-
     #: Typical fluctuations at the ouput of the instrument.
     #: We use a class variable since we expect this to be identical for all
     #: instruments.
@@ -52,6 +52,7 @@ class CS4(VisaInstrument):
                  the instrument settings. One should also check that
                  the switch heater current is correct.'''))
 
+
         if 'output_fluctuations' in connection_info:
             self.output_fluctuations = connection_info['output_fluctuations']
         else:
@@ -65,7 +66,6 @@ class CS4(VisaInstrument):
         if not para:
             self.write_termination = '\n'
             self.read_termination = '\n'
-
         # Setup the correct unit and range.
         self.write('UNITS T')
         self.write('RANGE 0 100;')  # HINT the CG4 requires the ;
@@ -143,6 +143,7 @@ class CS4(VisaInstrument):
         except KeyError:
             raise ValueError('The switch is in fault or absent')
 
+
     @heater_state.setter
     @secure_communication()
     def heater_state(self, state):
@@ -170,7 +171,7 @@ class CS4(VisaInstrument):
     def fast_sweep_rate(self):
         """Rate at which to ramp the field when the switch heater is off
         (T/min).
-
+        
         """
         rate = float(self.ask('RATE? 5'))
         return rate * (60 * self.field_current_ratio)

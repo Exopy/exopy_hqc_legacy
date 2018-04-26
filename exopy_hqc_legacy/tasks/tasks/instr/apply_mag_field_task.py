@@ -42,7 +42,7 @@ class ApplyMagFieldTask(InstrumentTask):
 
         """
         return self.root.should_stop.is_set()
-
+      
     def perform(self, target_value=None):
         """Apply the specified magnetic field.
 

@@ -60,7 +60,6 @@ class IPS12010(VisaInstrument):
     #: We use a class variable since we expect this to be identical for all
     #: instruments.
     OUTPUT_FLUCTUATIONS = 2e-4
-
     caching_permissions = {'heater_state': True,
                            'target_current': True,
                            'sweep_rate_current': True,
@@ -335,7 +334,6 @@ class IPS12010(VisaInstrument):
     @instrument_property
     def current_sweep_rate(self):
         """Rate at which to sweep the current when the switch heater is on.
-
         """
         return float(self.read_parameter('Current sweep rate'))
 
@@ -343,7 +341,6 @@ class IPS12010(VisaInstrument):
     @secure_communication()
     def current_sweep_rate(self, rate):
         """Rate at which to sweep the current when the switch heater is on.
-
         """
         # amps/min
         result = self.ask("S{}".format(rate))

@@ -185,6 +185,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
                 Drivers:
+
                     manufacturer = 'Cryomagnetics'
                     settings = {'MagnetConversionSetting': {}}
                     Driver:

@@ -17,6 +17,7 @@ from exopy_hqc_legacy.instruments.drivers.driver_tools import BaseInstrument
 
 PROFILES = 'exopy.instruments.profiles'
 
+
 DRIVERS = 'exopy.instruments.drivers'
 
 

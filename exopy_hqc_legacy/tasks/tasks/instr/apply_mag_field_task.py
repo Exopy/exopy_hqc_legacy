@@ -37,17 +37,53 @@ class ApplyMagFieldTask(InstrumentTask):
     parallel = set_default({'activated': True, 'pool': 'instr'})
     database_entries = set_default({'field': 0.01})
 
+    def check_for_interruption(self):
+        """Check if the user required an interruption.
+
+        """
+        return self.root.should_stop.is_set()
+      
     def perform(self, target_value=None):
         """Apply the specified magnetic field.
 
         """
+        # make ready
         if (self.driver.owner != self.name or
                 not self.driver.check_connection()):
             self.driver.owner = self.name
-            self.driver.make_ready()
 
         if target_value is None:
             target_value = self.format_and_eval_string(self.field)
-        self.driver.go_to_field(target_value, self.rate, self.auto_stop_heater,
-                                self.post_switch_wait)
+
+        driver = self.driver
+        normal_end = True
+        if (abs(driver.read_persistent_field() - target_value) >
+                driver.output_fluctuations):
+            job = driver.sweep_to_persistent_field()
+            if job.wait_for_completion(self.check_for_interruption,
+                                       timeout=60, refresh_time=1):
+                driver.heater_state = 'On'
+            else:
+                return False
+
+            # set the magnetic field
+            job = driver.sweep_to_field(target_value, self.rate)
+            normal_end = job.wait_for_completion(self.check_for_interruption,
+                                                 timeout=60,
+                                                 refresh_time=10)
+
+        # Always close the switch heater when the ramp was interrupted.
+        if not normal_end:
+            job.cancel()
+            driver.heater_state = 'Off'
+            self.write_in_database('field', driver.read_persistent_field())
+            return False
+
+        # turn off heater
+        if self.auto_stop_heater:
+            driver.heater_state = 'Off'
+            job = driver.sweep_to_field(0)
+            job.wait_for_completion(self.check_for_interruption,
+                                    timeout=60, refresh_time=1)
+
         self.write_in_database('field', target_value)

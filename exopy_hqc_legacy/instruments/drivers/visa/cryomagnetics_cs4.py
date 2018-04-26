@@ -13,20 +13,31 @@ from inspect import cleandoc
 from time import sleep
 
 from ..driver_tools import (InstrIOError, secure_communication,
-                            instrument_property)
+                            instrument_property, InstrJob)
+
 from ..visa_tools import VisaInstrument
 
 
 _GET_HEATER_DICT = {'0': 'Off',
                     '1': 'On'}
 
-_ACTIVITY_DICT = {'To zero': 'SWEEP ZERO'}
-
-OUT_FLUC = 2e-4
-MAXITER = 10
+_ACTIVITY_DICT = {'To set point': 'UP',
+                  'Hold': 'PAUSE'}
 
 
 class CS4(VisaInstrument):
+    """Driver for the superconducting magnet power supply Cryomagnetics CS4.
+
+    """
+    #: Typical fluctuations at the ouput of the instrument.
+    #: We use a class variable since we expect this to be identical for all
+    #: instruments.
+    OUTPUT_FLUCTUATIONS = 2e-4
+
+    caching_permissions = {'heater_state': True,
+                           'target_field': True,
+                           'sweep_rate_field': True,
+                           }
 
     def __init__(self, connection_info, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
@@ -41,54 +52,81 @@ class CS4(VisaInstrument):
                  the instrument settings. One should also check that
                  the switch heater current is correct.'''))
 
+
+        if 'output_fluctuations' in connection_info:
+            self.output_fluctuations = connection_info['output_fluctuations']
+        else:
+            self.output_fluctuations = self.OUTPUT_FLUCTUATIONS
+
     def open_connection(self, **para):
+        """Open the connection and set up the parameters.
+
+        """
         super(CS4, self).open_connection(**para)
         if not para:
             self.write_termination = '\n'
             self.read_termination = '\n'
-
-    @secure_communication()
-    def make_ready(self):
-        """Setup the correct unit and range.
-
-        """
+        # Setup the correct unit and range.
         self.write('UNITS T')
-        self.write('RANGE 0 100')
+        self.write('RANGE 0 100;')  # HINT the CG4 requires the ;
         # we'll only use the command sweep up (ie to upper limit)
         # however upper limit can't be lower than lower limit for
         # some sources : G4 for example
         # set lower limit to lowest value
         self.write('LLIM -7')
 
-    def go_to_field(self, value, rate, auto_stop_heater=True,
-                    post_switch_wait=30):
-        """Ramp up the field to the specified value.
+    def read_output_field(self):
+        """Read the current value of the output field.
 
         """
-        self.field_sweep_rate = rate
+        return float(self.ask('IOUT?').strip(' T'))
 
-        if abs(self.persistent_field - value) >= OUT_FLUC:
+    def read_persistent_field(self):
+        """Read the current value of the persistent field.
 
-            if self.heater_state == 'Off':
-                self.target_field = self.persistent_field
-                self.heater_state = 'On'
-                sleep(1)
+        """
+        return float(self.ask('IMAG?').strip(' T'))
 
-            self.target_field = value
+    def is_target_reached(self):
+        """Check whether the target field has been reached.
 
-        if auto_stop_heater:
-            self.heater_state = 'Off'
-            sleep(post_switch_wait)
-            self.activity = 'To zero'
-            wait = 60 * abs(self.target_field) / self.field_sweep_rate
-            sleep(wait)
-            niter = 0
-            while abs(self.target_field) >= OUT_FLUC:
-                sleep(5)
-                niter += 1
-                if niter > MAXITER:
-                    raise InstrIOError(cleandoc('''CS4 didn't set the
-                        field to zero after {} sec'''.format(5 * MAXITER)))
+        """
+        return (abs(self.read_output_field() - self.target_field) <
+                self.output_fluctuations)
+
+    def sweep_to_persistent_field(self):
+        """Convenience function ramping the field to the persistent.
+
+        Once the value is reached one can safely turn on the switch heater.
+
+        """
+        return self.sweep_to_field(self.read_persistent_field())
+
+    def sweep_to_field(self, value, rate=None):
+        """Convenience function to ramp up the field to the specified value.
+
+        """
+        # Set rate. Always the fast sweep rate if the switch heater is off.
+        if rate is not None:
+            self.field_sweep_rate = rate
+        rate = (self.field_sweep_rate if self.heater_state == 'On' else
+                self.fast_sweep_rate)
+
+        # Start ramping.
+        self.target_field = value
+        self.activity = 'To set point'
+
+        # Create job.
+        span = abs(self.read_output_field() - value)
+        wait = 60 * span / rate
+        job = InstrJob(self.is_target_reached, wait, cancel=self.stop_sweep)
+        return job
+
+    def stop_sweep(self):
+        """Stop the field sweep at the current value.
+
+        """
+        self.activity = 'Hold'
 
     def check_connection(self):
         pass
@@ -103,14 +141,15 @@ class CS4(VisaInstrument):
         try:
             return _GET_HEATER_DICT[heat]
         except KeyError:
-            raise ValueError(cleandoc('''The switch is in fault or
-                                         absent'''))
+            raise ValueError('The switch is in fault or absent')
+
 
     @heater_state.setter
     @secure_communication()
     def heater_state(self, state):
         if state in ['On', 'Off']:
             self.write('PSHTR {}'.format(state))
+            sleep(1)
 
     @instrument_property
     def field_sweep_rate(self):
@@ -130,8 +169,9 @@ class CS4(VisaInstrument):
 
     @instrument_property
     def fast_sweep_rate(self):
-        """Rate at which to ramp the field when the switch heater is off (T/min).
-
+        """Rate at which to ramp the field when the switch heater is off
+        (T/min).
+        
         """
         rate = float(self.ask('RATE? 5'))
         return rate * (60 * self.field_current_ratio)
@@ -147,7 +187,8 @@ class CS4(VisaInstrument):
         """Field that the source will try to reach.
 
         """
-        return float(self.ask('IOUT?').strip(' T'))
+        # in T
+        return float(self.ask('ULIM?').strip(' T'))
 
     @target_field.setter
     @secure_communication()
@@ -157,30 +198,6 @@ class CS4(VisaInstrument):
 
         """
         self.write('ULIM {}'.format(target))
-
-        if self.heater_state == 'Off':
-            wait = 60 * abs(self.target_field - target) / self.fast_sweep_rate
-            self.write('SWEEP UP FAST')
-        else:
-            wait = 60 * abs(self.target_field - target) / self.field_sweep_rate
-            # need to specify slow after a fast sweep !
-            self.write('SWEEP UP SLOW')
-
-        sleep(wait)
-        niter = 0
-        while abs(self.target_field - target) >= OUT_FLUC:
-            sleep(5)
-            niter += 1
-            if niter > MAXITER:
-                raise InstrIOError(cleandoc('''CS4 didn't set the field
-                                               to {}'''.format(target)))
-
-    @instrument_property
-    def persistent_field(self):
-        """Last known value of the magnet field.
-
-        """
-        return float(self.ask('IMAG?').strip(' T'))
 
     @instrument_property
     def activity(self):
@@ -193,8 +210,13 @@ class CS4(VisaInstrument):
     @secure_communication()
     def activity(self, value):
         par = _ACTIVITY_DICT.get(value, None)
+        if par != 'PAUSE':
+            if self.heater_state == 'Off':
+                par += ' FAST'
+            else:
+                par += ' SLOW'
         if par:
-            self.write(par)
+            self.write('SWEEP ' + par)
         else:
             raise ValueError(cleandoc(''' Invalid parameter {} sent to
                              CS4 set_activity method'''.format(value)))

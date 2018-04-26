@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,23 +9,20 @@
 """Tests for the ApplyMagFieldTask
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
 import enaml
 
-from ecpy.tasks.api import RootTask
-from ecpy.tasks.tasks.logic.loop_task import LoopTask
-from ecpy.testing.util import show_and_close_widget
-from ecpy_hqc_legacy.tasks.tasks.instr.dc_tasks\
+from exopy.tasks.api import RootTask
+from exopy.tasks.tasks.logic.loop_task import LoopTask
+from exopy.testing.util import show_and_close_widget
+from exopy_hqc_legacy.tasks.tasks.instr.dc_tasks\
     import (SetDCVoltageTask, MultiChannelVoltageSourceInterface)
 
 with enaml.imports():
-    from ecpy.tasks.tasks.logic.views.loop_view import LoopView
-    from ecpy_hqc_legacy.tasks.tasks.instr.views.dc_views\
+    from exopy.tasks.tasks.logic.views.loop_view import LoopView
+    from exopy_hqc_legacy.tasks.tasks.instr.views.dc_views\
         import SetDcVoltageView
 
 from .instr_helper import InstrHelper, InstrHelperStarter, PROFILES, DRIVERS
@@ -187,17 +184,17 @@ class TestSetDCVoltageTask(object):
 
 
 @pytest.mark.ui
-def test_set_dc_voltage_view(windows, root_view, task_workbench):
+def test_set_dc_voltage_view(exopy_qtbot, root_view, task_workbench):
     """Test SetDCVoltageView widget outisde of a LoopTask.
 
     """
     task = SetDCVoltageTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(SetDcVoltageView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, SetDcVoltageView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_set_dc_voltage_view2(windows, root_view, task_workbench):
+def test_set_dc_voltage_view2(exopy_qtbot, root_view, task_workbench):
     """Test SetDCVoltageView widget inside of a LoopTask.
 
     """
@@ -207,4 +204,4 @@ def test_set_dc_voltage_view2(windows, root_view, task_workbench):
     loop = LoopTask(name='r', task=task)
     root_view.task.add_child_task(0, loop)
     # XXX check for absence of target field
-    show_and_close_widget(LoopView(task=loop, root=root_view))
+    show_and_close_widget(exopy_qtbot, LoopView(task=loop, root=root_view))

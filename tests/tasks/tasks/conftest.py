@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,16 +9,13 @@
 """Configuration for the tests run on tasks.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import pytest
 import enaml
 
 with enaml.imports():
-    from ecpy_hqc_legacy.manifest import HqcLegacyManifest
+    from exopy_hqc_legacy.manifest import HqcLegacyManifest
 
-pytest_plugins = str('ecpy.testing.tasks.fixtures'),
+pytest_plugins = str('exopy.testing.tasks.fixtures'),
 
 
 @pytest.yield_fixture
@@ -28,4 +25,4 @@ def task_workbench(task_workbench):
     """
     task_workbench.register(HqcLegacyManifest())
     yield task_workbench
-    task_workbench.unregister('ecpy_hqc_legacy')
+    task_workbench.unregister('exopy_hqc_legacy')

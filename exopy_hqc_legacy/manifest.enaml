@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,9 +9,6 @@
 """The manifest contributing the extensions to the main application.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import os
 
 import enaml
@@ -350,6 +347,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                     instruments = ['exopy_hqc_legacy.Legacy.IPS12010',
                                    'exopy_hqc_legacy.Legacy.CS4',
                                    'exopy_hqc_legacy.Legacy.C4G']
+
                     metadata = {'loopable': True}
                 Task:
                     task = 'lock_in_measure_task:LockInMeasureTask'

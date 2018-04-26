@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,22 +9,19 @@
 """Test the tasks operating on numpy.arrays.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
 import enaml
 import numpy as np
-from ecpy.tasks.api import RootTask
-from ecpy.testing.util import show_and_close_widget
+from exopy.tasks.api import RootTask
+from exopy.testing.util import show_and_close_widget
 
-from ecpy_hqc_legacy.tasks.tasks.util.array_tasks import (ArrayExtremaTask,
+from exopy_hqc_legacy.tasks.tasks.util.array_tasks import (ArrayExtremaTask,
                                                           ArrayFindValueTask)
 
 with enaml.imports():
-    from ecpy_hqc_legacy.tasks.tasks.util.views.array_views\
+    from exopy_hqc_legacy.tasks.tasks.util.views.array_views\
         import ArrayExtremaView, ArrayFindValueView
 
 
@@ -213,7 +210,7 @@ class TestArrayExtremaTask(object):
 
 
 @pytest.mark.ui
-def test_array_extrema_view(windows):
+def test_array_extrema_view(exopy_qtbot):
     """Test the array extrema view.
 
     """
@@ -221,7 +218,7 @@ def test_array_extrema_view(windows):
     task = ArrayExtremaTask(name='Test')
     root.children.append(task)
 
-    show_and_close_widget(ArrayExtremaView(task=task))
+    show_and_close_widget(exopy_qtbot, ArrayExtremaView(task=task))
 
 
 class TestArrayFindValueTask(object):
@@ -358,7 +355,7 @@ class TestArrayFindValueTask(object):
 
 
 @pytest.mark.ui
-def test_array_find_value_view(windows):
+def test_array_find_value_view(exopy_qtbot):
     """Test the array extrema view.
 
     """
@@ -366,4 +363,4 @@ def test_array_find_value_view(windows):
     task = ArrayFindValueTask(name='Test')
     root.children.append(task)
 
-    show_and_close_widget(ArrayFindValueView(task=task))
+    show_and_close_widget(exopy_qtbot, ArrayFindValueView(task=task))

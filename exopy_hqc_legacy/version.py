@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,9 +9,6 @@
 """The version information for this release of Exopy.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from collections import namedtuple
 
 # The major release number. Differences in the major number indicate
@@ -22,14 +19,14 @@ MAJOR = 0
 # possibly small differences in the API, but these changes will come
 # backwards compatibility support when possible. Minor releases are
 # typically used for large feature additions.
-MINOR = 1
+MINOR = 2
 
 # The micro release number. The micro release number is incremented
 # for bug fix releases and small feature additions.
 MICRO = 0
 
 # The status indicate if this is a development or pre-release version
-STATUS = 'a4'
+STATUS = 'dev'
 
 #: A namedtuple of the version info for the current release.
 version_info = namedtuple('version_info', 'major minor micro status')

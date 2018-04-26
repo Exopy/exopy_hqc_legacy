@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,9 +9,6 @@
 """Test the taskused to load files.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import os
 from multiprocessing import Event
 from collections import OrderedDict
@@ -20,17 +17,17 @@ import pytest
 import enaml
 import numpy as np
 
-from ecpy.tasks.api import RootTask
-from ecpy.testing.util import (show_and_close_widget, show_widget)
-from ecpy_hqc_legacy.tasks.tasks.util.save_tasks import (SaveTask,
-                                                         SaveArrayTask,
-                                                         SaveFileTask)
+from exopy.tasks.api import RootTask
+from exopy.testing.util import (show_and_close_widget, show_widget)
+from exopy_hqc_legacy.tasks.tasks.util.save_tasks import (SaveTask,
+                                                          SaveArrayTask,
+                                                          SaveFileTask)
 
 with enaml.imports():
-    from ecpy_hqc_legacy.tasks.tasks.util.views.save_views\
+    from exopy_hqc_legacy.tasks.tasks.util.views.save_views\
         import (SaveView, SaveArrayView, SaveFileView)
 
-pytest_plugins = str('ecpy.testing.tasks.fixtures'),
+pytest_plugins = str('exopy.testing.tasks.fixtures'),
 
 
 class TestSaveTask(object):
@@ -701,38 +698,39 @@ class TestSaveArrayTask(object):
 
 
 @pytest.mark.ui
-def test_save_view(windows, process_and_sleep, root_view):
+def test_save_view(exopy_qtbot, dialog_sleep, root_view):
     """Test SaveView widget.
 
     """
     task = SaveTask(name='Test')
     root_view.task.add_child_task(0, task)
     view = SaveView(task=task, root=root_view)
-    win = show_widget(view)
-    process_and_sleep()
+    win = show_widget(exopy_qtbot, view)
+    exopy_qtbot.wait(dialog_sleep)
 
     d_editor = view.widgets()[-1]
     d_editor._model.add_pair(0)
-    process_and_sleep()
+    exopy_qtbot.wait(dialog_sleep)
 
     win.close()
 
 
 @pytest.mark.ui
-def test_save_file_view(windows, root_view):
+def test_save_file_view(exopy_qtbot, root_view):
     """Test SaveView widget.
 
     """
     task = SaveFileTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(SaveFileView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, SaveFileView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_save_array_view(windows, root_view):
+def test_save_array_view(exopy_qtbot, root_view):
     """Test SaveView widget.
 
     """
     task = SaveArrayTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(SaveArrayView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot,
+                          SaveArrayView(task=task, root=root_view))

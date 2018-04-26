@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Test the routines to update a HQCMeas .ini file to the formats used by ecpy.
+"""Test the routines to update a HQCMeas .ini file to the formats used by exopy
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import os
 from traceback import print_exc
 
@@ -19,19 +16,19 @@ import pytest
 import enaml
 from configobj import ConfigObj
 
-from ecpy.measure.measure import Measure
-from ecpy_hqc_legacy.conversion.convert import (update_task,
-                                                update_task_interface,
-                                                update_monitor,
-                                                iterate_on_sections,
-                                                convert_measure)
+from exopy.measurement.measurement import Measurement
+from exopy_hqc_legacy.conversion.convert import (update_task,
+                                                 update_task_interface,
+                                                 update_monitor,
+                                                 iterate_on_sections,
+                                                 convert_measure)
 
 with enaml.imports():
-    from ecpy.tasks.manifest import TasksManagerManifest
-    from ecpy_hqc_legacy.manifest import HqcLegacyManifest
+    from exopy.tasks.manifest import TasksManagerManifest
+    from exopy_hqc_legacy.manifest import HqcLegacyManifest
 
 
-pytest_plugins = str('ecpy.testing.measure.fixtures'),
+pytest_plugins = str('exopy.testing.measurement.fixtures'),
 
 
 def test_update_task():
@@ -45,7 +42,7 @@ def test_update_task():
                         'voltage': '1.0'})
     update_task(config)
     assert 'task_class' not in config
-    assert config['task_id'] == 'ecpy_hqc_legacy.SetDCVoltageTask'
+    assert config['task_id'] == 'exopy_hqc_legacy.SetDCVoltageTask'
     assert 'dep_type' in config
     assert 'selected_driver' not in config
     assert 'selected_profile' not in config
@@ -64,7 +61,8 @@ def test_update_task_interface():
               'iterable': '[]'}
     update_task_interface(config)
     assert 'interface_class' not in config
-    assert config['interface_id'] == 'ecpy.LoopTask:ecpy.IterableLoopInterface'
+    assert (config['interface_id'] ==
+            'exopy.LoopTask:exopy.IterableLoopInterface')
     assert 'dep_type' in config
     assert 'iterable' in config
 
@@ -227,34 +225,36 @@ MEASURES_FILES = [
 
 
 @pytest.mark.parametrize('meas_file', MEASURES_FILES)
-def test_converting_a_measure(measure_workbench, meas_file, tmpdir,
-                              monkeypatch):
-    """Test converting a measure created using HQCMeas to make it run on Ecpy.
+def test_converting_a_measurement(measurement_workbench, meas_file, tmpdir,
+                                  monkeypatch):
+    """Test converting a measurement created using HQCMeas to make it run on
+    Exopy.
 
     """
     import enaml
-    from ecpy.measure.monitors.text_monitor import monitor
+    from exopy.measurement.monitors.text_monitor import monitor
     monkeypatch.setattr(monitor, 'information', lambda *args, **kwargs: 1)
-    measure_workbench.register(TasksManagerManifest())
-    measure_workbench.register(HqcLegacyManifest())
+    measurement_workbench.register(TasksManagerManifest())
+    measurement_workbench.register(HqcLegacyManifest())
     try:
         with enaml.imports():
-            from ecpy_pulses.pulses.manifest import PulsesManagerManifest
-            measure_workbench.register(PulsesManagerManifest())
-            from ecpy_pulses.tasks.manifest import PulsesTasksManifest
-            measure_workbench.register(PulsesTasksManifest())
-            from ecpy_hqc_legacy.pulses.manifest import HqcLegacyPulsesManifest
-            measure_workbench.register(HqcLegacyPulsesManifest())
+            from exopy_pulses.pulses.manifest import PulsesManagerManifest
+            measurement_workbench.register(PulsesManagerManifest())
+            from exopy_pulses.tasks.manifest import PulsesTasksManifest
+            measurement_workbench.register(PulsesTasksManifest())
+            from exopy_hqc_legacy.pulses.manifest\
+                import HqcLegacyPulsesManifest
+            measurement_workbench.register(HqcLegacyPulsesManifest())
     except ImportError:
-        print('Ecpy pulses is not installed')
+        print('Exopy pulses is not installed')
         print_exc()
 
-    plugin = measure_workbench.get_plugin('ecpy.measure')
+    plugin = measurement_workbench.get_plugin('exopy.measurement')
 
     path = convert_measure(os.path.join(MEASURE_DIRECTORY, meas_file),
                            dest_folder=str(tmpdir))
 
-    res, errors = Measure.load(plugin, path)
+    res, errors = Measurement.load(plugin, path)
     with open(path) as f:
         print(errors.get('main task'), f.read())
     assert res

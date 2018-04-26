@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,9 +9,6 @@
 """Task to apply a magnetic field.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import numbers
 
 import numpy as np
@@ -19,6 +16,7 @@ from atom.api import (Unicode, Bool, set_default, Enum)
 from exopy.tasks.api import InstrumentTask, validators
 
 # XXX unfinished
+
 
 class OscilloGetTraceTask(InstrumentTask):
     """ Get the trace displayed on the oscilloscope.

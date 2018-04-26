@@ -9,9 +9,6 @@
 """Driver for the Cryomagnetic superconducting magnet power supply CS4.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from inspect import cleandoc
 from time import sleep
 

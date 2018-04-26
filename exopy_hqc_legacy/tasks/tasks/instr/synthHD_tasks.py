@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2017 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,9 +9,6 @@
 """Interface allowing to use RF tasks with synthHD generator.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from atom.api import Int
 
 from exopy.tasks.api import TaskInterface

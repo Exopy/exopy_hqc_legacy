@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2017 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,9 +9,6 @@
 """Driver for Windfreaktech SynthHD SignalGenerator using VISA library.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import re
 from textwrap import fill
 from inspect import cleandoc

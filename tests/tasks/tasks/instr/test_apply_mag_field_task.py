@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,23 +9,20 @@
 """Tests for the ApplyMagFieldTask
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 from multiprocessing import Event
 
 import pytest
 import enaml
 
-from ecpy.tasks.api import RootTask
-from ecpy.tasks.tasks.logic.loop_task import LoopTask
-from ecpy.testing.util import show_and_close_widget
-from ecpy_hqc_legacy.tasks.tasks.instr.apply_mag_field_task\
+from exopy.tasks.api import RootTask
+from exopy.tasks.tasks.logic.loop_task import LoopTask
+from exopy.testing.util import show_and_close_widget
+from exopy_hqc_legacy.tasks.tasks.instr.apply_mag_field_task\
     import ApplyMagFieldTask
 
 with enaml.imports():
-    from ecpy.tasks.tasks.logic.views.loop_view import LoopView
-    from ecpy_hqc_legacy.tasks.tasks.instr.views.apply_mag_field_view\
+    from exopy.tasks.tasks.logic.views.loop_view import LoopView
+    from exopy_hqc_legacy.tasks.tasks.instr.views.apply_mag_field_view\
         import ApplyMagFieldView
 
 from .instr_helper import (InstrHelper, InstrHelperStarter, DummyJob,
@@ -93,19 +90,31 @@ class TestApplyMagFieldTask(object):
         self.task.perform()
         assert self.root.get_from_database('Test_field') == 2.0
 
+    def test_perform2(self):
+        """Test multiple run when connection is maintained.
+
+        """
+        self.task.field = '2.0'
+
+        self.root.prepare()
+        self.task.perform()
+        self.task.perform()
+        # In case of fail make_ready would be called twice.
+        assert self.root.get_from_database('Test_field') == 2.0
+
 
 @pytest.mark.ui
-def test_apply_mag_field_view1(windows, root_view, task_workbench):
+def test_apply_mag_field_view1(exopy_qtbot, root_view, task_workbench):
     """Test ApplyMagFieldView widget outisde of a LoopTask.
 
     """
     task = ApplyMagFieldTask(name='Test')
     root_view.task.add_child_task(0, task)
-    show_and_close_widget(ApplyMagFieldView(task=task, root=root_view))
+    show_and_close_widget(exopy_qtbot, ApplyMagFieldView(task=task, root=root_view))
 
 
 @pytest.mark.ui
-def test_apply_mag_field_view2(windows, root_view, task_workbench):
+def test_apply_mag_field_view2(exopy_qtbot, root_view, task_workbench):
     """Test ApplyMagFieldView widget inside of a LoopTask.
 
     """
@@ -113,4 +122,4 @@ def test_apply_mag_field_view2(windows, root_view, task_workbench):
     loop = LoopTask(name='r', task=task)
     root_view.task.add_child_task(0, loop)
     # XXX check for absence of target field
-    show_and_close_widget(LoopView(task=loop, root=root_view))
+    show_and_close_widget(exopy_qtbot, LoopView(task=loop, root=root_view))

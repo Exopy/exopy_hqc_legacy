@@ -1,8 +1,58 @@
-EcpyHqcLegacy Changelog
+ExopyHqcLegacy Changelog
 =======================
 
+0.2.0 - unreleased
+------------------
 
-0.1.0
------
+Nothing yet
+
+
+0.1.0 - 15/02/2018
+------------------
+
+- add support for the Cryomagnetics CS4 superconducting magnet power supply
+- fix declaration of supported driver for lock-in tasks
+- add Windfreaktech SynthHD microwave power source driver
+- add RhodeSchwarz SMB100A microwave power source driver
+- add RhodeSchwarz VNA driver
+- update Alazar 935x driver
+- update SP ADQ14 driver
+- update digitizer task
+- add SetPulseModulationTask for microwave power sources
+- fixes for PNA tasks
+- extend AWG 5014 driver capabilities to allow using the internal sequencer
+- improve digitizer capabilities to handle AWG loops
+- solve bugs in HDF5 task
+- add Anapico microwave generator and another R&S VNA (ZVA24)
+- improve DC sources related tasks
+- delay the loading of the Alazar DLL to first use of the driver
+
+
+0.1.0.a4 - 24/11/2016
+---------------------
+
+- add connection for DLL controlled instruments
+- add driver for SP ADQ14 digitizer
+- fix handling of zero length pulses
+
+
+0.1.0.a3 - 19/10/2016
+---------------------
+
+- fix handling of database_entries in lock-in related tasks
+- add a context for compilation of pulse sequences using AWG5014C
+
+
+0.1.0.a2 - 13/08/2016
+---------------------
+
+- update instrument starter to match changes in exopy
+- add conversion tool for old measurement format found in HQCMeas
+- fixes for save tasks and pna related tasks
+- fix reopen_connection for visa instruments
+
+
+0.1.0.a1 - 14/06/2016
+---------------------
 
 - First numbered version

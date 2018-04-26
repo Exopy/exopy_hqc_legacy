@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,17 +9,12 @@
 """Base classes for instrument relying on the VISA protocol.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
-from future.utils import raise_with_traceback
-
 try:
     from pyvisa.highlevel import ResourceManager
     from pyvisa import errors
-except ImportError:
+except ImportError as e:
     msg = 'The PyVISA library is necessary to use the visa backend.'
-    raise_with_traceback(ImportError(msg))
+    raise ImportError(msg) from e
 
 from .driver_tools import BaseInstrument, InstrIOError
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -9,9 +9,6 @@
 """Tasks to set the parameters of arbitrary waveform generators.
 
 """
-from __future__ import (division, unicode_literals, print_function,
-                        absolute_import)
-
 import logging
 
 from atom.api import (Unicode, set_default)

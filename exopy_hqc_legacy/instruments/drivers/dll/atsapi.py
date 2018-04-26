@@ -4,7 +4,7 @@
 # see AUTHORS for more details.
 #
 # -----------------------------------------------------------------------------
-'''Python interface to the AlazarTech SDK.
+"""Python interface to the AlazarTech SDK.
 
 This module provides a thin wrapper on top of the AlazarTech C
 API. All the exported methods directly map to underlying C
@@ -19,25 +19,18 @@ Attributes:
 
   DMABuffer: Holds a memory buffer suitable for data transfer with
   digitizers.
-'''
+
+"""
 
 # ExopyHqcLegacy modifications:
 # - use numpy for memory allocation in DMABuffer
 # - remove tk WaitBar
+# - delay the loading of the ats library
 
-from ctypes import *
+from ctypes import (CDLL, byref, c_byte, c_int, c_long, c_float, c_uint32,
+                    c_int64, c_void_p, c_char_p)
 import numpy as np
 import os
-
-from sys import version_info
-if version_info.major == 2:
-    import Tkinter as tk
-    import ttk
-    import thread
-elif version_info.major == 3:
-    import tkinter as tk
-    import tkinter.ttk as ttk
-    import _thread as thread
 
 '''Types of clocks that a board can use for acquiring data.
 Note: Available sources for a given board form a subset of this
@@ -231,7 +224,7 @@ boardNames = {
     ATU7825: "ATU7825",
     ATS9373: "ATS9373",
     ATS9416: "ATS9416"
-};
+}
 
 
 '''Board input ranges (amplitudes) identifiers. PM stands for
@@ -377,30 +370,167 @@ class DMABuffer(object):
     def __init__(self, bytes_per_sample, size_bytes):
         self.size_bytes = size_bytes
 
-        npSampleType = np.uint8
+        np_sample_type = np.uint8
         if bytes_per_sample > 1:
-            npSampleType = np.uint16
+            np_sample_type = np.uint16
 
-        self.buffer = np.empty(size_bytes//bytes_per_sample, npSampleType)
+        self.buffer = np.empty(size_bytes//bytes_per_sample, np_sample_type)
         self.addr = self.buffer.ctypes.data_as(c_void_p)
 
 
-# Load libraries
+#: Global variable used to store the dynamically loaded library
 ats = None
-libc = None
-if os.name == 'nt':
-    ats = CDLL("ATSApi.dll")
-elif os.name == 'posix':
-    ats = CDLL("libATSApi.so")
-    libc = CDLL("libc.so.6")
-else:
-    raise Exception("Unsupported OS")
 
+# C types used by Alazar
 U32 = c_uint32
-U8  = c_byte
+U8 = c_byte
 
-ats.AlazarErrorToText.restype = c_char_p
-ats.AlazarErrorToText.argtypes = [U32]
+
+def load_library():
+    """Load the ATS library and register the c signatures.
+
+    """
+    global ats
+    if os.name == 'nt':
+        ats = CDLL("ATSApi.dll")
+    elif os.name == 'posix':
+        ats = CDLL("libATSApi.so")
+    else:
+        raise Exception("Unsupported OS")
+
+    # Registering c signature for ctypes to perform automatic conversions
+    ats.AlazarErrorToText.restype = c_char_p
+    ats.AlazarErrorToText.argtypes = [U32]
+
+    ats.AlazarGetBoardBySystemID.restype = U32
+    ats.AlazarGetBoardBySystemID.argtypes = [U32, U32]
+
+    ats.AlazarGetBoardKind.restype = U32
+    ats.AlazarGetBoardKind.argtypes = [U32]
+
+    ats.AlazarAbortAsyncRead.restype = U32
+    ats.AlazarAbortAsyncRead.argtypes = [U32]
+    ats.AlazarAbortAsyncRead.errcheck = returnCodeCheck
+
+    ats.AlazarAbortCapture.restype = U32
+    ats.AlazarAbortCapture.argtypes = [U32]
+    ats.AlazarAbortCapture.errcheck = returnCodeCheck
+
+    ats.AlazarBeforeAsyncRead.restype = U32
+    ats.AlazarBeforeAsyncRead.argtypes = [U32, U32, c_long, U32, U32, U32, U32]
+    ats.AlazarBeforeAsyncRead.errcheck = returnCodeCheck
+
+    ats.AlazarBusy.restype = U32
+    ats.AlazarBusy.argtypes = [U32]
+
+    ats.AlazarConfigureAuxIO.restype = U32
+    ats.AlazarConfigureAuxIO.argtypes = [U32, U32, U32]
+    ats.AlazarConfigureAuxIO.errcheck = returnCodeCheck
+
+    ats.AlazarConfigureLSB.restype = U32
+    ats.AlazarConfigureLSB.argtypes = [U32, U32, U32]
+    ats.AlazarConfigureLSB.errcheck = returnCodeCheck
+
+    ats.AlazarConfigureRecordAverage.restype = U32
+    ats.AlazarConfigureRecordAverage.argtypes = [U32, U32, U32, U32, U32]
+    ats.AlazarConfigureRecordAverage.errcheck = returnCodeCheck
+
+    ats.AlazarForceTrigger.restype = U32
+    ats.AlazarForceTrigger.argtypes = [U32]
+    ats.AlazarForceTrigger.errcheck = returnCodeCheck
+
+    ats.AlazarForceTriggerEnable.restype = U32
+    ats.AlazarForceTriggerEnable.argtypes = [U32]
+    ats.AlazarForceTriggerEnable.errcheck = returnCodeCheck
+
+    ats.AlazarGetChannelInfo.restype = U32
+    ats.AlazarGetChannelInfo.argtypes = [U32, c_void_p, c_void_p]
+
+    ats.AlazarInputControl.restype = U32
+    ats.AlazarInputControl.argtypes = [U32, U8, U32, U32, U32]
+    ats.AlazarInputControl.errcheck = returnCodeCheck
+
+    ats.AlazarNumOfSystems.restype = U32
+    ats.AlazarNumOfSystems.argtypes = []
+
+    ats.AlazarPostAsyncBuffer.restype = U32
+    ats.AlazarPostAsyncBuffer.argtypes = [U32, c_void_p, U32]
+    ats.AlazarPostAsyncBuffer.errcheck = returnCodeCheck
+
+    ats.AlazarReadEx.restype = U32
+    ats.AlazarReadEx.argtypes = [U32, U32, c_void_p, c_int, c_long,
+                                 c_int64, U32]
+    ats.AlazarReadEx.errcheck = returnCodeCheck
+
+    ats.AlazarResetTimeStamp.restype = U32
+    ats.AlazarResetTimeStamp.argtypes = [U32, U32]
+    ats.AlazarResetTimeStamp.errcheck = returnCodeCheck
+
+    ats.AlazarSetBWLimit.restype = U32
+    ats.AlazarSetBWLimit.argtypes = [U32, U32, U32]
+    ats.AlazarSetBWLimit.errcheck = returnCodeCheck
+
+    ats.AlazarSetCaptureClock.restype = U32
+    ats.AlazarSetCaptureClock.argtypes = [U32, U32, U32, U32, U32]
+    ats.AlazarSetCaptureClock.errcheck = returnCodeCheck
+
+    ats.AlazarSetExternalClockLevel.restype = U32
+    ats.AlazarSetExternalClockLevel.argtypes = [U32, c_float]
+    ats.AlazarSetExternalClockLevel.errcheck = returnCodeCheck
+
+    ats.AlazarSetExternalTrigger.restype = U32
+    ats.AlazarSetExternalTrigger.argtypes = [U32, U32, U32]
+    ats.AlazarSetExternalTrigger.errcheck = returnCodeCheck
+
+    ats.AlazarSetLED.restype = U32
+    ats.AlazarSetLED.argtypes = [U32, U32]
+    ats.AlazarSetLED.errcheck = returnCodeCheck
+
+    ats.AlazarSetParameter.restype = U32
+    ats.AlazarSetParameter.argtypes = [U32, U8, U32, c_long]
+    ats.AlazarSetParameter.errcheck = returnCodeCheck
+
+    ats.AlazarSetParameterUL.restype = U32
+    ats.AlazarSetParameterUL.argtypes = [U32, U8, U32, c_long]
+    ats.AlazarSetParameterUL.errcheck = returnCodeCheck
+
+    ats.AlazarSetRecordCount.restype = U32
+    ats.AlazarSetRecordCount.argtypes = [U32, U32]
+    ats.AlazarSetRecordCount.errcheck = returnCodeCheck
+
+    ats.AlazarSetRecordSize.restype = U32
+    ats.AlazarSetRecordSize.argtypes = [U32, U32, U32]
+    ats.AlazarSetRecordSize.errcheck = returnCodeCheck
+
+    ats.AlazarSetTriggerDelay.restype = U32
+    ats.AlazarSetTriggerDelay.argtypes = [U32, U32]
+    ats.AlazarSetTriggerDelay.errcheck = returnCodeCheck
+
+    ats.AlazarSetTriggerOperation.restype = U32
+    ats.AlazarSetTriggerOperation.argtypes = [U32, U32, U32, U32, U32, U32,
+                                              U32, U32, U32, U32]
+    ats.AlazarSetTriggerOperation.errcheck = returnCodeCheck
+
+    ats.AlazarSetTriggerTimeOut.restype = U32
+    ats.AlazarSetTriggerTimeOut.argtypes = [U32, U32]
+    ats.AlazarSetTriggerTimeOut.errcheck = returnCodeCheck
+
+    ats.AlazarSleepDevice.restype = U32
+    ats.AlazarSleepDevice.argtypes = [U32, U32]
+    ats.AlazarSleepDevice.errcheck = returnCodeCheck
+
+    ats.AlazarStartCapture.restype = U32
+    ats.AlazarStartCapture.argtypes = [U32]
+    ats.AlazarStartCapture.errcheck = returnCodeCheck
+
+    ats.AlazarTriggered.restype = U32
+    ats.AlazarTriggered.argtypes = [U32]
+
+    ats.AlazarWaitAsyncBufferComplete.restype = U32
+    ats.AlazarWaitAsyncBufferComplete.argtypes = [U32, c_void_p, U32]
+    ats.AlazarWaitAsyncBufferComplete.errcheck = returnCodeCheck
+
+
 def returnCodeCheck(result, func, arguments):
     '''Function used internally to check the return code of the C ATS-SDK
     functions.'''
@@ -410,18 +540,9 @@ def returnCodeCheck(result, func, arguments):
                          str(arguments),
                          str(ats.AlazarErrorToText(result))))
 
-def numOfSystems():
-    ats.AlazarNumOfSystems.restype = U32
-    ats.AlazarNumOfSystems.argtypes = []
-    return ats.AlazarNumOfSystems()
 
-def boardsInSystemBySystemID(sid):
-    ats.AlazarBoardsInSystemBySystemID.restype = U32
-    ats.AlazarBoardsInSystemBySystemID.argtypes = [U32]
-    return ats.AlazarBoardsInSystemBySystemID(sid)
-
-class Board:
-    '''Interface to an AlazarTech digitizer.
+class Board(object):
+    """Interface to an AlazarTech digitizer.
 
     The Board class represents an acquisition device on the local
     system. It can be used to control configuration parameters, to
@@ -437,211 +558,192 @@ class Board:
       system. Defaults to 1, which is suitable when there is only one
       board in the system.
 
-    '''
+    """
     def __init__(self, systemId=1, boardId=1):
-        ats.AlazarGetBoardBySystemID.restype = U32
-        ats.AlazarGetBoardBySystemID.argtypes = [U32, U32]
+        if ats is None:
+            load_library()
         self.systemId = systemId
         self.boardId = boardId
         self.handle = ats.AlazarGetBoardBySystemID(systemId, boardId)
         if self.handle == 0:
             raise Exception("Board %d.%d not found" % (systemId, boardId))
 
-
-        ats.AlazarGetBoardKind.restype = U32
-        ats.AlazarGetBoardKind.argtypes = [U32]
         self.type = ats.AlazarGetBoardKind(self.handle)
 
-    ats.AlazarAbortAsyncRead.restype = U32
-    ats.AlazarAbortAsyncRead.argtypes = [U32]
-    ats.AlazarAbortAsyncRead.errcheck = returnCodeCheck
     def abortAsyncRead(self):
-        '''Cancels any asynchronous acquisition running on a board.'''
+        """Cancels any asynchronous acquisition running on a board.
+
+        """
         ats.AlazarAbortAsyncRead(self.handle)
 
-    ats.AlazarAbortCapture.restype = U32
-    ats.AlazarAbortCapture.argtypes = [U32]
-    ats.AlazarAbortCapture.errcheck = returnCodeCheck
     def abortCapture(self):
-        '''Abort an acquisition to on-board memory.'''
+        """Abort an acquisition to on-board memory.
+
+        """
         ats.AlazarAbortCapture(self.handle)
 
-
-
-    ats.AlazarBeforeAsyncRead.restype = U32
-    ats.AlazarBeforeAsyncRead.argtypes = [U32, U32, c_long, U32, U32, U32, U32]
-    ats.AlazarBeforeAsyncRead.errcheck = returnCodeCheck
     def beforeAsyncRead(self, channels, transferOffset, samplesPerRecord,
                         recordsPerBuffer, recordsPerAcquisition, flags):
-        '''Prepares the board for an asynchronous acquisition.'''
-        ats.AlazarBeforeAsyncRead(self.handle, channels, transferOffset, samplesPerRecord,
-                                  recordsPerBuffer, recordsPerAcquisition, flags)
+        """Prepares the board for an asynchronous acquisition.
 
-    ats.AlazarBusy.restype = U32
-    ats.AlazarBusy.argtypes = [U32]
+        """
+        ats.AlazarBeforeAsyncRead(self.handle, channels, transferOffset,
+                                  samplesPerRecord, recordsPerBuffer,
+                                  recordsPerAcquisition, flags)
+
     def busy(self):
-        '''Determine if an acquisition to on-board memory is in progress.'''
+        """Determine if an acquisition to on-board memory is in progress.
+
+        """
         return True if (ats.AlazarBusy(self.handle) > 0) else False
 
-    ats.AlazarConfigureAuxIO.restype = U32
-    ats.AlazarConfigureAuxIO.argtypes = [U32, U32, U32]
-    ats.AlazarConfigureAuxIO.errcheck = returnCodeCheck
     def configureAuxIO(self, mode, parameter):
-        '''Configures the auxiliary output.'''
+        """Configures the auxiliary output.
+
+        """
         ats.AlazarConfigureAuxIO(self.handle, mode, parameter)
 
-    ats.AlazarConfigureLSB.restype = U32
-    ats.AlazarConfigureLSB.argtypes = [U32, U32, U32]
-    ats.AlazarConfigureLSB.errcheck = returnCodeCheck
     def configureLDB(self, valueLSB0, valueLSB1):
-        '''Change unused bits to digital outputs.'''
+        """Change unused bits to digital outputs.
+
+        """
         ats.AlazarConfigureLSB(self.handle, valueLSB0, valueLSB1)
 
-    ats.AlazarConfigureRecordAverage.restype = U32
-    ats.AlazarConfigureRecordAverage.argtypes = [U32, U32, U32, U32, U32]
-    ats.AlazarConfigureRecordAverage.errcheck = returnCodeCheck
-    def configureRecordAverage(self, mode, samplesPerRecord, recordsPerAverage, options):
-        '''Co-add ADC samples into accumulator record.'''
-        ats.AlazarConfigureRecordAverage(self.handle, mode, samplesPerRecord, recordsPerAverage, options)
+    def configureRecordAverage(self, mode, samplesPerRecord, recordsPerAverage,
+                               options):
+        """Co-add ADC samples into accumulator record.
 
-    ats.AlazarForceTrigger.restype = U32
-    ats.AlazarForceTrigger.argtypes = [U32]
-    ats.AlazarForceTrigger.errcheck = returnCodeCheck
+        """
+        ats.AlazarConfigureRecordAverage(self.handle, mode, samplesPerRecord,
+                                         recordsPerAverage, options)
+
     def forceTrigger(self):
-        '''Generate a software trigger event.'''
+        """Generate a software trigger event.
+
+        """
         ats.AlazarForceTrigger(self.handle)
 
-    ats.AlazarForceTriggerEnable.restype = U32
-    ats.AlazarForceTriggerEnable.argtypes = [U32]
-    ats.AlazarForceTriggerEnable.errcheck = returnCodeCheck
     def forceTriggerEnable(self):
-        '''Generate a software trigger enable event.'''
+        """Generate a software trigger enable event.
+
+        """
         ats.AlazarForceTriggerEnable(self.handle)
 
-    ats.AlazarGetChannelInfo.restype = U32
-    ats.AlazarGetChannelInfo.argtypes = [U32, c_void_p, c_void_p]
     def getChannelInfo(self):
-        '''Get the on-board memory in samples per channe and sample size in bits per sample'''
+        """Get the on-board memory in samples per channel and sample size in
+        bits per sample.
+
+        """
         memorySize_samples = U32(0)
         bitsPerSample = U8(0)
-        ats.AlazarGetChannelInfo(self.handle, byref(memorySize_samples), byref(bitsPerSample))
+        ats.AlazarGetChannelInfo(self.handle, byref(memorySize_samples),
+                                 byref(bitsPerSample))
         return (memorySize_samples, bitsPerSample)
 
-    ats.AlazarInputControl.restype = U32
-    ats.AlazarInputControl.argtypes = [U32, U8, U32, U32, U32]
-    ats.AlazarInputControl.errcheck = returnCodeCheck
     def inputControl(self, channel, coupling, inputRange, impedance):
-        '''Configures one input channel on a board.'''
-        ats.AlazarInputControl(self.handle, channel, coupling, inputRange, impedance)
+        """Configures one input channel on a board.
 
-    ats.AlazarNumOfSystems.restype = U32
-    ats.AlazarNumOfSystems.argtypes = []
+        """
+        ats.AlazarInputControl(self.handle, channel, coupling, inputRange,
+                               impedance)
+
     def numOfSystems():
-        '''Returns the number of board systems installed.'''
+        """Returns the number of board systems installed.
+
+        """
         ats.AlazarNumOfSystems()
 
-    ats.AlazarPostAsyncBuffer.restype = U32
-    ats.AlazarPostAsyncBuffer.argtypes = [U32, c_void_p, U32]
-    ats.AlazarPostAsyncBuffer.errcheck = returnCodeCheck
     def postAsyncBuffer(self, buffer, bufferLength):
-        '''Posts a DMA buffer to a board.'''
+        """Posts a DMA buffer to a board.
+
+        """
         ats.AlazarPostAsyncBuffer(self.handle, buffer, bufferLength)
 
-    ats.AlazarReadEx.restype = U32
-    ats.AlazarReadEx.argtypes = [U32, U32, c_void_p, c_int, c_long, c_int64, U32]
-    ats.AlazarReadEx.errcheck = returnCodeCheck
-    def read(self, channelId, buffer, elementSize, record, transferOffset, transferLength):
-        '''Read all or part of a record from on-board memory.'''
-        ats.AlazarReadEx(self.handle, channelId, buffer, elementSize, record, transferOffset, transferLength)
+    def read(self, channelId, buffer, elementSize, record, transferOffset,
+             transferLength):
+        """Read all or part of a record from on-board memory.
 
-    ats.AlazarResetTimeStamp.restype = U32
-    ats.AlazarResetTimeStamp.argtypes = [U32, U32]
-    ats.AlazarResetTimeStamp.errcheck = returnCodeCheck
+        """
+        ats.AlazarReadEx(self.handle, channelId, buffer, elementSize, record,
+                         transferOffset, transferLength)
+
     def resetTimeStamp(self, option):
-        '''Control record timestamp counter reset.'''
+        """Control record timestamp counter reset.
+
+        """
         ats.AlazarResetTimeStamp(self.handle, option)
 
-    ats.AlazarSetBWLimit.restype = U32
-    ats.AlazarSetBWLimit.argtypes = [U32, U32, U32]
-    ats.AlazarSetBWLimit.errcheck = returnCodeCheck
     def setBWLimit(self, channel, enable):
-        '''Activates or deactivates the low-pass filter on a given channel.'''
+        """Activates or deactivates the low-pass filter on a given channel.
+
+        """
         ats.AlazarSetBWLimit(self.handle, channel, enable)
 
-    ats.AlazarSetCaptureClock.restype = U32
-    ats.AlazarSetCaptureClock.argtypes = [U32, U32, U32, U32, U32]
-    ats.AlazarSetCaptureClock.errcheck = returnCodeCheck
     def setCaptureClock(self, source, rate, edge, decimation):
-        '''Configures the board's acquisition clock.'''
+        """Configures the board's acquisition clock.
+
+        """
         ats.AlazarSetCaptureClock(self.handle,
                                   int(source),
                                   int(rate),
                                   int(edge),
                                   decimation)
 
-    ats.AlazarSetExternalClockLevel.restype = U32
-    ats.AlazarSetExternalClockLevel.argtypes = [U32, c_float]
-    ats.AlazarSetExternalClockLevel.errcheck = returnCodeCheck
     def setExternalClockLevel(self, level_percent):
-        '''Set the external clock comparator level'''
+        """Set the external clock comparator level.
+
+        """
         ats.AlazarSetExternalClockLevel(self.handle, level_percent)
 
-    ats.AlazarSetExternalTrigger.restype = U32
-    ats.AlazarSetExternalTrigger.argtypes = [U32, U32, U32]
-    ats.AlazarSetExternalTrigger.errcheck = returnCodeCheck
     def setExternalTrigger(self, coupling, range):
-        '''Configure the external trigger.'''
+        """Configure the external trigger.
+
+        """
         ats.AlazarSetExternalTrigger(self.handle, coupling, range)
 
-    ats.AlazarSetLED.restype = U32
-    ats.AlazarSetLED.argtypes = [U32, U32]
-    ats.AlazarSetLED.errcheck = returnCodeCheck
     def setLED(self, ledState):
-        '''Control LED on a board's mounting bracket.'''
+        """Control LED on a board's mounting bracket.
+
+        """
         ats.AlazarSetLED(self.handle, ledState)
 
-    ats.AlazarSetParameter.restype = U32
-    ats.AlazarSetParameter.argtypes = [U32, U8, U32, c_long]
-    ats.AlazarSetParameter.errcheck = returnCodeCheck
     def setParameter(self, channelId, parameterId, value):
-        '''Set a device parameter as a signed long value.'''
+        """Set a device parameter as a signed long value.
+
+        """
         ats.AlazarSetParameter(self.handle, channelId, parameterId, value)
 
-    ats.AlazarSetParameterUL.restype = U32
-    ats.AlazarSetParameterUL.argtypes = [U32, U8, U32, c_long]
-    ats.AlazarSetParameterUL.errcheck = returnCodeCheck
     def setParameterUL(self, channelId, parameterId, value):
-        '''Set a device parameter as a signed long value.'''
+        """Set a device parameter as a signed long value.
+
+        """
         ats.AlazarSetParameterUL(self.handle, channelId, parameterId, value)
 
-    ats.AlazarSetRecordCount.restype = U32
-    ats.AlazarSetRecordCount.argtypes = [U32, U32]
-    ats.AlazarSetRecordCount.errcheck = returnCodeCheck
     def setRecordCount(self, count):
-        '''Configure the record count for single ported acquisitions.'''
+        """Configure the record count for single ported acquisitions.
+
+        """
         ats.AlazarSetRecordCount(self.handle, count)
 
-    ats.AlazarSetRecordSize.restype = U32
-    ats.AlazarSetRecordSize.argtypes = [U32, U32, U32]
-    ats.AlazarSetRecordSize.errcheck = returnCodeCheck
     def setRecordSize(self, preTriggerSamples, postTriggerSamples):
-        '''Configures the acquisition records size.'''
-        ats.AlazarSetRecordSize(self.handle, preTriggerSamples, postTriggerSamples)
+        """Configures the acquisition records size.
 
-    ats.AlazarSetTriggerDelay.restype = U32
-    ats.AlazarSetTriggerDelay.argtypes = [U32, U32]
-    ats.AlazarSetTriggerDelay.errcheck = returnCodeCheck
+        """
+        ats.AlazarSetRecordSize(self.handle, preTriggerSamples,
+                                postTriggerSamples)
+
     def setTriggerDelay(self, delay_samples):
-        '''Configures the trigger delay.'''
+        """Configures the trigger delay.
+
+        """
         ats.AlazarSetTriggerDelay(self.handle, delay_samples)
 
-    ats.AlazarSetTriggerOperation.restype = U32
-    ats.AlazarSetTriggerOperation.argtypes = [U32, U32, U32, U32, U32, U32, U32, U32, U32, U32]
-    ats.AlazarSetTriggerOperation.errcheck = returnCodeCheck
     def setTriggerOperation(self, operation,
                             engine1, source1, slope1, level1,
                             engine2, source2, slope2, level2):
-        '''Set trigger operation.'''
+        """Set trigger operation.
+
+        """
         ats.AlazarSetTriggerOperation(
             self.handle, operation,
             engine1, source1, slope1, level1,
@@ -650,36 +752,32 @@ class Board:
             slope2,
             level2)
 
-    ats.AlazarSetTriggerTimeOut.restype = U32
-    ats.AlazarSetTriggerTimeOut.argtypes = [U32, U32]
-    ats.AlazarSetTriggerTimeOut.errcheck = returnCodeCheck
     def setTriggerTimeOut(self, timeout_clocks):
-        '''Configures the trigger timeout.'''
+        """Configures the trigger timeout.
+
+        """
         ats.AlazarSetTriggerTimeOut(self.handle, timeout_clocks)
 
-    ats.AlazarSleepDevice.restype = U32
-    ats.AlazarSleepDevice.argtypes = [U32, U32]
-    ats.AlazarSleepDevice.errcheck = returnCodeCheck
     def sleepDevice(self, sleepState):
-        '''Control poewr to ADC devices'''
+        """Control power to ADC devices.
+
+        """
         ats.AlazarSleepDevice(self.handle, sleepState)
 
-    ats.AlazarStartCapture.restype = U32
-    ats.AlazarStartCapture.argtypes = [U32]
-    ats.AlazarStartCapture.errcheck = returnCodeCheck
     def startCapture(self):
-        '''Starts the acquisition.'''
+        """Starts the acquisition.
+
+        """
         ats.AlazarStartCapture(self.handle)
 
-    ats.AlazarTriggered.restype = U32
-    ats.AlazarTriggered.argtypes = [U32]
     def triggered(self):
-        '''Determine if a board has triggered during the current acquisition.'''
+        """Determine if a board has triggered during the current acquisition.
+
+        """
         return ats.AlazarTriggered(self.handle)
 
-    ats.AlazarWaitAsyncBufferComplete.restype = U32
-    ats.AlazarWaitAsyncBufferComplete.argtypes = [U32, c_void_p, U32]
-    ats.AlazarWaitAsyncBufferComplete.errcheck = returnCodeCheck
     def waitAsyncBufferComplete(self, buffer, timeout_ms):
-        '''Blocks until the board confirms that buffer is filled with data.'''
+        """Blocks until the board confirms that buffer is filled with data.
+
+        """
         ats.AlazarWaitAsyncBufferComplete(self.handle, buffer, timeout_ms)

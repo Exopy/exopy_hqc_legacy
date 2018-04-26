@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# This file comes AlazarTech SDK and was edited by EcpyHqcLegacy Authors
+# This file comes AlazarTech SDK and was edited by ExopyHqcLegacy Authors
 # see AUTHORS for more details.
 #
 # -----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ Attributes:
   digitizers.
 '''
 
-# EcpyHqcLegacy modifications:
+# ExopyHqcLegacy modifications:
 # - use numpy for memory allocation in DMABuffer
 # - remove tk WaitBar
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -23,9 +23,9 @@ import numpy
 import h5py
 from atom.api import Unicode, Enum, Value, Bool, Int, Typed, List, set_default
 
-from ecpy.tasks.api import SimpleTask, validators
-from ecpy.utils.atom_util import ordered_dict_from_pref, ordered_dict_to_pref
-from ecpy.utils.traceback import format_exc
+from exopy.tasks.api import SimpleTask, validators
+from exopy.utils.atom_util import ordered_dict_from_pref, ordered_dict_to_pref
+from exopy.utils.traceback import format_exc
 
 
 class SaveTask(SimpleTask):

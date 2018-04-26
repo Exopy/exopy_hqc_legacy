@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Compatibility package providing HQCMeas tasks and drivers in Ecpy.
+"""Compatibility package providing HQCMeas tasks and drivers in Exopy.
 
 """
 from __future__ import (division, unicode_literals, print_function,
@@ -14,7 +14,7 @@ from __future__ import (division, unicode_literals, print_function,
 
 
 def list_manifests():
-    """List the manifest that should be regsitered when the main Ecpy app is
+    """List the manifest that should be regsitered when the main Exopy app is
     started.
 
     """

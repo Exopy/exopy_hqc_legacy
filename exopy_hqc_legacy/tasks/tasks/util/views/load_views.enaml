@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -24,8 +24,8 @@ from enaml.core.api import Include, d_
 from enaml.layout.api import hbox, align
 from enaml.stdlib.message_box import warning
 
-from ecpy.tasks.api import (BaseTaskView, EVALUATER_TOOLTIP, FORMATTER_TOOLTIP)
-from ecpy.utils.widgets.qt_completers import QtLineCompleter
+from exopy.tasks.api import (BaseTaskView, EVALUATER_TOOLTIP, FORMATTER_TOOLTIP)
+from exopy.utils.widgets.qt_completers import QtLineCompleter
 
 
 class BaseLoadView(BaseTaskView):

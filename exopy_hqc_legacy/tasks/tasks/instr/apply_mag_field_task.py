@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2017 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -15,7 +15,7 @@ import numbers
 
 from atom.api import (Unicode, Float, Bool, set_default)
 
-from ecpy.tasks.api import InstrumentTask, validators
+from exopy.tasks.api import InstrumentTask, validators
 
 
 class ApplyMagFieldTask(InstrumentTask):

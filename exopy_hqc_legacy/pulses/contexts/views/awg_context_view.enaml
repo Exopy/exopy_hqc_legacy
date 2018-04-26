@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyPulses Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyPulses Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -18,8 +18,8 @@ from enaml.layout.api import hbox, vbox
 from enaml.widgets.api import (Label, ObjectCombo, CheckBox)
 from enaml.stdlib.fields import FloatField
 
-from ecpy.utils.widgets.qt_completers import QtLineCompleter
-from ecpy_pulses.pulses.api import BaseContextView
+from exopy.utils.widgets.qt_completers import QtLineCompleter
+from exopy_pulses.pulses.api import BaseContextView
 
 
 enamldef AWG5014ContextView(BaseContextView): view:

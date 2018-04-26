@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -18,7 +18,7 @@ from enaml.widgets.api import (GroupBox, Label, Field, ObjectCombo)
 from enaml.stdlib.fields import FloatField
 from enaml.layout.api import factory
 
-from ecpy_hqc_legacy.utils.layouts import auto_grid_layout
+from exopy_hqc_legacy.utils.layouts import auto_grid_layout
 from ...base_instr_view import InstrView
 
 

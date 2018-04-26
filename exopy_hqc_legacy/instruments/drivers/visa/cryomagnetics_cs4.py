@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -114,7 +114,7 @@ class CS4(VisaInstrument):
             self.field_sweep_rate = rate
         rate = (self.field_sweep_rate if self.heater_state == 'On' else
                 self.fast_sweep_rate)
-        
+
         # Start ramping.
         self.target_field = value
         self.activity = 'To set point'

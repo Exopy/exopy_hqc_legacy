@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -17,7 +17,7 @@ import numbers
 
 from atom.api import (Float, Value, Unicode, Int, set_default)
 
-from ecpy.tasks.api import (InstrumentTask, TaskInterface,
+from exopy.tasks.api import (InstrumentTask, TaskInterface,
                             InterfaceableTaskMixin, validators)
 
 

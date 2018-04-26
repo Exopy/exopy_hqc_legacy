@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Start up script for HQCMeas .ini files to ecpy converter tool.
+"""Start up script for HQCMeas .ini files to exopy converter tool.
 
 """
 from __future__ import (division, unicode_literals, print_function,
@@ -28,7 +28,7 @@ def main():
     app = QtApplication()
     if sys.platform == 'win32':
         import ctypes
-        myappid = 'ecpy.hqcmeas_converter' # arbitrary string
+        myappid = 'exopy.hqcmeas_converter' # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     win = Main()
     win.show()

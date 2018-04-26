@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -17,7 +17,7 @@ import os
 from enaml.widgets.api import Label
 from enaml.stdlib.fields import FloatField
 from enaml.layout.api import hbox
-from ecpy.instruments.api import BaseSettings
+from exopy.instruments.api import BaseSettings
 
 
 enamldef MagnetConversionSetting(BaseSettings):

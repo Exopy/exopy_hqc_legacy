@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -16,7 +16,7 @@ import numbers
 
 from atom.api import (Unicode, Bool, set_default, Enum)
 
-from ecpy.tasks.api import (InstrumentTask, InterfaceableTaskMixin,
+from exopy.tasks.api import (InstrumentTask, InterfaceableTaskMixin,
                             validators)
 
 CONVERSION_FACTORS = {'GHz': {'Hz': 1e9, 'kHz': 1e6, 'MHz': 1e3, 'GHz': 1},

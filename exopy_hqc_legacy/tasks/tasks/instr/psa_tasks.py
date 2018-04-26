@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -19,7 +19,7 @@ import numpy as np
 from atom.api import (Unicode, Int, set_default, Enum)
 
 
-from ecpy.tasks.api import InstrumentTask, validators
+from exopy.tasks.api import InstrumentTask, validators
 
 # XXX unfinished
 

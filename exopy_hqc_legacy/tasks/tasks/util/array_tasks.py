@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -15,7 +15,7 @@ from __future__ import (division, unicode_literals, print_function,
 import numpy as np
 from future.utils import raise_from
 from atom.api import (Enum, Unicode, set_default)
-from ecpy.tasks.api import SimpleTask, validators
+from exopy.tasks.api import SimpleTask, validators
 
 
 ARR_VAL = validators.Feval(types=np.ndarray)

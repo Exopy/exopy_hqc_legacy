@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -16,7 +16,7 @@ from time import sleep
 
 from atom.api import (Enum, Float, set_default)
 
-from ecpy.tasks.api import InstrumentTask
+from exopy.tasks.api import InstrumentTask
 
 
 class LockInMeasureTask(InstrumentTask):

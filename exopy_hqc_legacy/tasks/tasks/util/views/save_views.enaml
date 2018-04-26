@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -19,10 +19,10 @@ from enaml.widgets.api import (PushButton, Container, Label, Field, FileDialog,
 from inspect import cleandoc
 from textwrap import fill
 
-from ecpy.tasks.api import (EVALUATER_TOOLTIP, FORMATTER_TOOLTIP,
+from exopy.tasks.api import (EVALUATER_TOOLTIP, FORMATTER_TOOLTIP,
                             BaseTaskView)
-from ecpy.utils.widgets.dict_editor import DictEditor
-from ecpy.utils.widgets.qt_completers import QtLineCompleter, QtTextCompleter
+from exopy.utils.widgets.dict_editor import DictEditor
+from exopy.utils.widgets.qt_completers import QtLineCompleter, QtTextCompleter
 
 
 enamldef HeaderDialog(Dialog): dial:

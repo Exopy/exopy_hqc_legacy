@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Routines to update a HQCMeas .ini file to the formats used by ecpy.
+"""Routines to update a HQCMeas .ini file to the formats used by exopy.
 
 """
 from __future__ import (division, unicode_literals, print_function,
@@ -20,93 +20,93 @@ from configobj import ConfigObj
 
 
 #: Dependency id for tasks.
-TASK_DEP_TYPE = 'ecpy.task'
+TASK_DEP_TYPE = 'exopy.task'
 
 #: Dependency id for task interfaces.
-INTERFACE_DEP_TYPE = 'ecpy.tasks.interface'
+INTERFACE_DEP_TYPE = 'exopy.tasks.interface'
 
 #: Dependency id for the pulse sequences items.
-ITEM_DEP_TYPE = 'ecpy.pulses.item'
+ITEM_DEP_TYPE = 'exopy.pulses.item'
 
 #: Dependency id for the pulse sequences shapes.
-SHAPE_DEP_TYPE = 'ecpy.pulses.shape'
+SHAPE_DEP_TYPE = 'exopy.pulses.shape'
 
 #: Dependency id for pulse sequence contexts.
-CONTEXT_DEP_TYPE = 'ecpy.pulses.context'
+CONTEXT_DEP_TYPE = 'exopy.pulses.context'
 
 
-#: Mapping between task_class (in HQCMeas) and task_id (in ecpy)
-TASKS = {'ComplexTask': 'ecpy.ComplexTask',
-         'WhileTask': 'ecpy.WhileTask',
-         'ConditionalTask': 'ecpy.ConditionalTask',
-         'BreakTask': 'ecpy.BreakTask',
-         'ContinueTask': 'ecpy.ContinueTask',
-         'LoopTask':  'ecpy.LoopTask',
-         'LogTask': 'ecpy.LogTask',
-         'DefinitionTask': 'ecpy.DefinitionTask',
-         'FormulaTask': 'ecpy.FormulaTask',
-         'SleepTask': 'ecpy.SleepTask',
-         'ArrayExtremaTask': 'ecpy_hqc_legacy.ArrayExtremaTask',
-         'ArrayFindValueTask': 'ecpy_hqc_legacy.ArrayFindValueTask',
-         'SaveTask': 'ecpy_hqc_legacy.SaveTask',
-         'SaveFileTask': 'ecpy_hqc_legacy.SaveFileTask',
-         'SaveFileHDF5Task': 'ecpy_hqc_legacy.SaveFileHDF5Task',
-         'SaveArrayTask': 'ecpy_hqc_legacy.SaveArrayTask',
-         'LoadArrayTask': 'ecpy_hqc_legacy.LoadArrayTask',
-         'ApplyMagFieldTask': 'ecpy_hqc_legacy.ApplyMagFieldTask',
-         'LockInMeasureTask': 'ecpy_hqc_legacy.LockInMeasureTask',
-         'MeasDCVoltageTask': 'ecpy_hqc_legacy.MeasDCVoltageTask',
-         'SetRFFrequencyTask': 'ecpy_hqc_legacy.SetRFFrequencyTask',
-         'SetRFPowerTask': 'ecpy_hqc_legacy.SetRFPowerTask',
-         'SetRFOnOffTask': 'ecpy_hqc_legacy.SetRFOnOffTask',
+#: Mapping between task_class (in HQCMeas) and task_id (in exopy)
+TASKS = {'ComplexTask': 'exopy.ComplexTask',
+         'WhileTask': 'exopy.WhileTask',
+         'ConditionalTask': 'exopy.ConditionalTask',
+         'BreakTask': 'exopy.BreakTask',
+         'ContinueTask': 'exopy.ContinueTask',
+         'LoopTask':  'exopy.LoopTask',
+         'LogTask': 'exopy.LogTask',
+         'DefinitionTask': 'exopy.DefinitionTask',
+         'FormulaTask': 'exopy.FormulaTask',
+         'SleepTask': 'exopy.SleepTask',
+         'ArrayExtremaTask': 'exopy_hqc_legacy.ArrayExtremaTask',
+         'ArrayFindValueTask': 'exopy_hqc_legacy.ArrayFindValueTask',
+         'SaveTask': 'exopy_hqc_legacy.SaveTask',
+         'SaveFileTask': 'exopy_hqc_legacy.SaveFileTask',
+         'SaveFileHDF5Task': 'exopy_hqc_legacy.SaveFileHDF5Task',
+         'SaveArrayTask': 'exopy_hqc_legacy.SaveArrayTask',
+         'LoadArrayTask': 'exopy_hqc_legacy.LoadArrayTask',
+         'ApplyMagFieldTask': 'exopy_hqc_legacy.ApplyMagFieldTask',
+         'LockInMeasureTask': 'exopy_hqc_legacy.LockInMeasureTask',
+         'MeasDCVoltageTask': 'exopy_hqc_legacy.MeasDCVoltageTask',
+         'SetRFFrequencyTask': 'exopy_hqc_legacy.SetRFFrequencyTask',
+         'SetRFPowerTask': 'exopy_hqc_legacy.SetRFPowerTask',
+         'SetRFOnOffTask': 'exopy_hqc_legacy.SetRFOnOffTask',
          'PNASinglePointMeasureTask':
-             'ecpy_hqc_legacy.PNASinglePointMeasureTask',
-         'PNASweepTask': 'ecpy_hqc_legacy.PNASweepTask',
-         'PNAGetTraces': 'ecpy_hqc_legacy.PNAGetTraces',
-         'SetDCVoltageTask': 'ecpy_hqc_legacy.SetDCVoltageTask',
-         'DemodSPTask': 'ecpy_hqc_legacy.DemodSPTask',
-         'TransferPulseSequenceTask': 'ecpy_pulses.TransferPulseSequenceTask'}
+             'exopy_hqc_legacy.PNASinglePointMeasureTask',
+         'PNASweepTask': 'exopy_hqc_legacy.PNASweepTask',
+         'PNAGetTraces': 'exopy_hqc_legacy.PNAGetTraces',
+         'SetDCVoltageTask': 'exopy_hqc_legacy.SetDCVoltageTask',
+         'DemodSPTask': 'exopy_hqc_legacy.DemodSPTask',
+         'TransferPulseSequenceTask': 'exopy_pulses.TransferPulseSequenceTask'}
 
-#: Mapping between interface_class (in HQCMeas) and interface_id (in ecpy)
+#: Mapping between interface_class (in HQCMeas) and interface_id (in exopy)
 INTERFACES = {'IterableLoopInterface':
-              'ecpy.LoopTask:ecpy.IterableLoopInterface',
+              'exopy.LoopTask:exopy.IterableLoopInterface',
               'LinspaceLoopInterface':
-              'ecpy.LoopTask:ecpy.LinspaceLoopInterface',
+              'exopy.LoopTask:exopy.LinspaceLoopInterface',
               'MultiChannelVoltageSourceInterface':
-              ('ecpy_hqc_legacy.SetDCVoltageTask:'
-               'ecpy_hqc_legcy.MultiChannelVoltageSourceInterface'),
+              ('exopy_hqc_legacy.SetDCVoltageTask:'
+               'exopy_hqc_legcy.MultiChannelVoltageSourceInterface'),
               'PNASetRFFrequencyInterface':
-              ('ecpy_hqc_legacy.SetRFFrequencyTask:'
-               'ecpy_hqc_legacy.PNASetRFFrequencyInterface'),
+              ('exopy_hqc_legacy.SetRFFrequencyTask:'
+               'exopy_hqc_legacy.PNASetRFFrequencyInterface'),
               'PNASetRFPowerInterface':
-              ('ecpy_hqc_legacy.SetRFPowerTask:'
-               'ecpy_hqc_legacy.PNASetRFPowerInterface'),
+              ('exopy_hqc_legacy.SetRFPowerTask:'
+               'exopy_hqc_legacy.PNASetRFPowerInterface'),
               'CSVLoadInterface':
-              ('ecpy_hqc_legacy.LoadArrayTask:'
-               'ecpy_hqc_legacy.CSVLoadInterface')}
+              ('exopy_hqc_legacy.LoadArrayTask:'
+               'exopy_hqc_legacy.CSVLoadInterface')}
 
-#: Mapping between item_class (in HQCMeas) and item_id (in ecpy_pulses)
-ITEMS = {'Pulse': 'ecpy_pulses.Pulse',
-         'Sequence': 'ecpy_pulses.BaseSequence',
-         'ConditionalSequence': 'ecpy_pulses.ConditionalSequence',
-         'RootSequence': 'ecpy_pulses.RootSequence'}
+#: Mapping between item_class (in HQCMeas) and item_id (in exopy_pulses)
+ITEMS = {'Pulse': 'exopy_pulses.Pulse',
+         'Sequence': 'exopy_pulses.BaseSequence',
+         'ConditionalSequence': 'exopy_pulses.ConditionalSequence',
+         'RootSequence': 'exopy_pulses.RootSequence'}
 
-#: Mapping between shape_class (in HQCMeas) and shape_id (in ecpy_pulses)
-SHAPES = {'SquareShape': 'ecpy_pulses.SquareShape'}
+#: Mapping between shape_class (in HQCMeas) and shape_id (in exopy_pulses)
+SHAPES = {'SquareShape': 'exopy_pulses.SquareShape'}
 
-#: Mapping between context_class (in HQCMeas) and context_id (in ecpy_pulses)
-CONTEXTS = {'AWGContext': 'ecpy_hqc_legacy.AWG5014Context'}
+#: Mapping between context_class (in HQCMeas) and context_id (in exopy_pulses)
+CONTEXTS = {'AWGContext': 'exopy_hqc_legacy.AWG5014Context'}
 
 #: Mapping between monitor_class and monitor_id
 MONITORS = {'hqc_meas.measure.monitors.text_monitor':
-            'ecpy.text_monitor'}
+            'exopy.text_monitor'}
 
 
 def fix_access_exs(task_config, ex, depth):
     """Walk the sections of a task to fix the access exception.
 
     In HQCMeas access_exs exists only on ComplexTask and can be chained (appear
-    at several level). IN Ecpy access_exs are stored on the task exporting
+    at several level). IN Exopy access_exs are stored on the task exporting
     entry in a dict, and the value represents on how many level we should go
     up.
 
@@ -213,8 +213,8 @@ def update_item(item_config):
     if old_id == 'Pulse':
         if 'modulation' in item_config:
             mod = item_config['modulation']
-            mod['dep_type'] = 'ecpy.pulses.modulation'
-            mod['modulation_id'] = 'ecpy_pulses.Modulation'
+            mod['dep_type'] = 'exopy.pulses.modulation'
+            mod['modulation_id'] = 'exopy_pulses.Modulation'
 
 
 def update_shape(shape_config):
@@ -291,7 +291,7 @@ def iterate_on_sections(section, action_mapping):
 
 
 def convert_measure(meas_path, archive_folder=None, dest_folder=None):
-    """Convert a measure created using HQCMeas to make it run on Ecpy.
+    """Convert a measure created using HQCMeas to make it run on Exopy.
 
     Parameters
     ----------

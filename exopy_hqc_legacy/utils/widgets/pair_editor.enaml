@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015 by Ecpy Authors, see AUTHORS for more details.
+# Copyright 2015 by Exopy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -23,8 +23,8 @@ from collections import OrderedDict
 from enaml.widgets.api import (Container, Field, GroupBox)
 from enaml.layout.api import hbox
 
-from ecpy.utils.widgets.list_editor import ListEditor
-from ecpy.utils.container_change import ContainerChange
+from exopy.utils.widgets.list_editor import ListEditor
+from exopy.utils.container_change import ContainerChange
 
 
 class Pair(Atom):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2017 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2017 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -56,7 +56,7 @@ class Anapico(VisaInstrument):
         self.read_termination = '\n'
 # The next line sets the timeout before reconnection to 0. This is available
 # since firmware version 0.4.106 and avoids the Anapico generator to freeze
-# upon unproperly closed connections (for instance if ecpy crashes)
+# upon unproperly closed connections (for instance if exopy crashes)
 # no need to turn the generator OFF and ON with this line
 # here if the explanation from the support team at Anapico:
 # I added a reconnect timeout option. It allows to reconnect to an

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -21,7 +21,7 @@ import numpy as np
 from atom.api import (Unicode, Int, Bool, Enum, set_default,
                       Value, List)
 
-from ecpy.tasks.api import InstrumentTask, TaskInterface, validators
+from exopy.tasks.api import InstrumentTask, TaskInterface, validators
 
 
 def check_channels_presence(task, channels, *args, **kwargs):

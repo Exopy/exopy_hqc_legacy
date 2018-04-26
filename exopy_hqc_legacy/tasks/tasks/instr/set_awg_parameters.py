@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2016 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2016 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -16,9 +16,9 @@ from ast import literal_eval
 from itertools import chain
 from atom.api import (Unicode, Int, List, Dict)
 
-from ecpy.utils.atom_util import HasPrefAtom, tagged_members
-from ecpy.utils.traceback import format_exc
-from ecpy.tasks.api import (InstrumentTask, InterfaceableTaskMixin,
+from exopy.utils.atom_util import HasPrefAtom, tagged_members
+from exopy.utils.traceback import format_exc
+from exopy.tasks.api import (InstrumentTask, InterfaceableTaskMixin,
                             InstrTaskInterface)
 
 # XXX unfinished

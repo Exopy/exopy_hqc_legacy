@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015 by EcpyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -17,8 +17,8 @@ from textwrap import fill
 
 from enaml.widgets.api import Field, Label, ToolButton, FileDialogEx
 from enaml.layout.api import hbox, vbox, grid, align
-from ecpy.instruments.api import BaseConnection
-from ecpy.app.icons.api import get_icon
+from exopy.instruments.api import BaseConnection
+from exopy.app.icons.api import get_icon
 
 
 enamldef DLLConnection(BaseConnection):

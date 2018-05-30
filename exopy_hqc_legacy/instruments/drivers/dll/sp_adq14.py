@@ -221,7 +221,7 @@ class SPADQ14(DllInstrument):
 
             # If we are not averaging we wait for all records to be acquired.
             if not n_records or (not average and
-                                 n_records < retrieved_records):
+                                 n_records < records_per_capture):
                 time.sleep(1e-6)
                 continue
             if not get_data(cu, id_, buffers_ptr,

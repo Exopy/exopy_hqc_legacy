@@ -133,7 +133,7 @@ def secure_communication(max_iter=2):
                         log = logging.getLogger(__name__)
                         msg = ('Iterating connection %s/%s '
                                'for instrument %s')
-                        log.debug(msg, (i, max_iter, type(self).__name__))
+                        log.info(msg, i, max_iter, type(self).__name__)
                         self.reopen_connection()
                         i += 1
 

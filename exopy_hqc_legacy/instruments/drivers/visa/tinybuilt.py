@@ -18,6 +18,7 @@ from contextlib import contextmanager
 
 import numpy as np
 from visa import VisaTypeError
+from pyvisa.errors import InvalidSession, VisaIOError
 
 from ..driver_tools import (BaseInstrument, InstrIOError, secure_communication,
                             instrument_property)
@@ -25,6 +26,8 @@ from ..visa_tools import VisaInstrument
 
 
 class TinyBiltChannel(BaseInstrument):
+
+    secure_com_except = (InvalidSession, InstrIOError, VisaIOError)
 
     def __init__(self, TB, channel_num, caching_allowed=True,
                  caching_permissions={}):
@@ -276,6 +279,7 @@ class TinyBilt(VisaInstrument):
     """
     """
     caching_permissions = {'defined_channels': True}
+    secure_com_except = (InvalidSession, InstrIOError, VisaIOError)
 
     def __init__(self, connection_info, caching_allowed=True,
                  caching_permissions={}, auto_open=True):

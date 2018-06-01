@@ -67,6 +67,11 @@ class ADQControlUnit(object):
         self.library.ControlUnit_DeleteADQ(self.id, b_id)
         del self._boards[b_id-1]
 
+    def enable_logging(self, level, path):
+        """
+        """
+        self.library.ControlUnit_EnableErrorTrace(self.id, level, path)
+
     def _cleanup(self):
         """Make sure we disconnect all the boards and destroy the unit.
 
@@ -99,6 +104,7 @@ class SPADQ14(DllInstrument):
 
         """
         cu = ADQControlUnit(self._dll)
+        cu.enable_logging(3, b"C:\\Logs")
         boards = cu.list_boards()
         board_id = None
         for i, b in enumerate(boards):
@@ -216,6 +222,8 @@ class SPADQ14(DllInstrument):
         get_data = self._dll.GetData.func
         retrieved_records = 0
         while retrieved_records < records_per_capture:
+            # WHY ???
+            time.sleep(0.001)
             # Wait for a record to be acquired.
             n_records = (acq_records(cu, id_) - retrieved_records)
 

@@ -78,7 +78,7 @@ class TestSetDCVoltageTask(object):
         self.task.target_value = '1.0'
 
         c = self.root.run_time[PROFILES]['Test1']['connections']
-        c['C'] = {'defined_channels': [[1]]}
+        c['C'] = {'defined_channels': [[(1, 1)]]}
 
         test, traceback = self.task.check(test_instr=True)
         assert test
@@ -95,7 +95,7 @@ class TestSetDCVoltageTask(object):
 
         self.root.run_time[DRIVERS] = {}
         c = self.root.run_time[PROFILES]['Test1']['connections']
-        c['C'] = {'defined_channels': [[1]]}
+        c['C'] = {'defined_channels': [[(1, 1)]]}
 
         test, traceback = self.task.check(test_instr=True)
         assert not test
@@ -125,7 +125,7 @@ class TestSetDCVoltageTask(object):
         self.task.target_value = '1.0'
 
         c = self.root.run_time[PROFILES]['Test1']['connections']
-        c['C'] = {'defined_channels': [[1]]}
+        c['C'] = {'defined_channels': [[(1, 1)]]}
 
         test, traceback = self.task.check(test_instr=True)
         assert not test

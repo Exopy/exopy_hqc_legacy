@@ -73,7 +73,7 @@ class TestSetDCVoltageTask(object):
 
         """
         interface = MultiChannelVoltageSourceInterface(task=self.task)
-        interface.channel = 1
+        interface.channel = (1, 1)
         self.task.interface = interface
         self.task.target_value = '1.0'
 
@@ -89,7 +89,7 @@ class TestSetDCVoltageTask(object):
 
         """
         interface = MultiChannelVoltageSourceInterface(task=self.task)
-        interface.channel = 1
+        interface.channel = (1, 1)
         self.task.interface = interface
         self.task.target_value = '1.0'
 
@@ -106,7 +106,7 @@ class TestSetDCVoltageTask(object):
 
         """
         interface = MultiChannelVoltageSourceInterface(task=self.task)
-        interface.channel = 1
+        interface.channel = (1, 1)
         self.task.interface = interface
         self.task.target_value = '1.0'
         self.task.selected_instrument = ()
@@ -120,7 +120,7 @@ class TestSetDCVoltageTask(object):
 
         """
         interface = MultiChannelVoltageSourceInterface(task=self.task)
-        interface.channel = 2
+        interface.channel = (2, 1)
         self.task.interface = interface
         self.task.target_value = '1.0'
 
@@ -169,7 +169,7 @@ class TestSetDCVoltageTask(object):
 
         """
         interface = MultiChannelVoltageSourceInterface(task=self.task)
-        interface.channel = 1
+        interface.channel = (1, 1)
         self.task.interface = interface
         self.task.target_value = '1.0'
 

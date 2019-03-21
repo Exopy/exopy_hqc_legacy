@@ -222,8 +222,6 @@ class SPADQ14(DllInstrument):
         get_data = self._dll.GetData.func
         retrieved_records = 0
         while retrieved_records < records_per_capture:
-            # WHY ???
-            time.sleep(0.001)
             # Wait for a record to be acquired.
             n_records = (acq_records(cu, id_) - retrieved_records)
 

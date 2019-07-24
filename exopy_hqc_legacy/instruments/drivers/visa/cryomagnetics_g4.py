@@ -15,16 +15,31 @@ Also the fast sweep rate is stored in range 5 whereas it is stored in range
 3 for the CS4.
 
 """
-from ..driver_tools import (secure_communication,
+from time import sleep
+
+from ..driver_tools import (InstrIOError, secure_communication,
                             instrument_property)
 from .cryomagnetics_cs4 import CS4
 
+OUT_FLUC = 2e-4
+MAXITER = 10
 
 class C4G(CS4):
     """Driver for the superconducting magnet power supply Cryomagnetics CG4.
 
     """
 
+    @secure_communication()
+    def make_ready(self):
+        """Setup the correct unit and range.
+
+        """
+        self.write('UNITS T')
+        self.write('RANGE 0 100')
+        # Need to write the lower limit in kG 
+        #(LLIM needs to be lower than any ULIM)
+        self.write('LLIM -70')
+        
     @instrument_property
     @secure_communication()
     def target_field(self):
@@ -33,23 +48,39 @@ class C4G(CS4):
         Iout is given in kG no matter the settings.
 
         """
-        return float(self.ask('ULIM?;').strip('kG')) / 10
+        return float(self.ask('IOUT?').strip('kG')) / 10
 
     @target_field.setter
     @secure_communication()
     def target_field(self, target):
-        # convert target field from T to kG
-        self.write('ULIM {};'.format(target * 10))
-
-    @secure_communication()
-    def read_output_field(self):
-        """Read the current value of the output field.
+        """Sweep the output intensity to reach the specified ULIM (in T)
+        at a rate depending on the intensity, as defined in the range(s).
 
         """
-        return float(self.ask('IOUT?').strip('kG')) / 10
+        # convert target field from T to kG
+        # can't reuse CS4 class because a semi-colon is needed
+        self.write('ULIM {};'.format(target * 10))
 
+        if self.heater_state == 'Off':
+            wait = 60 * abs(self.target_field - target) / self.fast_sweep_rate
+            self.write('SWEEP UP FAST')
+        else:
+            wait = 60 * abs(self.target_field - target) / self.field_sweep_rate
+            # need to specify slow after a fast sweep !
+            self.write('SWEEP UP SLOW')
+
+        sleep(wait)
+        niter = 0
+        while abs(self.target_field - target) >= OUT_FLUC:
+            sleep(5)
+            niter += 1
+            if niter > MAXITER:
+                raise InstrIOError(cleandoc('''CS4 didn't set the field
+                                               to {}'''.format(target)))
+
+    @instrument_property
     @secure_communication()
-    def read_persistent_field(self):
+    def persistent_field(self):
         """Read the current value of the persistent field.
 
         """

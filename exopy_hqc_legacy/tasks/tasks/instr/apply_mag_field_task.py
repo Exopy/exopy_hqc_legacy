@@ -64,6 +64,7 @@ class ApplyMagFieldTask(InstrumentTask):
             if job.wait_for_completion(self.check_for_interruption,
                                        timeout=60, refresh_time=1):
                 driver.heater_state = 'On'
+                sleep(self.post_switch_wait)
             else:
                 return False
 
@@ -77,6 +78,7 @@ class ApplyMagFieldTask(InstrumentTask):
         if not normal_end:
             job.cancel()
             driver.heater_state = 'Off'
+            sleep(self.post_switch_wait)
             self.write_in_database('field', driver.read_persistent_field())
             return False
 

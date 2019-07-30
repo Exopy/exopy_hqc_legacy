@@ -64,3 +64,30 @@ enamldef ApplyMagFieldView(InstrView): view:
             value := task.post_switch_wait
             tool_tip = fill('Time to wait after closing the switch heater '
                             'before bringing the field to zero',60)
+
+
+enamldef ApplyMagFieldAndDropView(InstrView): view:
+    """View for the ApplyMagFieldAndDropView.
+
+    """
+    #: Attribute set by the parent view if the task is embedded inside a
+    #: LoopTask
+    attr in_loop : bool = False
+
+    constraints = [factory(auto_grid_layout)]
+
+    Conditional:
+        condition = not in_loop
+        Label:  field_lab:
+            text = 'Target field'
+        QtLineCompleter: field_val:
+            hug_width = 'ignore'
+            text := task.field
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = EVALUATER_TOOLTIP
+
+    Label: rate_lab:
+        text = 'Rate (T/min)'
+    FloatField: rate_val:
+        hug_width = 'strong'
+        value := task.rate

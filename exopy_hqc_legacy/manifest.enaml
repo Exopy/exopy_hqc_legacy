@@ -342,10 +342,24 @@ enamldef HqcLegacyManifest(PluginManifest):
                 path = 'instr'
                 group = 'instr'
                 Task:
+                    task = 'apply_mag_field_task:ApplyMagFieldAndDropTask'
+                    view = 'views.apply_mag_field_view:ApplyMagFieldAndDropView'
+                    instruments = ['exopy_hqc_legacy.Legacy.IPS12010',
+                                   'exopy_hqc_legacy.Legacy.CS4',
+                                   'exopy_hqc_legacy.Legacy.C4G']
+                    metadata = {'loopable': True}
+                Task:
                     task = 'apply_mag_field_task:ApplyMagFieldTask'
                     view = 'views.apply_mag_field_view:ApplyMagFieldView'
                     instruments = ['exopy_hqc_legacy.Legacy.IPS12010',
                                    'exopy_hqc_legacy.Legacy.CS4',
+                                   'exopy_hqc_legacy.Legacy.C4G']
+                    metadata = {'loopable': True}
+                Task:
+                    task = 'meas_mag_field_task:MeasMagFieldTask'
+                    view = 'views.meas_mag_field_view:MeasMagFieldView'
+                    instruments = ['exopy_hqc_legacy.Legacy.IPS12010',
+                                   'exopy_hqc_legacy.Legacy.CS40',
                                    'exopy_hqc_legacy.Legacy.C4G']
                     metadata = {'loopable': True}
                 Task:

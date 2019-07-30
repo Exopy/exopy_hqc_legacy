@@ -29,7 +29,7 @@ class CS4(VisaInstrument):
 
     """
 
-    #: Typical fluctuations at the ouput of the instrument.
+    #: Typical fluctuations at the output of the instrument.
     #: We use a class variable since we expect this to be identical for all
     #: instruments.
     OUTPUT_FLUCTUATIONS = 2e-4
@@ -41,7 +41,7 @@ class CS4(VisaInstrument):
 
     def __init__(self, connection_info, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
-        super(CS4, self).__init__(connection_info, caching_allowed,
+        super().__init__(connection_info, caching_allowed,
                                   caching_permissions)
         try:
             mc = connection_info['magnet_conversion']

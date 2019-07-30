@@ -11,6 +11,7 @@
 """
 from time import sleep
 import numbers
+from inspect import cleandoc
 
 from atom.api import (Unicode, Float, Bool, set_default)
 
@@ -89,5 +90,48 @@ class ApplyMagFieldTask(InstrumentTask):
             job = driver.sweep_to_field(0)
             job.wait_for_completion(self.check_for_interruption,
                                     timeout=60, refresh_time=1)
+
+        self.write_in_database('field', target_value)
+
+        
+class ApplyMagFieldAndDropTask(InstrumentTask):
+    """Use a supraconducting magnet to apply a magnetic field. Parallel task.
+
+    """
+    # Target magnetic field (dynamically evaluated)
+    field = Unicode().tag(pref=True,
+                          feval=validators.SkipLoop(types=numbers.Real))
+
+    # Rate at which to sweep the field.
+    rate = Float(0.01).tag(pref=True)
+
+    parallel = set_default({'activated': True, 'pool': 'instr'})
+    database_entries = set_default({'field': 0.01})
+
+    def check_for_interruption(self):
+        """Check if the user required an interruption.
+
+        """
+        return self.root.should_stop.is_set()
+
+    def perform(self, target_value=None):
+        """Apply the specified magnetic field.
+
+        """
+        # make ready
+        if (self.driver.owner != self.name or
+                not self.driver.check_connection()):
+            self.driver.owner = self.name
+
+        driver = self.driver
+        if driver.heater_state == 'Off':
+            raise ValueError(cleandoc(''' Switch heater must be on'''))
+            
+        if target_value is None:
+            target_value = self.format_and_eval_string(self.field)
+
+        driver.field_sweep_rate = self.rate
+        driver.target_field = target_value
+        driver.activity = 'To set point'
 
         self.write_in_database('field', target_value)

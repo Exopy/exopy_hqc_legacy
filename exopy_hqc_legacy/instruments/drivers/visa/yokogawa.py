@@ -62,6 +62,16 @@ class YokogawaGS200(VisaInstrument):
         else:
             raise InstrIOError('Instrument did not return the voltage')
 
+    @secure_communication()
+    def read_voltage_dc():
+        """Wrapper for the voltage getter that checks for the mode
+
+        """
+        if self.function == 'VOLT':
+            return self.voltage
+        msg = ('Instrument cannot read its voltage when in current mode')
+        raise InstrIOError(msg)
+
     @voltage.setter
     @secure_communication()
     def voltage(self, set_point):
@@ -333,6 +343,17 @@ class Yokogawa7651(VisaInstrument):
             return voltage
         else:
             raise InstrIOError('Instrument did not return the voltage')
+
+    @secure_communication()
+    def read_voltage_dc():
+        """Wrapper for the voltage getter that checks for the mode
+
+        """
+        if self.function == 'VOLT':
+            return self.voltage
+        msg = ('Instrument cannot read its voltage when in current mode')
+        raise InstrIOError(msg)
+
 
     @voltage.setter
     @secure_communication()

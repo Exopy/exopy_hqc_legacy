@@ -35,6 +35,9 @@ class SetDCVoltageTask(InterfaceableTaskMixin, InstrumentTask):
     #: Largest allowed voltage
     safe_max = Float(0.0).tag(pref=True)
 
+    #: Largest allowed delta compared to current voltage
+    safe_delta = Float(0.0).tag(pref=True)
+
     #: Time to wait between changes of the output of the instr.
     delay = Float(0.01).tag(pref=True)
 
@@ -68,11 +71,18 @@ class SetDCVoltageTask(InterfaceableTaskMixin, InstrumentTask):
             Function to set the voltage, should take as single argument the
             value.
 
+        current_value: float
+            Current voltage.
+
         """
         if target_value is not None:
             value = target_value
         else:
             value = self.format_and_eval_string(self.target_value)
+
+        if self.safe_delta and abs(current_value-value) > self.safe_delta:
+            msg = ('Requested voltage {} is too far away from the current voltage {}!')
+            raise ValueError(msg.format(value, current_value))
 
         if self.safe_max and self.safe_max < abs(value):
             msg = 'Requested voltage {} exceeds safe max : {}'

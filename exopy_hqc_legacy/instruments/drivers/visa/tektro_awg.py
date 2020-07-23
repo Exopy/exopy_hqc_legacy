@@ -11,6 +11,7 @@
 """
 import re
 import time
+import random
 import logging
 from textwrap import fill
 from inspect import cleandoc
@@ -507,6 +508,36 @@ class AWG(VisaInstrument):
         self.write('*WAI')
 
     @secure_communication()
+    def send_load_awg_file(self, awg_file, filename='setup', timeout=100):
+        """Command to send and load and .awg file into the AWG
+                awg_file = bytearray
+                filename = str
+                timeout = float
+        """
+        # Add a random int at the the end of the file to make it unique
+        filename += str(random.randint(0, 10000))
+        name_str = 'MMEMory:DATA "{}",'.format(filename+'.awg')
+        size_str = ('#' + str(len(str(len(awg_file))))
+                    + str(len(awg_file)))
+        mes = name_str + size_str
+        self.write('MMEMory:CDIRectory "/Users/OEM/Documents"')
+        self._driver.write_raw(mes.encode('ASCII') + awg_file)
+        self.write('AWGCONTROL:SRESTORE "{}"'.format(filename+'.awg'))
+
+        # Wait for the AWG to finish loading the file
+        start_time = time.clock()
+        current_file = ''
+        while time.clock() - start_time <= timeout and\
+              filename not in current_file:
+            time.sleep(0.5)
+            try:
+                current_file = self.ask('AWGCONTROL:SNAMe?')
+            except VisaIOError:
+                continue
+        if filename not in current_file:
+            raise InstrIOError(cleandoc('''Timeout during AWG file loading'''))
+
+    @secure_communication()
     def clear_sequence(self):
         """Command to delete the sequence
 
@@ -521,6 +552,35 @@ class AWG(VisaInstrument):
         self.write('SEQuence:ELEMent' + str(position) + ':GOTO:STATe 1')
         self.write('SEQuence:ELEMent' + str(position) + ':GOTO:INDex ' +
                    str(goto))
+
+    @secure_communication()
+    def set_jump_pos(self, position, jump):
+        """Sets the jump value at position to jump
+
+        """
+        self.write('SEQuence:ELEMent{}:JTARget:TYPE INDex'.format(position))
+        self.write('SEQuence:ELEMent{}:JTARget:INDex {}'.format(position, jump))
+
+    @secure_communication()
+    def send_event(self):
+        """Send an event
+
+        """
+        self.write('EVENt:IMM')
+
+    @secure_communication()
+    def ask_sequencer_pos(self):
+        """Ask the current position index of the sequencer
+
+        """
+        return self.ask('AWGC:SEQ:POS?')
+
+    @secure_communication()
+    def force_jump_to(self, pos):
+        """Make the sequencer jump to position pos
+
+        """
+        self.ask('SEQUENCE:JUMP:IMMEDIATE {}'.format(pos))
 
     @secure_communication()
     def set_repeat(self, position, repeat):
@@ -713,7 +773,8 @@ class AWG(VisaInstrument):
         self.clear_output_buffer()
         if value in ('RUN', 1, 'True'):
             self.write('AWGC:RUN:IMM')
-            if self.ask_for_values('AWGC:RST?')[0] not in (1, 2):
+            values = self.query('AWGC:RST?', format=2, delay=self.delay)
+            if values[0] not in (1, 2):
                 raise InstrIOError(cleandoc('''Instrument did not set
                                             correctly the run state'''))
         elif value in ('STOP', 0, 'False'):
@@ -774,7 +835,17 @@ class AWG(VisaInstrument):
         """Deletes all user-defined waveforms from the currently loaded setup
 
         """
+        try:
+            # Number of user defined waveforms
+            nb_waveforms = int(self.ask("WLIST:SIZE?")) - 25
+        except Exception:
+            nb_waveforms = 0
+        wait_time = 1+int(nb_waveforms/120)
         self.write('WLIST:WAVEFORM:DELETE ALL')
+
+        logging.info('Waiting {}s for {} waveforms to be deleted'.format(wait_time,
+                                                                         nb_waveforms))
+        time.sleep(wait_time)
 
     def clear_all_sequences(self):
         """Clear the all sequences played by the AWG.

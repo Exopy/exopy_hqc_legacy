@@ -13,7 +13,7 @@ import numbers
 from inspect import cleandoc
 
 import numpy as np
-from atom.api import (Unicode, Int, set_default, Enum)
+from atom.api import (Str, Int, set_default, Enum)
 
 
 from exopy.tasks.api import InstrumentTask, validators
@@ -80,19 +80,19 @@ class PSASetParam(InstrumentTask):
 
     mode = Enum('Start/Stop', 'Center/Span').tag(pref=True)
 
-    start_freq = Unicode().tag(pref=True, feval=EMPTY_REAL)
+    start_freq = Str().tag(pref=True, feval=EMPTY_REAL)
 
-    end_freq = Unicode().tag(pref=True, feval=EMPTY_REAL)
+    end_freq = Str().tag(pref=True, feval=EMPTY_REAL)
 
-    center_freq = Unicode().tag(pref=True, feval=EMPTY_REAL)
+    center_freq = Str().tag(pref=True, feval=EMPTY_REAL)
 
-    span_freq = Unicode().tag(pref=True, feval=EMPTY_REAL)
+    span_freq = Str().tag(pref=True, feval=EMPTY_REAL)
 
-    average_nb = Unicode().tag(pref=True, feval=EMPTY_INT)
+    average_nb = Str().tag(pref=True, feval=EMPTY_INT)
 
-    resolution_bandwidth = Unicode().tag(pref=True, feval=EMPTY_REAL)
+    resolution_bandwidth = Str().tag(pref=True, feval=EMPTY_REAL)
 
-    video_bandwidth = Unicode().tag(pref=True, feval=EMPTY_REAL)
+    video_bandwidth = Str().tag(pref=True, feval=EMPTY_REAL)
 
     database_entries = set_default({'psa_config': ''})
 

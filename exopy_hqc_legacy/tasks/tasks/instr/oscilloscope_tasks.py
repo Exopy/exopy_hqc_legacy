@@ -12,7 +12,7 @@
 import numbers
 
 import numpy as np
-from atom.api import (Unicode, Bool, set_default, Enum)
+from atom.api import (Str, Bool, set_default, Enum)
 from exopy.tasks.api import InstrumentTask, validators
 
 # XXX unfinished
@@ -26,7 +26,7 @@ class OscilloGetTraceTask(InstrumentTask):
     trace = Enum('1', '2', '3', '4', 'TA', 'TB', 'TC', 'TD').tag(pref=True)
 
     #: Number of time the instrument should average.
-    average_nb = Unicode().tag(pref=True,
+    average_nb = Str().tag(pref=True,
                                feval=validators.Feval(types=numbers.Integral))
 
     #: Should hid=gh resolution be used.

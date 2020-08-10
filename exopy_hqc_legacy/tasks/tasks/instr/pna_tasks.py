@@ -15,7 +15,7 @@ import numbers
 from inspect import cleandoc
 
 import numpy as np
-from atom.api import (Unicode, Int, Bool, Enum, set_default,
+from atom.api import (Str, Int, Bool, Enum, set_default,
                       Value, List)
 
 from exopy.tasks.api import InstrumentTask, TaskInterface, validators
@@ -293,13 +293,13 @@ class PNASweepTask(SingleChannelPNATask):
     channel = Int(1).tag(pref=True)
 
     #: Start value for the sweep.
-    start = Unicode().tag(pref=True, feval=FEVAL)
+    start = Str().tag(pref=True, feval=FEVAL)
 
     #: Stop value for the sweep.
-    stop = Unicode().tag(pref=True, feval=FEVAL)
+    stop = Str().tag(pref=True, feval=FEVAL)
 
     #: Number of points desired in the sweep.
-    points = Unicode().tag(pref=True, feval=FEVAL)
+    points = Str().tag(pref=True, feval=FEVAL)
 
     #: Kind of sweep to perform.
     sweep_type = Enum('', 'Frequency', 'Power').tag(pref=True)
@@ -425,7 +425,7 @@ class PNAGetTraces(InstrumentTask):
 
     """
     #: Traces to get.
-    tracelist = Unicode('1,1').tag(pref=True)
+    tracelist = Str('1,1').tag(pref=True)
 
     #: Should the data be measured first.
     already_measured = Bool(False).tag(pref=True)

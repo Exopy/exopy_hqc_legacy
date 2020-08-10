@@ -13,7 +13,7 @@ from time import sleep
 import numbers
 from inspect import cleandoc
 
-from atom.api import (Unicode, Float, Bool, set_default)
+from atom.api import (Str, Float, Bool, set_default)
 
 from exopy.tasks.api import InstrumentTask, validators
 
@@ -23,7 +23,7 @@ class ApplyMagFieldTask(InstrumentTask):
 
     """
     # Target magnetic field (dynamically evaluated)
-    field = Unicode().tag(pref=True,
+    field = Str().tag(pref=True,
                           feval=validators.SkipLoop(types=numbers.Real))
 
     # Rate at which to sweep the field.
@@ -99,7 +99,7 @@ class ApplyMagFieldAndDropTask(InstrumentTask):
 
     """
     # Target magnetic field (dynamically evaluated)
-    field = Unicode().tag(pref=True,
+    field = Str().tag(pref=True,
                           feval=validators.SkipLoop(types=numbers.Real))
 
     # Rate at which to sweep the field.

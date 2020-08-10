@@ -11,7 +11,7 @@
 """
 import numbers
 
-from atom.api import (Unicode, Bool, set_default, Enum)
+from atom.api import (Str, Bool, set_default, Enum)
 
 from exopy.tasks.api import (InstrumentTask, InterfaceableTaskMixin,
                             validators)
@@ -30,7 +30,7 @@ class SetRFFrequencyTask(InterfaceableTaskMixin, InstrumentTask):
 
     """
     # Target frequency (dynamically evaluated)
-    frequency = Unicode().tag(pref=True, feval=LOOP_REAL)
+    frequency = Str().tag(pref=True, feval=LOOP_REAL)
 
     # Unit of the frequency
     unit = Enum('GHz', 'MHz', 'kHz', 'Hz').tag(pref=True)
@@ -88,7 +88,7 @@ class SetRFPowerTask(InterfaceableTaskMixin, InstrumentTask):
 
     """
     # Target power (dynamically evaluated)
-    power = Unicode().tag(pref=True, feval=LOOP_REAL)
+    power = Str().tag(pref=True, feval=LOOP_REAL)
 
     # Whether to start the source if its output is off.
     auto_start = Bool(False).tag(pref=True)
@@ -114,7 +114,7 @@ class SetRFOnOffTask(InterfaceableTaskMixin, InstrumentTask):
 
     """
     # Desired state of the output, runtime value can be 0 or 1.
-    switch = Unicode('Off').tag(pref=True, feval=validators.SkipLoop())
+    switch = Str('Off').tag(pref=True, feval=validators.SkipLoop())
 
     database_entries = set_default({'output': 0})
 
@@ -157,7 +157,7 @@ class SetPulseModulationTask(InterfaceableTaskMixin, InstrumentTask):
 
     """
     # Desired state of the output, runtime value can be 0 or 1.
-    switch = Unicode('Off').tag(pref=True, feval=validators.SkipLoop())
+    switch = Str('Off').tag(pref=True, feval=validators.SkipLoop())
 
     database_entries = set_default({'pm_state': 0})
 

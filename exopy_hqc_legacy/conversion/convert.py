@@ -292,18 +292,18 @@ def convert_measure(meas_path, archive_folder=None, dest_folder=None):
 
     Parameters
     ----------
-    meas_path : unicode
+    meas_path : str
         Path to the file containing the measure to update.
 
-    archive_folder : unicode or None, optional
+    archive_folder : str or None, optional
         Path to the folder in which to store the old file after conversion.
 
-    dest_folder : unicode or None, optional
+    dest_folder : str or None, optional
         Save the new measure into the specified folder
 
     Returns
     -------
-    new_path : unicode
+    new_path : str
         Location of the new file
 
     """

@@ -13,7 +13,7 @@ import os
 
 import numpy as np
 import h5py
-from atom.api import (Bool, Unicode, List, set_default)
+from atom.api import (Bool, Str, List, set_default)
 from past.builtins import basestring
 
 from exopy.tasks.api import SimpleTask, InterfaceableTaskMixin, TaskInterface
@@ -32,13 +32,13 @@ class LoadArrayTask(InterfaceableTaskMixin, SimpleTask):
 
     """
     #: Folder from which to load the data.
-    folder = Unicode().tag(pref=True, fmt=True)
+    folder = Str().tag(pref=True, fmt=True)
 
     #: Name of the file from which to load the data.
-    filename = Unicode().tag(pref=True, fmt=True)
+    filename = Str().tag(pref=True, fmt=True)
 
     #: Kind of file to load.
-    selected_format = Unicode().tag(pref=True)
+    selected_format = Str().tag(pref=True)
 
     database_entries = set_default({'array': _make_array(['var1', 'var2'])})
 
@@ -69,17 +69,17 @@ class CSVLoadInterface(TaskInterface):
 
     """
     #: Delimiter used in the file to load.
-    delimiter = Unicode('\t').tag(pref=True)
+    delimiter = Str('\t').tag(pref=True)
 
     #: Character used to signal a comment.
-    comments = Unicode('#').tag(pref=True)
+    comments = Str('#').tag(pref=True)
 
     #: Flag indicating whether or not to use the first row as column names.
     names = Bool(True).tag(pref=True)
 
     #: The users can provide the names which will be available in its file
     #: if the file cannot be found when checks are run.
-    c_names = List(Unicode()).tag(pref=True)
+    c_names = List(Str()).tag(pref=True)
 
     #: Class attr used in the UI.
     file_formats = ['CSV']

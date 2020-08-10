@@ -11,7 +11,7 @@
 """
 from ast import literal_eval
 from itertools import chain
-from atom.api import (Unicode, Int, List, Dict)
+from atom.api import (Str, Int, List, Dict)
 
 from exopy.utils.atom_util import HasPrefAtom, tagged_members
 from exopy.utils.traceback import format_exc
@@ -24,29 +24,29 @@ class AnalogicalParameters(HasPrefAtom):
     """Parameters for one analogical port of the channel.
 
     """
-    parameter1 = Unicode().tag(pref=True, check=True)
+    parameter1 = Str().tag(pref=True, check=True)
 
-    parameter2 = Unicode().tag(pref=True, check=True)
+    parameter2 = Str().tag(pref=True, check=True)
 
-    parameter3 = Unicode().tag(pref=True, check=True)
+    parameter3 = Str().tag(pref=True, check=True)
 
 
 class LogicalParameters(HasPrefAtom):
     """Parameters for one logical port of the channel.
 
     """
-    parameter1 = Unicode().tag(pref=True, check=True)
+    parameter1 = Str().tag(pref=True, check=True)
 
-    parameter2 = Unicode().tag(pref=True, check=True)
+    parameter2 = Str().tag(pref=True, check=True)
 
-    parameter3 = Unicode().tag(pref=True, check=True)
+    parameter3 = Str().tag(pref=True, check=True)
 
 
 class AWGChannelParameters(HasPrefAtom):
     """Parameters for one channel of the AWG.
 
     """
-    active = Unicode().tag(pref=True, check=True)
+    active = Str().tag(pref=True, check=True)
 
     analogical = Int().tag(pref=True)
 

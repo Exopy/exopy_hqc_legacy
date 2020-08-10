@@ -10,7 +10,7 @@
 
 """
 import numpy as np
-from atom.api import (Enum, Unicode, set_default)
+from atom.api import (Enum, Str, set_default)
 from exopy.tasks.api import SimpleTask, validators
 
 
@@ -24,10 +24,10 @@ class ArrayExtremaTask(SimpleTask):
 
     """
     #: Name of the target in the database.
-    target_array = Unicode().tag(pref=True, feval=ARR_VAL)
+    target_array = Str().tag(pref=True, feval=ARR_VAL)
 
     #: Name of the column into which the extrema should be looked for.
-    column_name = Unicode().tag(pref=True)
+    column_name = Str().tag(pref=True)
 
     #: Flag indicating which extremum shiul be lookd for.
     mode = Enum('Max', 'Min', 'Max & min').tag(pref=True)
@@ -109,13 +109,13 @@ class ArrayFindValueTask(SimpleTask):
 
     """
     #: Name of the target in the database.
-    target_array = Unicode().tag(pref=True, feval=ARR_VAL)
+    target_array = Str().tag(pref=True, feval=ARR_VAL)
 
     #: Name of the column into which the extrema should be looked for.
-    column_name = Unicode().tag(pref=True)
+    column_name = Str().tag(pref=True)
 
     #: Value which should be looked for in the array.
-    value = Unicode().tag(pref=True, feval=validators.Feval())
+    value = Str().tag(pref=True, feval=validators.Feval())
 
     database_entries = set_default({'index': 0})
 

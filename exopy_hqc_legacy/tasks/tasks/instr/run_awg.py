@@ -11,7 +11,7 @@
 """
 import logging
 
-from atom.api import (Unicode, set_default)
+from atom.api import (Str, set_default)
 
 from exopy.tasks.api import (InstrumentTask, validators)
 
@@ -21,7 +21,7 @@ class RunAWGTask(InstrumentTask):
 
     """
     #: Switch to choose the AWG run mode: on or off
-    switch = Unicode('Off').tag(pref=True, feval=validators.SkipLoop())
+    switch = Str('Off').tag(pref=True, feval=validators.SkipLoop())
     database_entries = set_default({'output': 0})
 
     def perform(self, switch=None):

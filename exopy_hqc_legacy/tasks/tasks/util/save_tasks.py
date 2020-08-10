@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="h5py")
 
 import numpy
 import h5py
-from atom.api import Unicode, Enum, Value, Bool, Int, Typed, List, set_default
+from atom.api import Enum, Value, Bool, Int, Typed, List, set_default, Str
 
 from exopy.tasks.api import SimpleTask, validators
 from exopy.utils.atom_util import ordered_dict_from_pref, ordered_dict_to_pref
@@ -44,10 +44,10 @@ class SaveTask(SimpleTask):
     saving_target = Enum('File', 'Array', 'File and array').tag(pref=True)
 
     #: Folder in which to save the data.
-    folder = Unicode('{default_path}').tag(pref=True)
+    folder = Str('{default_path}').tag(pref=True)
 
     #: Name of the file in which to write the data.
-    filename = Unicode().tag(pref=True)
+    filename = Str().tag(pref=True)
 
     #: Currently opened file object. (File mode)
     file_object = Value()
@@ -56,13 +56,13 @@ class SaveTask(SimpleTask):
     file_mode = Enum('New', 'Add')
 
     #: Header to write at the top of the file.
-    header = Unicode().tag(pref=True)
+    header = Str().tag(pref=True)
 
     #: Numpy array in which data are stored (Array mode)
     array = Value()  # Array
 
     #: Size of the data to be saved. (Evaluated at runtime)
-    array_size = Unicode().tag(pref=True)
+    array_size = Str().tag(pref=True)
 
     #: Computed size of the data (post evaluation)
     array_length = Int()
@@ -264,16 +264,16 @@ class SaveFileTask(SimpleTask):
 
     """
     #: Folder in which to save the data.
-    folder = Unicode('{default_path}').tag(pref=True, fmt=True)
+    folder = Str('{default_path}').tag(pref=True, fmt=True)
 
     #: Name of the file in which to write the data.
-    filename = Unicode().tag(pref=True, fmt=True)
+    filename = Str().tag(pref=True, fmt=True)
 
     #: Currently opened file object. (File mode)
     file_object = Value()
 
     #: Header to write at the top of the file.
-    header = Unicode().tag(pref=True, fmt=True)
+    header = Str().tag(pref=True, fmt=True)
 
     #: Values to save as an ordered dictionary.
     saved_values = Typed(OrderedDict, ()).tag(pref=(ordered_dict_to_pref,
@@ -505,16 +505,16 @@ class SaveFileHDF5Task(SimpleTask):
 
     """
     #: Folder in which to save the data.
-    folder = Unicode('{default_path}').tag(pref=True, fmt=True)
+    folder = Str('{default_path}').tag(pref=True, fmt=True)
 
     #: Name of the file in which to write the data.
-    filename = Unicode().tag(pref=True, fmt=True)
+    filename = Str().tag(pref=True, fmt=True)
 
     #: Currently opened file object. (File mode)
     file_object = Value()
 
     #: Header to write at the top of the file.
-    header = Unicode().tag(pref=True, fmt=True)
+    header = Str().tag(pref=True, fmt=True)
 
     #: Values to save as an ordered dictionary.
     saved_values = Typed(OrderedDict, ()).tag(pref=(ordered_dict_to_pref,
@@ -528,7 +528,7 @@ class SaveFileHDF5Task(SimpleTask):
 
     #: Estimation of the number of calls of this task during the measure.
     #: This helps h5py to chunk the file appropriately
-    calls_estimation = Unicode('1').tag(pref=True, feval=VAL_REAL)
+    calls_estimation = Str('1').tag(pref=True, feval=VAL_REAL)
 
     #: Flag indicating whether or not the data should be saved in swmr mode
     swmr = Bool(True).tag(pref=True)
@@ -694,16 +694,16 @@ class SaveArrayTask(SimpleTask):
     """
 
     #: Folder in which to save the data.
-    folder = Unicode().tag(pref=True, fmt=True)
+    folder = Str().tag(pref=True, fmt=True)
 
     #: Name of the file in which to write the data.
-    filename = Unicode().tag(pref=True, fmt=True)
+    filename = Str().tag(pref=True, fmt=True)
 
     #: Header to write at the top of the file.
-    header = Unicode().tag(pref=True, fmt=True)
+    header = Str().tag(pref=True, fmt=True)
 
     #: Name of the array to save in the database.
-    target_array = Unicode().tag(pref=True, feval=ARR_VAL)
+    target_array = Str().tag(pref=True, feval=ARR_VAL)
 
     #: Flag indicating whether to save as csv or .npy.
     mode = Enum('Text file', 'Binary file').tag(pref=True)

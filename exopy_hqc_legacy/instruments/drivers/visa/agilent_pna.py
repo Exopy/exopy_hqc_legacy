@@ -266,8 +266,7 @@ class AgilentPNAChannel(BaseInstrument):
 
         self._pna.write('CALCulate{}:FORMat {}'.format(self._channel,
                                                        meas_format))
-        res = self._pna.ask('CALCulate{}:FORMat?'.format(self._channel,
-                                                         meas_format))
+        res = self._pna.ask('CALCulate{}:FORMat?'.format(self._channel))
         if meas_name and selected_meas:
             self.selected_measure = selected_meas
         else:
@@ -327,7 +326,7 @@ class AgilentPNAChannel(BaseInstrument):
                                                             stop))
         else:
             raise AgilentPNAChannelError(cleandoc('''Unsupported type of sweep
-            : {} was specified for channel'''.format(sweep_type,
+            : {} was specified for channel {}'''.format(sweep_type,
                                                      self._channel)))
 
     @instrument_property
@@ -572,7 +571,7 @@ class AgilentPNAChannel(BaseInstrument):
         points = self._pna.ask_for_values('SENSe{}:SWEep:POINts?'.format(
                                           self._channel))
         if points:
-            return points[0]
+            return int(points[0])
         else:
             raise InstrIOError(cleandoc('''Agilent PNA did not return the
                     channel {} sweep point number'''.format(self._channel)))

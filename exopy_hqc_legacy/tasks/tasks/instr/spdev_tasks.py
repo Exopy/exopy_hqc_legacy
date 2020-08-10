@@ -11,7 +11,7 @@
 """
 import numbers
 import numpy as np
-from atom.api import (Bool, Unicode, Enum, set_default)
+from atom.api import (Bool, Str, Enum, set_default)
 
 from exopy.tasks.api import InstrumentTask, validators
 
@@ -35,7 +35,7 @@ class DemodSPTask(InstrumentTask):
                    'Avg after demod').tag(pref=True)
 
     #: Number of loops in the pulse sequence
-    num_loop = Unicode('1').tag(pref=True, feval=VAL_INT)
+    num_loop = Str('1').tag(pref=True, feval=VAL_INT)
 
     #: Should the acquisition on channel 1 be enabled
     ch1_enabled = Bool(True).tag(pref=True)
@@ -50,19 +50,19 @@ class DemodSPTask(InstrumentTask):
     ch2_trace = Bool(False).tag(pref=True)
 
     #: Frequency of the signal sent to channel 1 in MHz
-    freq_1 = Unicode('50').tag(pref=True, feval=VAL_REAL)
+    freq_1 = Str('50').tag(pref=True, feval=VAL_REAL)
 
     #: Frequency of the signal sent to channel 2 in MHz
-    freq_2 = Unicode('50').tag(pref=True, feval=VAL_REAL)
+    freq_2 = Str('50').tag(pref=True, feval=VAL_REAL)
 
     #: Time during which to acquire data after a trigger (ns).
-    duration = Unicode('1000').tag(pref=True, feval=VAL_REAL)
+    duration = Str('1000').tag(pref=True, feval=VAL_REAL)
 
     #: Time to wait after a trigger before starting acquisition (ns).
-    delay = Unicode('0').tag(pref=True, feval=VAL_REAL)
+    delay = Str('0').tag(pref=True, feval=VAL_REAL)
 
     #: Number of records to acquire (one per trig)
-    records_number = Unicode('1000').tag(pref=True, feval=VAL_INT)
+    records_number = Str('1000').tag(pref=True, feval=VAL_INT)
 
     #: Reference: when using average after demod, we can use ch2 as a ref, and
     # correct every I,Q from ch1 by Iref, Qref from ch2. This interferometric
@@ -70,7 +70,7 @@ class DemodSPTask(InstrumentTask):
     ref2 = Bool(False).tag(pref=True)
 
     #: Sampling rate in samples per second
-    sampling_rate = Unicode('500000000').tag(pref=True, feval=VAL_INT)
+    sampling_rate = Str('500000000').tag(pref=True, feval=VAL_INT)
 
     database_entries = set_default({'Ch1_I': 1.0, 'Ch1_Q': 1.0,
                                     'Ch2_I': 1.0, 'Ch2_Q': 1.0})

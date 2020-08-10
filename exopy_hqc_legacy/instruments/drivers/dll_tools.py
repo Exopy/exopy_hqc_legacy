@@ -41,7 +41,7 @@ class DllLibrary(object):
 
     Parameters
     ----------
-    path : unicode
+    path : str
         Path to the dll library to load.
 
     type : {'windll', 'oledll'}, optional

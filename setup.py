@@ -46,8 +46,6 @@ setup(
     setup_requires=['setuptools'],
     install_requires=['exopy', 'pyvisa', 'h5py>=2.5.0', 'numpy', 'pyclibrary'],
     entry_points={
-        'gui_scripts':
-        'hqcmeas_to_exopy = exopy_hqc_legacy.conversion.__main__:main',
         'exopy_package_extension':
         'exopy_hqc_legacy = exopy_hqc_legacy:list_manifests'}
 )

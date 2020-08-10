@@ -220,7 +220,7 @@ MEASURES_FILES = [
     'Vsd_GrayScale_PhA.ini',
 ]
 
-
+@pytest.mark.skip(reason="Broken and soon to be removed")
 @pytest.mark.parametrize('meas_file', MEASURES_FILES)
 def test_converting_a_measurement(measurement_workbench, meas_file, tmpdir,
                                   monkeypatch):

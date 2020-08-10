@@ -40,7 +40,9 @@ before_install:
   - export CONDA_BLD_PATH=$(pwd)
 
   # Install exopy dependencies
-  - $CONDA_INSTALL pyqt numpy exopy h5py exopy_pulses pyclibrary pyvisa
+  - $CONDA_INSTALL pyqt numpy h5py pyclibrary pyvisa
+  - $PIP_INSTALL git+https://github.com/Exopy/exopy.git#egg=exopy
+  - $PIP_INSTALL git+https://github.com/Exopy/exopy_pulses.git#egg=exopy_pulses
 
   # Intall test tools
   - $CONDA_INSTALL pytest

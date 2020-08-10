@@ -26,8 +26,7 @@ class SetDCVoltageTask(InterfaceableTaskMixin, InstrumentTask):
 
     """
     #: Target value for the source (dynamically evaluated)
-    target_value = Str().tag(pref=True,
-                                 feval=validators.SkipLoop(types=numbers.Real))
+    target_value = Str().tag(pref=True, feval=validators.SkipLoop(types=numbers.Real))
 
     #: Largest allowed step when changing the output of the instr.
     back_step = Float().tag(pref=True)
@@ -181,8 +180,7 @@ class SetDCCurrentTask(InterfaceableTaskMixin, InstrumentTask):
 
     """
     #: Target value for the source (dynamically evaluated)
-    target_value = Str().tag(pref=True,
-                                 feval=validators.SkipLoop(types=numbers.Real))
+    target_value = Str().tag(pref=True, feval=validators.SkipLoop(types=numbers.Real))
 
     #: Largest allowed step when changing the output of the instr.
     back_step = Float().tag(pref=True)

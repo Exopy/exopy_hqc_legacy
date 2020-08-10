@@ -26,8 +26,7 @@ class OscilloGetTraceTask(InstrumentTask):
     trace = Enum('1', '2', '3', '4', 'TA', 'TB', 'TC', 'TD').tag(pref=True)
 
     #: Number of time the instrument should average.
-    average_nb = Str().tag(pref=True,
-                               feval=validators.Feval(types=numbers.Integral))
+    average_nb = Str().tag(pref=True, feval=validators.Feval(types=numbers.Integral))
 
     #: Should hid=gh resolution be used.
     highres = Bool(True).tag(pref=True)

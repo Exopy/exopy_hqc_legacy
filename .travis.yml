@@ -1,9 +1,6 @@
 # References https://gist.github.com/dan-blanchard/7045057
 # and https://docs.travis-ci.com/user/trusty-ci-environment/
 
-sudo: false
-dist: trusty
-
 branches:
   only:
     - master
@@ -25,7 +22,7 @@ before_install:
   # Setup environment
   - travis_retry conda update --yes conda
   - conda config --set always_yes yes
-  - conda config --append channels exopy
+  - conda config --append channels conda-forge
   - conda install conda-build anaconda-client -q
   - conda info -a
   - conda create -n travisci --yes python=$PYTHON pip

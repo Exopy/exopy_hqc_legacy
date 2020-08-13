@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #==============================================================================
 # module : agilent_psa.py
-# author : Benjamin Huard
 # license : MIT license
 #==============================================================================
 """
@@ -190,6 +189,7 @@ class AgilentPSA(VisaInstrument):
         """
         """
         SAorBASIC = self.ask('inst:sel?')
+        SAorBASIC =  SAorBASIC[:-1]
         if SAorBASIC == 'SA':
             return 'SA'
         elif SAorBASIC == 'BASIC':

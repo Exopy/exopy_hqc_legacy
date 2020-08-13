@@ -102,7 +102,7 @@ class CSVLoadInterface(TaskInterface):
                     break
 
         data = np.genfromtxt(full_path, comments=self.comments,
-                             delimiter=self.delimiter, names=self.names,
+                             delimiter=self.delimiter, names=self.names if self.names else None,
                              skip_header=comment_lines)
 
         task.write_in_database('array', data)
@@ -141,7 +141,7 @@ class CSVLoadInterface(TaskInterface):
         """Keep the c_names  in sync with the array in the database.
 
         """
-        if new:
+        if new and self.task:
             self.task.write_in_database('array', _make_array(new))
 
 

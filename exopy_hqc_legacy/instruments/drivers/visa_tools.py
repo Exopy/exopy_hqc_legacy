@@ -95,6 +95,9 @@ class VisaInstrument(BaseInstrument):
 
         """
         rm = ResourceManager()
+        
+        self.para = para
+        
         try:
             self._driver = rm.open_resource(self.connection_str,
                                             open_timeout=1000, **para)
@@ -116,13 +119,13 @@ class VisaInstrument(BaseInstrument):
         as previously.
 
         """
-        para = {'timeout': self._driver.timeout,
-                'query_delay': self._driver.query_delay,
-                'write_termination': self._driver.write_termination,
-                'read_termination': self._driver.read_termination,
-                }
-        self._driver.close()
-        self.open_connection(**para)
+        # para = {'timeout': self._driver.timeout,
+                # 'query_delay': self._driver.query_delay,
+                # 'write_termination': self._driver.write_termination,
+                # 'read_termination': self._driver.read_termination,
+                # }
+        # self._driver.close()
+        self.open_connection(**self.para)
 
     def connected(self):
         """Returns whether commands can be sent to the instrument

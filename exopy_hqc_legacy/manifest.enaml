@@ -138,6 +138,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaUSB': {'resource_class': 'INSTR'},
                                        'VisaTCPIP': {'resource_class': 'INSTR'}
                                        }
+                    Driver:
+                        driver = 'agilent_psa:AgilentPSA'
+                        serie = ''
+                        model = 'E4440A'
+                        kind = 'Spectrum analyser'
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaUSB': {'resource_class': 'INSTR'},
+                                       'VisaTCPIP': {'resource_class': 'INSTR'}
+                                       }
                 Drivers:
                     manufacturer = 'Yokogawa'
                     Driver:
@@ -442,6 +451,14 @@ enamldef HqcLegacyManifest(PluginManifest):
                     view = 'views.rf_views:PulseModulationView'
                     instruments = ['exopy_hqc_legacy.Legacy.RohdeSchwarzSMB100A',
                                    'exopy_hqc_legacy.Legacy.Anapico']
+                Task:
+                    task = 'psa_tasks:PSAGetTrace'
+                    view = 'views.psa_tasks_views:PSAGetTraceView'
+                    instruments = ['exopy_hqc_legacy.Legacy.AgilentPSA']
+                Task:
+                    task = 'psa_tasks:PSASetParam'
+                    view = 'views.psa_tasks_views:PSASetParamView'
+                    instruments = ['exopy_hqc_legacy.Legacy.AgilentPSA']
                 Task:
                     task = 'pna_tasks:PNASinglePointMeasureTask'
                     view = 'views.pna_task_views:PNASinglePointView'

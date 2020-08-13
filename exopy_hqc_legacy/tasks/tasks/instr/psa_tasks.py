@@ -17,6 +17,7 @@ from atom.api import (Str, Int, set_default, Enum)
 
 
 from exopy.tasks.api import InstrumentTask, validators
+from exopy.tasks.api import InstrumentTask, TaskInterface, validators
 
 # XXX unfinished
 
@@ -48,7 +49,7 @@ class PSAGetTrace(InstrumentTask):
         psa_config = header.format(d.start_frequency_SA, d.stop_frequency_SA,
                                    d.span_frequency, d.center_frequency,
                                    d.average_count_SA, d.RBW, d.VBW_SA,
-                                   d.sweep_points_SA, sweep_modes[self.mode])
+                                   d.sweep_points_SA, sweep_modes[d.mode])
 
         self.write_in_database('psa_config', psa_config)
         self.write_in_database('trace_data', self.driver.read_data(self.trace))
@@ -108,9 +109,9 @@ class PSASetParam(InstrumentTask):
                 self.driver.start_frequency_SA = \
                     self.format_and_eval_string(self.start_freq)
 
-            if self.stop_freq:
+            if self.end_freq:
                 self.driver.stop_frequency_SA = \
-                    self.format_and_eval_string(self.stop_freq)
+                    self.format_and_eval_string(self.end_freq)
 
             # start_freq is set again in case the former value of stop
             # prevented to do it
@@ -155,14 +156,14 @@ class PSASetParam(InstrumentTask):
                      {}'''.format(d.start_frequency_SA, d.stop_frequency_SA,
                                   d.span_frequency, d.center_frequency,
                                   d.average_count_SA, d.RBW, d.VBW_SA,
-                                  d.sweep_points_SA, sweep_modes[self.mode])
+                                  d.sweep_points_SA, sweep_modes[d.mode])
 
         self.write_in_database('psa_config', psa_config)
 
     def check(self, *args, **kwargs):
         """
         """
-        test, traceback = super(PSAGetTrace, self).check(*args, **kwargs)
+        test, traceback = super(PSASetParam, self).check(*args, **kwargs)
 
         err_path = self.get_error_path()
 
@@ -177,7 +178,7 @@ class PSASetParam(InstrumentTask):
                     start = self.format_and_eval_string(self.start_freq)
 # if type(self.driver).__name__ == 'AgilentPSA':
 # is a new PSA needs to be encoded, it would be best to use task_interfaces
-                    if (start < 3) or (start > 26500000000):
+                    if (start < 0) or (start > 26500000000):
                         raise Exception('out_of_range')
 
             except Exception as e:
@@ -192,21 +193,21 @@ class PSASetParam(InstrumentTask):
                         'formula {}'.format(self.start_freq)
 
             try:
-                if self.stop_freq:
-                    toto = self.format_and_eval_string(self.stop_freq)
-                    if (toto < 3) or (toto > 26500000000):
+                if self.end_freq:
+                    toto = self.format_and_eval_string(self.end_freq)
+                    if (toto < 0) or (toto > 26500000000):
                         raise Exception('out_of_range')
 
             except Exception as e:
                 test = False
                 if e.args == 'out_of_range':
                     traceback[err_path +
-                              '-stop_freq'] = 'Stop frequency {} out of ' + \
+                              '-end_freq'] = 'Stop frequency {} out of ' + \
                         'range'.format(self.start_freq)
                 else:
                     traceback[err_path +
-                              '-stop_freq'] = 'Failed to eval the stop' + \
-                        'formula {}'.format(self.stop_freq)
+                              '-end_freq'] = 'Failed to eval the stop' + \
+                        'formula {}'.format(self.end_freq)
         else:
             try:
                 if self.span_freq:

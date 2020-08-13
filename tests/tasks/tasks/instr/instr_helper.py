@@ -25,7 +25,8 @@ class DummyJob(InstrJob):
 
     """
     def __init__(self):
-        super(DummyJob, self).__init__(lambda: True, 0.1, lambda: None)
+        super(DummyJob, self).__init__(lambda: True, 0.1, lambda: None, 
+                                       lambda: None)
 
 
 class HelperMeta(type):

@@ -16,6 +16,7 @@ from inspect import cleandoc
 from atom.api import (Str, Float, Bool, set_default)
 
 from exopy.tasks.api import InstrumentTask, validators
+from exopy_hqc_legacy.instruments.drivers.driver_tools import InstrTimeoutError
 
 
 class ApplyMagFieldTask(InstrumentTask):
@@ -59,8 +60,9 @@ class ApplyMagFieldTask(InstrumentTask):
 
         driver = self.driver
         normal_end = True
-        if (abs(driver.read_persistent_field() - target_value) >
-                driver.output_fluctuations):
+        # Only if driver.heater_state == 'Off' otherwise we wait for 
+        # post_switch_wait no matter what
+        if driver.heater_state == 'Off':
             job = driver.sweep_to_persistent_field()
             if job.wait_for_completion(self.check_for_interruption,
                                        timeout=60, refresh_time=1):
@@ -69,31 +71,41 @@ class ApplyMagFieldTask(InstrumentTask):
             else:
                 return False
 
+        if (abs(driver.read_persistent_field() - target_value) > 
+            driver.output_fluctuations):
             # set the magnetic field
             job = driver.sweep_to_field(target_value, self.rate)
-            normal_end = job.wait_for_completion(self.check_for_interruption,
-                                                 timeout=60,
-                                                 refresh_time=10)
 
-        # Always close the switch heater when the ramp was interrupted.
+            try:
+                normal_end = job.wait_for_completion(self.check_for_interruption,
+                                                    timeout=60,
+                                                    refresh_time=5)
+            except InstrTimeoutError:
+                # job.timeout() has been called, which stops the sweep and turn off 
+                # the switch heater
+                self.write_in_database('field', driver.read_persistent_field())
+                # fail the measurement
+                self.root.should_stop.set()
+                raise ValueError(cleandoc('''Field source did not set the field to 
+                                          {}'''.format(target_value)))
+
         if not normal_end:
+            # this happens when a stop signal has been send to the measurement
             job.cancel()
-            driver.heater_state = 'Off'
-            sleep(self.post_switch_wait)
-            self.write_in_database('field', driver.read_persistent_field())
-            return False
+            return
 
-        # turn off heater
+        # turn off heater if required
         if self.auto_stop_heater:
             driver.heater_state = 'Off'
             sleep(self.post_switch_wait)
-            job = driver.sweep_to_field(0)
+            # sweep down to zero at the fast sweep rate
+            job = driver.sweep_to_field(0, driver.fast_sweep_rate)
             job.wait_for_completion(self.check_for_interruption,
                                     timeout=60, refresh_time=1)
 
         self.write_in_database('field', target_value)
 
-        
+
 class ApplyMagFieldAndDropTask(InstrumentTask):
     """Use a supraconducting magnet to apply a magnetic field. Parallel task.
 

@@ -50,6 +50,12 @@ class InstrIOError(InstrError):
     pass
 
 
+class InstrTimeoutError(InstrError):
+    """Generic error raised when an instrument does not behave as expected
+    """
+    pass
+
+
 class instrument_property(property):
     """Property allowing to cache the result of a get operation and return it
     on the next get. The cache can be cleared.
@@ -157,11 +163,15 @@ class InstrJob(object):
     cancel : Callable, optional
         Function to cancel the task.
 
+    timeout : Callable, optional
+        Function called when the task timeouts
+
     """
-    def __init__(self, condition_callable, expected_waiting_time, cancel):
+    def __init__(self, condition_callable, expected_waiting_time, cancel, timeout):
         self.condition_callable = condition_callable
         self.expected_waiting_time = expected_waiting_time
         self.cancel = cancel
+        self.timeout = timeout
         self._start_time = time.time()
 
     def wait_for_completion(self, break_condition_callable=None, timeout=15,
@@ -185,6 +195,10 @@ class InstrJob(object):
         result : bool
             Boolean indicating if the wait succeeded of was interrupted.
 
+        Raises
+        ------
+        InstrTimeoutError:
+            Raised if the operation timeout. 
         """
         while True:
             remaining_time = (self.expected_waiting_time -
@@ -205,7 +219,13 @@ class InstrJob(object):
             if self.condition_callable():
                 return True
             if remaining_time < 0 or break_condition_callable():
-                return False
+                if remaining_time < 0:
+                    if self.timeout:
+                        self.timeout()
+                    raise InstrTimeoutError()
+                else:
+                    return False
+
 
     def cancel(self, *args, **kwargs):
         """Cancel the long running job.

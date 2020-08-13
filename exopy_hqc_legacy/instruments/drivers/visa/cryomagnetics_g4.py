@@ -27,7 +27,8 @@ MAXITER = 10
 
 class C4G(CS4):
     """Driver for the superconducting magnet power supply Cryomagnetics 4G.
-
+    The fields are read and given in kG (can't change it in G4)
+    The display only is in T.
     """
 
     def open_connection(self, **para):
@@ -40,7 +41,7 @@ class C4G(CS4):
             self.read_termination = '\n'
         # Need to write the lower limit in kG for source 4G
         #(LLIM needs to be lower than any ULIM)
-        self.write('LLIM -70')
+        self.write('LLIM -70;')
 
     @secure_communication()
     def read_output_field(self):
@@ -62,7 +63,6 @@ class C4G(CS4):
         """Field that the source will try to reach.
 
         """
-        # in T
         return float(self.ask('ULIM?').strip(' kG')) / 10
 
     @target_field.setter
@@ -75,6 +75,16 @@ class C4G(CS4):
         # convert target field from T to kG
         # can't reuse CS4 class because a semi-colon is needed
         self.write('ULIM {};'.format(target * 10))
+
+    @instrument_property
+    @secure_communication()
+    def field_sweep_rate(self):
+        """Rate at which to ramp the field (T/min).
+
+        """
+        # converted from A/s to T/min
+        rate = float(self.ask('RATE? 0'))
+        return rate * (60 * self.field_current_ratio)
 
     @field_sweep_rate.setter
     @secure_communication()

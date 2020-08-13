@@ -32,7 +32,7 @@ class CS4(VisaInstrument):
     #: Typical fluctuations at the output of the instrument.
     #: We use a class variable since we expect this to be identical for all
     #: instruments.
-    OUTPUT_FLUCTUATIONS = 2e-4
+    OUTPUT_FLUCTUATIONS = 5e-4
 
     caching_permissions = {'heater_state': True,
                            'target_field': True,
@@ -116,19 +116,34 @@ class CS4(VisaInstrument):
 
         # Start ramping.
         self.target_field = value
+        # Added a pause and then sweep up due to a buggy behavior of the source
+        sleep(1)
+        self.activity = 'Hold'
+        sleep(1)
         self.activity = 'To set point'
 
         # Create job.
         span = abs(self.read_output_field() - value)
         wait = 60 * span / rate
-        job = InstrJob(self.is_target_reached, wait, cancel=self.stop_sweep)
+        job = InstrJob(self.is_target_reached, wait, cancel=self.stop_sweep,
+                       timeout=self.stop_sweep_safe)
         return job
 
+    @secure_communication()
     def stop_sweep(self):
         """Stop the field sweep at the current value.
 
         """
         self.activity = 'Hold'
+
+    @secure_communication()
+    def stop_sweep_safe(self):
+        """Stop the field sweep at the current value, and turn of the switch heater.
+
+        """
+        self.activity = 'Hold'
+        self.heater_state = 'Off'
+        sleep(self.post_switch_wait)
 
     def check_connection(self):
         pass

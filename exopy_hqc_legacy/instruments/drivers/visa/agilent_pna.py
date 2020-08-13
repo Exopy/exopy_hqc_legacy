@@ -20,6 +20,8 @@ except ImportError:
     single = 1
     double = 3
 
+from visa import VisaIOError, constants
+
 from ..driver_tools import (BaseInstrument, InstrIOError, InstrError,
                             secure_communication, instrument_property)
 from ..visa_tools import VisaInstrument
@@ -175,10 +177,12 @@ class AgilentPNAChannel(BaseInstrument):
                 try:
                     done = self._pna.ask_for_values('*OPC?')[0]
                     break
-                except Exception:
-                    # Getting an exception here simply means that the
+                except VisaIOError as e:
+                    # Getting an timeout here simply means that the
                     # PNA isn't done averaging
-                    pass
+                    if e.error_code == constants.StatusCode.error_timeout:
+                        continue
+                    raise
 
             if done != 1:
                 raise InstrError(cleandoc('''Agilent PNA did could  not perform

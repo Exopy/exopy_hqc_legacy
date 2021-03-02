@@ -51,6 +51,7 @@ class Anapico(VisaInstrument):
         self.frequency_unit = 'GHz'
         self.write_termination = '\n'
         self.read_termination = '\n'
+        self.timeout = 50000
 # The next line sets the timeout before reconnection to 0. This is available
 # since firmware version 0.4.106 and avoids the Anapico generator to freeze
 # upon unproperly closed connections (for instance if exopy crashes)
@@ -182,7 +183,109 @@ class Anapico(VisaInstrument):
             mess = fill(cleandoc('''The invalid value {} was sent to
                         switch_on_off method''').format(value), 80)
             raise VisaTypeError(mess)
+            
+    @instrument_property
+    @secure_communication()
+    def mode(self):
+        """Frequency mode of the signal generator.
 
+        """
+        mode = self.ask('FREQ:MODE?')
+        if mode:
+            return mode
+        else:
+            raise InstrIOError
+            
+    @mode.setter
+    @secure_communication()
+    def mode(self, value):
+        """Frequency mode setter method.
+        Can be FIX, LIST, SWE or CHIR.
+
+        """
+        if not value in ['FIX', 'LIST', 'SWE', 'CHIR']:
+            raise InstrIOError(cleandoc('''Frequency mode should be FIX, LIST, SWE or CHIR.
+                                        {} given instead'''.format(value)))
+        self.write('FREQ:MODE {}'.format(value))
+        res = self.ask('FREQ:MODE?')
+        if res != value:
+            raise InstrIOError(cleandoc('''frequency mode not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def start(self):
+        """Start frequency for a chirp or step sweep.
+
+        """
+        start = self.ask_for_values('FREQ:STAR?')
+        if start:
+            return start[0]
+        else:
+            raise InstrIOError
+            
+    @start.setter
+    @secure_communication()
+    def start(self, value):
+        """Start frequency setter method.
+            Unit is Hz.
+        """
+        self.write('FREQ:STAR {}'.format(value))
+        res = self.ask_for_values('FREQ:STAR?')
+        if res[0] != value:
+            raise InstrIOError(cleandoc('''start frequency not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def stop(self):
+        """Stop frequency for a chirp or step sweep.
+
+        """
+        stop = self.ask_for_values('FREQ:STOP?')
+        if stop:
+            return stop[0]
+        else:
+            raise InstrIOError
+            
+    @stop.setter
+    @secure_communication()
+    def stop(self, value):
+        """Stop frequency setter method.
+            Unit is Hz.
+        """
+        self.write('FREQ:STOP {}'.format(value))
+        res = self.ask_for_values('FREQ:STOP?')
+        if res[0] != value:
+            raise InstrIOError(cleandoc('''stop frequency not set properly'''))
+        
+    @secure_communication()
+    def abort(self):
+        """Abort sweep in progress.
+
+        """
+        self.write('ABOR')    
+        
+    @instrument_property
+    @secure_communication()
+    def init(self):
+        """Arms trigger.
+
+        """
+        return
+            
+    @init.setter
+    @secure_communication()
+    def init(self, value):
+        """Arms trigger
+            Can be IMM, ON or OFF
+
+        """
+        if not value in ['IMM', 'ON', 'OFF']:
+            raise InstrIOError(cleandoc('''Frequency mode should be IMM, ON or OFF.
+                                        {} given instead'''.format(value)))
+        if value != 'IMM':
+            value = 'CONT ' + value
+        self.write(':INIT:{}'.format(value))
+            
     @instrument_property
     @secure_communication()
     def pm_state(self):
@@ -250,7 +353,312 @@ class Anapico(VisaInstrument):
         else:
             raise InstrIOError(cleandoc('''reference should be INT or EXT.
                                         {} given instead'''.format(value)))
+                                        
+    @instrument_property
+    @secure_communication()
+    def sweep_number(self):
+        """Number of times a given sweep is executed.
+
+        """
+        nb = self.ask_for_values('SWE:COUN?')
+        if nb:
+            return nb
+        else:
+            raise InstrIOError
+            
+    @sweep_number.setter
+    @secure_communication()
+    def sweep_number(self, value):
+        """Number of sweeps setter method.
+           A negative value stands for an infinite number of sweeps.
+
+        """
+        if value < 0:
+            value = 'INF'
+            self.write('SWE:COUN {}'.format(value))
+            res = self.ask('SWE:COUN?')
+        else:
+            self.write('SWE:COUN {}'.format(value))
+            res = self.ask_for_values('SWE:COUN?')
+            res = res[0]
+        if res != value:
+            raise InstrIOError(cleandoc('''sweep number not set properly'''))
         
+    @instrument_property
+    @secure_communication()
+    def sweep_dwell_time(self):
+        """Dwell time.
+
+        """
+        t = self.ask_for_values('SWE:DWEL?')
+        if t:
+            return t[0]
+        else:
+            raise InstrIOError
+            
+    @sweep_dwell_time.setter
+    @secure_communication()
+    def sweep_dwell_time(self, value):
+        """Dwell time setter method.
+            Unit is seconds.
+
+        """
+        self.write('SWE:DWEL {}'.format(value))
+        
+        res = self.ask_for_values('SWE:DWEL?')
+        if res[0] != value:
+            raise InstrIOError(cleandoc('''sweep dwell time not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def sweep_spacing(self):
+        """Sweep spacing.
+
+        """
+        spacing = self.ask('SWE:SPAC?')
+        if spacing:
+            return spacing
+        else:
+            raise InstrIOError
+            
+    @sweep_spacing.setter
+    @secure_communication()
+    def sweep_spacing(self, value):
+        """Sweep spacing setter method.
+        Can be LIN or LOG.
+
+        """
+        if not value in ['LIN', 'LOG']:
+            raise InstrIOError(cleandoc('''Sweep spacing should be LIN or LOG.
+                                        {} given instead'''.format(value)))
+        self.write('SWE:SPAC {}'.format(value))
+        res = self.ask('SWE:SPAC?')
+        if res != value:
+            raise InstrIOError(cleandoc('''sweep spacing not set properly'''))
+        
+    @instrument_property
+    @secure_communication()
+    def sweep_points(self):
+        """Sweep number of points.
+
+        """
+        pt = self.ask_for_values('SWE:POIN?')
+        if pt:
+            return pt[0]
+        else:
+            raise InstrIOError
+            
+    @sweep_points.setter
+    @secure_communication()
+    def sweep_points(self, value):
+        """Sweep number of points setter method.
+
+        """
+        self.write('SWE:POIN {}'.format(value))
+        res = self.ask_for_values('SWE:POIN?')
+        if res[0] != value:
+            raise InstrIOError(cleandoc('''sweep number of points not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def sweep_auto_delay(self):
+        """Automatic sweep delay.
+
+        """
+        value = self.ask_for_values('SWE:DEL:AUTO?')
+        if value:
+            return value[0]
+        else:
+            raise InstrIOError
+            
+    @sweep_auto_delay.setter
+    @secure_communication()
+    def sweep_auto_delay(self, value):
+        """Automatic sweep delay setter method.
+        Can be ON, OFF, 1 or 0.
+
+        """
+        if value == 'ON':
+            value = 1
+        if value == 'OFF':
+            value = 0
+        if not value in [0, 1]:
+            raise InstrIOError(cleandoc('''Automatic sweep delay should be ON, OFF, 1 or 0.
+                                        {} given instead'''.format(value)))
+        self.write('SWE:DEL:AUTO {}'.format(value))
+        res = self.ask_for_values('SWE:DEL:AUTO?')
+        if res[0] != value:
+            raise InstrIOError(cleandoc('''automatic sweep delay not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def lfoutput_source(self):
+        """Source of the low frequency output.
+
+        """
+        value = self.ask('LFO:SOUR?')
+        if value:
+            return value
+        else:
+            raise InstrIOError
+            
+    @lfoutput_source.setter
+    @secure_communication()
+    def lfoutput_source(self, value):
+        """Source of the low frequency output setter method.
+        Can be LFG, PULM or TRIG.
+
+        """
+        if not value in ['LFG', 'PULM', 'TRIG']:
+            raise InstrIOError(cleandoc('''LFoutput source should be LFG, PULM or TRIG.
+                                        {} given instead'''.format(value)))
+        self.write('LFO:SOUR {}'.format(value))
+        res = self.ask('LFO:SOUR?')
+        if res == 'LFGenerator':
+            res = 'LFG'
+        if res == 'TRIGger':
+            res = 'TRIG'
+        if res != value:
+            raise InstrIOError(cleandoc('''LFoutput source not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def lfoutput_state(self):
+        """State of the low frequency output.
+
+        """
+        value = self.ask_for_values('LFO:STAT?')
+        if value:
+            return value[0]
+        else:
+            raise InstrIOError
+            
+    @lfoutput_state.setter
+    @secure_communication()
+    def lfoutput_state(self, value):
+        """State of the low frequency output setter method.
+        Can be ON, OFF, 1 or 0.
+
+        """
+        if value == 'ON':
+            value = 1
+        if value == 'OFF':
+            value = 0
+        if not value in [0, 1]:
+            raise InstrIOError(cleandoc('''LFoutput state should be ON, OFF, 1 or 0.
+                                        {} given instead'''.format(value)))
+        self.write('LFO:STAT {}'.format(value))
+        res = self.ask_for_values('LFO:STAT?')
+        if res[0] != value:
+            raise InstrIOError(cleandoc('''LFoutput state not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def trigger_type(self):
+        """Trigger type.
+
+        """
+        value = self.ask('TRIG:TYPE?')
+        if value:
+            return value
+        else:
+            raise InstrIOError
+            
+    @trigger_type.setter
+    @secure_communication()
+    def trigger_type(self, value):
+        """Trigger type.
+        Can be NORM, GATE or POIN.
+
+        """
+        if not value in ['NORM', 'GATE', 'POIN']:
+            raise InstrIOError(cleandoc('''Trigger type should be NORM, GATE or POIN.
+                                        {} given instead'''.format(value)))
+        self.write('TRIG:TYPE {}'.format(value))
+        res = self.ask('TRIG:TYPE?')
+        if res != value:
+            raise InstrIOError(cleandoc('''Trigger type not set properly'''))
+
+    @instrument_property
+    @secure_communication()
+    def trigger_source(self):
+        """Trigger source.
+
+        """
+        value = self.ask('TRIG:SOUR?')
+        if value:
+            return value
+        else:
+            raise InstrIOError
+            
+    @trigger_source.setter
+    @secure_communication()
+    def trigger_source(self, value):
+        """Trigger source.
+        Can be IMM, EXT, KEY or BUS.
+
+        """
+        if not value in ['IMM', 'EXT', 'KEY', 'BUS']:
+            raise InstrIOError(cleandoc('''Trigger source should be IMM, EXT, KEY or BUS.
+                                        {} given instead'''.format(value)))
+        self.write('TRIG:SOUR {}'.format(value))
+        res = self.ask('TRIG:SOUR?')
+        if res != value:
+            raise InstrIOError(cleandoc('''Trigger source not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def trigger_slope(self):
+        """Trigger slope.
+
+        """
+        value = self.ask('TRIG:SLOP?')
+        if value:
+            return value
+        else:
+            raise InstrIOError
+            
+    @trigger_slope.setter
+    @secure_communication()
+    def trigger_slope(self, value):
+        """Trigger slope.
+        Can be POS, NEG, NP or PN.
+
+        """
+        if not value in ['POS', 'NEG', 'NP', 'PN']:
+            raise InstrIOError(cleandoc('''Trigger slope should be POS, NEG, NP or PN.
+                                        {} given instead'''.format(value)))
+        self.write('TRIG:SLOP {}'.format(value))
+        res = self.ask('TRIG:SLOP?')
+        if res != value:
+            raise InstrIOError(cleandoc('''Trigger slope not set properly'''))
+            
+    @instrument_property
+    @secure_communication()
+    def trigger_output_mode(self):
+        """Trigger output mode.
+
+        """
+        value = self.ask('TRIG:OUTP:MODE?')
+        if value:
+            return value
+        else:
+            raise InstrIOError
+            
+    @trigger_output_mode.setter
+    @secure_communication()
+    def trigger_output_mode(self, value):
+        """Trigger output mode.
+        Can be NORM, GATE, POIN or VAL.
+
+        """
+        if not value in ['NORM', 'GATE', 'POIN', 'VAL']:
+            raise InstrIOError(cleandoc('''Trigger output mode should be NORM, GATE, POIN or VAL.
+                                        {} given instead'''.format(value)))
+        self.write('TRIG:OUTP:MODE {}'.format(value))
+        res = self.ask('TRIG:OUTP:MODE?')
+        if res != value:
+            raise InstrIOError(cleandoc('''Trigger output mode not set properly'''))
 
 class AnapicoMulti(Anapico):
     """

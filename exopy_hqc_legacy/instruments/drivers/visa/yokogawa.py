@@ -81,7 +81,7 @@ class YokogawaGS200(VisaInstrument):
         self.write(":SOURce:LEVel {}".format(set_point))
         value = self.ask_for_values('SOURce:LEVel?')[0]
         # to avoid floating point rouding
-        if abs(value - round(set_point, 9)) > 10**-9:
+        if abs(value - round(set_point, 9)) > 10**-3:
             raise InstrIOError('Instrument did not set correctly the voltage')
 
     @instrument_property
@@ -159,7 +159,8 @@ class YokogawaGS200(VisaInstrument):
         self.write(":SOURce:LEVel {}".format(set_point))
         value = self.ask_for_values('SOURce:LEVel?')[0]
         # to avoid floating point rouding
-        if abs(value - round(set_point, 9)) > 10**-9:
+        if abs(value - round(set_point, 9)) > 10**-7:
+            ## 15/02 Anil The precision should depend on the range, so this tolerence must be adapted
             raise InstrIOError('Instrument did not set correctly the current')
 
     @instrument_property

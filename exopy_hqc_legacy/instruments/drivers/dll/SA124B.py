@@ -19,14 +19,15 @@ import ctypes
 from subprocess import call
 
 import numpy as np
+import os
 
 from ..dll_tools import DllInstrument
 from ..driver_tools import InstrIOError
 import sys
 
 # to get the sa_api DLL imported, one should add th pathe C:\\Program Files\\Signal Hound\\Spike to the os environ path
-# pastr = "C:\Program Files\Signal Hound\Spike"
-# os.environ['PATH'] += ";" + pastr
+pastr = "C:\Program Files\Signal Hound\Spike"
+os.environ['PATH'] += ";" + pastr
 
 sa_dll = ctypes.CDLL("sa_api.dll")
 

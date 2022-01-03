@@ -1,0 +1,46 @@
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+#
+# Distributed under the terms of the BSD license.
+#
+# The full license is in the file LICENCE, distributed with this software.
+# -----------------------------------------------------------------------------
+"""Dynamic linking library connection information edition widget.
+
+"""
+import os
+from textwrap import fill
+
+from enaml.widgets.api import Field, Label, ToolButton, FileDialogEx
+from enaml.layout.api import hbox, vbox, grid, align
+from exopy.instruments.api import BaseConnection
+from exopy.app.icons.api import get_icon
+
+
+enamldef pyAPIConnection(BaseConnection):
+    """Connection for instruments communicating via a python API and 
+    identified by their serial number.
+
+    """
+    #: Reference to the application workbench.
+    attr workbench
+
+    #: Serial number of the instrument with which the connection should be
+    #: established. Specified as text.
+    alias serial_number : sr_val.text
+
+    enabled << not read_only
+    title = self.declaration.id
+
+    gather_infos => ():
+        return {'serial_number': serial_number}
+
+    constraints = [grid([sr_lab, sr_val, sr_val])]
+
+    Label: sr_lab:
+        text = 'Instr id'
+    Field: sr_val:
+        tool_tip = fill('This is instrument dependent please refer to the '
+                        'instrument driver. This is generally the instrument '
+                        'serial number.')

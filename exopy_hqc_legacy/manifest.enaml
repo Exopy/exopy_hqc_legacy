@@ -19,7 +19,8 @@ from exopy.instruments.api import (Starter, Connection, Drivers, Driver,
                                   Settings)
 
 from .instruments.starters.legacy_starter import (VisaLegacyStarter,
-                                                  DllLegacyStarter)
+                                                  DllLegacyStarter,
+                                                  PyAPILegacyStarter)
 
 
 enamldef HqcLegacyManifest(PluginManifest):
@@ -66,6 +67,12 @@ enamldef HqcLegacyManifest(PluginManifest):
                            'for communication.')
             starter = DllLegacyStarter()
 
+        Starter:
+            id = 'exopy_hqc_legacy.starter.pyapi'
+            description = ('Starter for legacy instruments using a external '
+                           'API for communication.')
+            starter = PyAPILegacyStarter()
+
     Extension:
         id = 'instruments.connections'
         point = 'exopy.instruments.connections'
@@ -83,7 +90,17 @@ enamldef HqcLegacyManifest(PluginManifest):
                                 header_dir=defaults.get('header_dir',''))
                 return DLLConnection(read_only=read_only, declaration=self,
                                      workbench=workbench, **defaults)
-
+        Connection:
+            id = 'LegacyPyAPIConnection'
+            description = ('Connection for instruments communicating via a '
+                           'python API and identified by their serial number.')
+            new => (workbench, defaults, read_only):
+                with enaml.imports():
+                    from .instruments.connections.pyAPI_serial_number_connection\
+                        import pyAPIConnection
+                defaults = dict(serial_number=defaults.get('serial_number',                                                           ''))
+                return pyAPIConnection(read_only=read_only, declaration=self,
+                                     workbench=workbench, **defaults)
     Extension:
         id = 'instruments.settings'
         point = 'exopy.instruments.settings'
@@ -349,6 +366,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                     manufacturer = 'AlazarTech'
                     model = 'ATS9350'
 
+            Drivers:
+                path = 'pyapi'
+                starter = 'exopy_hqc_legacy.starter.pyapi'
+                connections = {'LegacyPyAPIConnection': {}}
+                Driver:
+                    driver = 'zi:HF2LI'
+                    manufacturer = 'Zurich Instruments'
+                    model = 'HF2LI'
+
     Extension:
         id = 'exopy_hqc_legacy.tasks'
         point = 'exopy.tasks.declarations'
@@ -398,6 +424,10 @@ enamldef HqcLegacyManifest(PluginManifest):
                 path = 'instr'
                 group = 'instr'
                 Task:
+                    task = 'set_basestate_tasks:SetBaseStateTask'
+                    view = 'views.set_basestate_views:SetBaseStateView'
+                    instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
+                Task:
                     task = 'apply_mag_field_task:ApplyMagFieldAndDropTask'
                     view = 'views.apply_mag_field_view:ApplyMagFieldAndDropView'
                     instruments = ['exopy_hqc_legacy.Legacy.IPS12010',
@@ -433,6 +463,11 @@ enamldef HqcLegacyManifest(PluginManifest):
                                    'exopy_hqc_legacy.Legacy.LockInSR7280',
                                    'exopy_hqc_legacy.Legacy.LockInSR830']
                     metadata = {'loopable': True}
+                    Interface:
+                        interface = 'set_lockin_parameters_tasks:MultiChannelOscillatorFrequencyInterface'
+                        views = ['views.multi_channel_LI_views:MultiChannelOscLabel',
+                                 'views.multi_channel_LI_views:MultiChannelOscValue']
+                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
                 Task:
                     task = 'set_lockin_parameters_tasks:SetOscillatorAmplitudeTask'
                     view = 'views.set_lockin_parameters_view:SetOscillatorAmplitudeView'
@@ -441,6 +476,30 @@ enamldef HqcLegacyManifest(PluginManifest):
                                    'exopy_hqc_legacy.Legacy.LockInSR7280',
                                    'exopy_hqc_legacy.Legacy.LockInSR830']
                     metadata = {'loopable': True}
+                Task:
+                    task = 'set_lockin_parameters_tasks:SetDemodHarmTask'
+                    view = 'views.set_lockin_parameters_view:SetDemodHarmTaskView'
+                    instruments = ['exopy_hqc_legacy.Legacy.LockInSR7265',
+                                   'exopy_hqc_legacy.Legacy.LockInSR7270',
+                                   'exopy_hqc_legacy.Legacy.LockInSR7280',
+                                   'exopy_hqc_legacy.Legacy.LockInSR830']
+                    Interface:
+                        interface = 'set_lockin_parameters_tasks:MultiChannelDemodInterface'
+                        views = ['views.multi_channel_LI_views:MultiChannelDemodLabel',
+                                 'views.multi_channel_LI_views:MultiChannelDemodValue']
+                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
+                Task:
+                    task = 'set_lockin_parameters_tasks:SetDemodPhaseTask'
+                    view = 'views.set_lockin_parameters_view:SetDemodPhaseTaskView'
+                    instruments = ['exopy_hqc_legacy.Legacy.LockInSR7265',
+                                   'exopy_hqc_legacy.Legacy.LockInSR7270',
+                                   'exopy_hqc_legacy.Legacy.LockInSR7280',
+                                   'exopy_hqc_legacy.Legacy.LockInSR830']
+                    Interface:
+                        interface = 'set_lockin_parameters_tasks:MultiChannelDemodInterface'
+                        views = ['views.multi_channel_LI_views:MultiChannelDemodLabel',
+                                 'views.multi_channel_LI_views:MultiChannelDemodValue']
+                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
                 Task:
                     task = 'meas_dc_tasks:MeasDCVoltageTask'
                     view = 'views.meas_dc_views:MeasDCVoltView'

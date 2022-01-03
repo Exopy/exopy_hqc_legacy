@@ -10,24 +10,26 @@
 
 """
 from time import sleep
+import logging
 import numbers
 from inspect import cleandoc
 
-from atom.api import (Str, Float, Bool, set_default)
+from atom.api import (Int, Value, Str, Float, Bool, set_default)
 
-from exopy.tasks.api import InstrumentTask, validators
+from exopy.tasks.api import (InstrumentTask, TaskInterface,
+                            InterfaceableTaskMixin, validators)
 
 
-class SetOscillatorFrequencyTask(InstrumentTask):
+class SetOscillatorFrequencyTask(InterfaceableTaskMixin, InstrumentTask):
     """Sets the frequency outputted by a lockin.
 
     """
-    # Frequency.
-    frequency = Str().tag(pref=True)
+    # Frequency (dynamically evaluated).
+    frequency = Str().tag(pref=True, feval=validators.SkipLoop(types=numbers.Real))
 
     database_entries = set_default({'Frequency(Hz)': 137})
 
-    def perform(self):
+    def i_perform(self,value=None):
         """Set the specified frequency.
 
         """
@@ -51,3 +53,82 @@ class SetOscillatorAmplitudeTask(InstrumentTask):
         self.driver.set_osc_amplitude(self.format_and_eval_string(self.amplitude))
         
         self.write_in_database('Vac(mV)', self.format_and_eval_string(self.amplitude))
+
+class SetDemodHarmTask(InterfaceableTaskMixin, InstrumentTask):
+    """Sets the harm for demod by a lockin.
+
+    """
+    # Harm.
+    harm = Str().tag(pref=True)
+
+    database_entries = set_default({'Harm': 1})
+
+    def i_perform(self,value=None):
+        """Set the specified amplitude.
+
+        """
+        self.driver.set_demod_harmonic(self.format_and_eval_string(self.harm))
+        
+        self.write_in_database('Harm', self.format_and_eval_string(self.harm))
+
+class SetDemodPhaseTask(InterfaceableTaskMixin, InstrumentTask):
+    """Sets the phase for demod by a lockin.
+
+    """
+    # Phase.
+    phase = Str().tag(pref=True)
+
+    database_entries = set_default({'Phase(deg)': 0})
+
+    def i_perform(self,value=None):
+        """Set the specified amplitude.
+
+        """
+        self.driver.set_demod_phase(self.format_and_eval_string(self.phase))
+        
+        self.write_in_database('Phase(deg)', self.format_and_eval_string(self.phase))
+
+
+class MultiChannelOscillatorFrequencyInterface(TaskInterface):
+    """Interface for multiple oscillators lockin.
+
+    """
+    #: Id of the channel to use.
+    channel = Int(default=1).tag(pref=True)
+
+    #: Reference to the driver for the channel.
+    channel_driver = Value()
+
+    def perform(self, value=None):
+        """Set the specified frequency.
+
+        """
+        task = self.task
+        if not self.channel_driver:
+            self.channel_driver = task.driver.get_osc_channel(self.channel)
+        if self.channel_driver.owner != task.name:
+            self.channel_driver.owner = task.name
+        task.driver=self.channel_driver
+        task.i_perform(value)
+
+class MultiChannelDemodInterface(TaskInterface):
+    """Interface for multiple demodulators lockin.
+
+    """
+    #: Id of the channel to use.
+    channel = Int(default=1).tag(pref=True)
+
+    #: Reference to the driver for the channel.
+    channel_driver = Value()
+
+    def perform(self, value=None):
+        """Set the specified frequency.
+
+        """
+        task = self.task
+        if not self.channel_driver:
+            self.channel_driver = task.driver.get_demod_channel(self.channel)
+        if self.channel_driver.owner != task.name:
+            self.channel_driver.owner = task.name
+        task.driver=self.channel_driver
+        task.i_perform(value)

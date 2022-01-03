@@ -47,3 +47,29 @@ enamldef SetOscillatorAmplitudeView(InstrView): view:
         hug_width = 'ignore'
         text := task.amplitude
         tool_tip = fill('Integer value between 0 and 1000',60)
+
+enamldef SetDemodHarmTaskView(InstrView): view:
+    """View for the SetDemodHarmTask
+
+    """
+    constraints = [factory(auto_grid_layout)]
+
+    Label: harm_lab:
+        hug_width = 'ignore'
+        text = 'Harm'
+    QtLineCompleter: harm_val:
+        hug_width = 'ignore'
+        text := task.harm
+
+enamldef SetDemodPhaseTaskView(InstrView): view:
+    """View for the SetDemodPhaseTask
+
+    """
+    constraints = [factory(auto_grid_layout)]
+
+    Label: phase_lab:
+        hug_width = 'ignore'
+        text = 'Phase (deg.)'
+    QtLineCompleter: phase_val:
+        hug_width = 'ignore'
+        text := task.phase

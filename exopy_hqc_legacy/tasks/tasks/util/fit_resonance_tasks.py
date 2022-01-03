@@ -10,7 +10,7 @@
 
 """
 import numpy as np
-from atom.api import (Enum, Bool, Unicode, set_default, Float, Int)
+from atom.api import (Enum, Bool, Str, set_default, Float, Int)
 from scipy.interpolate import splrep, sproot, splev
 from scipy.optimize import curve_fit, leastsq
 import scipy.ndimage.filters as flt
@@ -28,12 +28,12 @@ class FitResonanceTask(InterfaceableTaskMixin, SimpleTask):
 
     """
     #: Name of the target in the database.
-    target_array = Unicode().tag(pref=True, feval=ARR_VAL)
-    ref_array = Unicode().tag(pref=True, feval=ARR_VAL)
+    target_array = Str().tag(pref=True, feval=ARR_VAL)
+    ref_array = Str().tag(pref=True, feval=ARR_VAL)
     use_ref = Bool(False).tag(pref=True)
 
     #: Kind of data to fit.
-    selected_format = Unicode().tag(pref=True)
+    selected_format = Str().tag(pref=True)
 
     wait = set_default({'activated': True})  # Wait on all pools by default.
 
@@ -68,9 +68,9 @@ class FitVNAInterface(TaskInterface):
 
     """
     #: Name of the column into which the extrema should be looked for.
-    column_name_maglin = Unicode().tag(pref=True)
-    column_name_phase = Unicode().tag(pref=True)
-    column_name_freq = Unicode().tag(pref=True)
+    column_name_maglin = Str().tag(pref=True)
+    column_name_phase = Str().tag(pref=True)
+    column_name_freq = Str().tag(pref=True)
 
     #: Flag indicating the measurement setup. This changes the fit function
     mode = Enum('Reflection', 'Transmission', 'Lorentzian').tag(pref=True)
@@ -141,10 +141,10 @@ class FitAlazarInterface(TaskInterface):
 
     """
     #: Name of the column into which the extrema should be looked for.
-    column_name_Icor = Unicode().tag(pref=True)
-    column_name_Qcor = Unicode().tag(pref=True)
-    column_name_freq = Unicode().tag(pref=True)
-    Tdelay = Unicode().tag(pref=True)
+    column_name_Icor = Str().tag(pref=True)
+    column_name_Qcor = Str().tag(pref=True)
+    column_name_freq = Str().tag(pref=True)
+    Tdelay = Str().tag(pref=True)
 
     #: Flag indicating the measurement setup. This changes the fit function
     mode = Enum('Reflection', 'Transmission', 'Lorentzian').tag(pref=True)

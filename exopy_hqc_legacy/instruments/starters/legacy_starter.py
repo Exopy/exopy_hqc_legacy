@@ -89,3 +89,16 @@ class DllLegacyStarter(LegacyStarter):
         i['instr_id'] = infos['serial_number']
         del i['serial_number']
         return i
+
+class PyAPILegacyStarter(LegacyStarter):
+    """Starter for legacy pyAPI instruments.
+
+    """
+    def format_connection_infos(self, infos):
+        """Rename serial_number to instr_id.
+
+        """
+        i = infos.copy()
+        i['instr_id'] = infos['serial_number']
+        del i['serial_number']
+        return i

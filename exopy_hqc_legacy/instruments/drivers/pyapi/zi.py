@@ -120,7 +120,8 @@ class HF2LIOscChannel(BaseInstrument):
         self._LI = LI
         self._channel = channel_num
         self._device_id = device
-        self._header_osc_freq = '/'+device+'/oscs/{}/freq'.format(channel_num-1)
+        self._header_osc_freq = (
+        '/'+device+'/oscs/{}/freq'.format(channel_num-1))
 
     def reopen_connection(self):
 
@@ -135,7 +136,8 @@ class HF2LIOscChannel(BaseInstrument):
         self._LI.daq_serv.echoDevice(self._device_id)
         value=self._LI.daq_serv.getDouble(self._header_osc_freq)
         if abs(value-frequency)>1e-6:
-            raise InstrIOError('The instrument did not set frequency correctly')
+            raise InstrIOError('The instrument did not '
+                               'set frequency correctly')
 
 class HF2LIDemodChannel(BaseInstrument):
 
@@ -146,12 +148,35 @@ class HF2LIDemodChannel(BaseInstrument):
         self._LI = LI
         self._channel = channel_num
         self._device_id = device
-        self._header_demod_harm = '/'+device+'/demods/{}/harmonic'.format(channel_num-1)
-        self._header_demod_phase = '/'+device+'/demods/{}/phaseshift'.format(channel_num-1)        
+        self._header_demod_osc = (
+        '/' + device + '/demods/{}/oscselect'.format(channel_num-1))
+        self._header_demod_harm = (
+        '/' + device + '/demods/{}/harmonic'.format(channel_num-1))
+        self._header_demod_phase = (
+        '/' + device + '/demods/{}/phaseshift'.format(channel_num-1))       
+        self._header_demod_timeconstant = (
+        '/' + device + '/demods/{}/timeconstant'.format(channel_num-1))
+        self._header_demod_order = (
+        '/' + device + '/demods/{}/order'.format(channel_num-1))
+        self._header_demod_datarate = (
+        '/' + device + '/demods/{}/rate'.format(channel_num-1))
 
     def reopen_connection(self):
 
         self._LI.reopen_connection()
+
+    def set_demod_osc(self,osc):
+        """
+        Set the osc select for LI demodulation by the instrument
+
+        """
+        if self._channel>5:
+            raise ValueError('The instrument can only set osc for chans 1-6')
+        self._LI.daq_serv.setInt(self._header_demod_osc, osc-1)
+        self._LI.daq_serv.echoDevice(self._device_id)
+        value=self._LI.daq_serv.getInt(self._header_demod_osc)
+        if int(value)!=int(osc-1):
+            raise InstrIOError('The instrument did not set osc correctly')
 
     def set_demod_harmonic(self, harm):
         """
@@ -179,6 +204,186 @@ class HF2LIDemodChannel(BaseInstrument):
         if abs(value-phase)>1e-3:
             raise InstrIOError('The instrument did not set phase correctly')
 
+    def get_nepbw(self):
+        """
+        Returns the nepbw specified for the channel
+
+        """
+        if self._channel>5:
+            raise ValueError('The instrument can only spec BW for chans 1-6')
+        tc=self._LI.daq_serv.getDouble(self._header_demod_timeconstant)
+        order=self._LI.daq_serv.getInt(self._header_demod_order)
+        return self._LI.get_FO_f_nepbw(order)/tc
+
+    def set_datarate(self, rate):
+        """
+        Sets the datarate for the channel
+
+        """
+        if self._channel>5:
+            raise ValueError('The instrument can only set rate for chans 1-6')
+        self._LI.daq_serv.setDouble(self._header_demod_datarate, rate)
+
+class HF2LIOutChannel(BaseInstrument):
+
+    def __init__(self, LI, channel_num, caching_allowed=True,
+                 caching_permissions={}, device=''):
+        super(HF2LIOutChannel, self).__init__(None, caching_allowed,
+                                              caching_permissions)
+        self._LI = LI
+        self._channel = channel_num
+        self._device_id = device
+        self._header_outampl = (
+                '/'+device+'/sigouts/{}/amplitudes/'.format(channel_num-1))
+        self._header_range = (
+                '/'+device+'/sigouts/{}/range'.format(channel_num-1))
+
+    def reopen_connection(self):
+
+        self._LI.reopen_connection()
+
+    def set_osc_amplitude(self, amplV, fromdemod):
+        """
+        Set the output amplitude from demod # for the channel 
+
+        """
+        Vrange=self._LI.daq_serv.getDouble(self._header_range)
+        ampl=amplV/Vrange
+        self._LI.daq_serv.setDouble(
+                self._header_outampl+'{}'.format(channel_num-1), ampl)
+        self._LI.daq_serv.echoDevice(self._device_id)
+        value=self._LI.daq_serv.getDouble(
+                self._header_outampl+'{}'.format(channel_num-1))
+        if abs(value-ampl)*Vrange>1e-7:
+            raise InstrIOError('The instrument did not '
+                               'set amplitude correctly')
+
+    def get_osc_range(self):
+        """
+        Get the output range for the output channel
+
+        """
+        return self._LI.daq_serv.getDouble(self._header_range)      
+
+class HF2LISweeper(BaseInstrument):
+
+    log_prefix= 'ZI Sweeper: '
+
+    def __init__(self, LI, caching_allowed=True,
+                 caching_permissions={}, device=''):
+        super(HF2LISweeper, self).__init__(None, caching_allowed,
+                                              caching_permissions)
+        self._LI = LI
+        self._device_id = device
+        self.suscribed = []
+        self.sweeper = self._LI.daq_serv.sweep()
+        self.sweeper.set('device', device)
+        self.sweeper.set('historylength', 1)
+
+    def reopen_connection(self):
+
+        self._LI.reopen_connection()
+
+    def set_sweep_param(self, sweep_type, sweep_channel, measkey, start, stop,
+                    points, log_sweep, sweep_channel_sec = 1, avg_time = 0):
+        """
+        Run a sweep of parameter
+
+        """
+        if sweep_type == 'Output':
+            if int(sweep_channel)>2:
+                msg = 'No channel {} for output, only channels 1--2 exist'
+                raise KeyError(msg.format(num))
+            if int(sweep_channel_sec)>8:
+                msg = 'No channel {} for output ampl., only channels 1--8 exist'
+                raise KeyError(msg.format(num))                
+            self.sweeper.set('gridnode', '/{}/sigouts/{}/amplitudes/{}'.format(
+                self._device_id, sweep_channel-1, sweep_channel_sec-1
+            ))
+        else:
+            if int(sweep_channel)>6:
+                msg = 'No channel {} for oscillators, only channels 1--6 exist'
+                raise KeyError(msg.format(num))
+            self.sweeper.set('gridnode', '/{}/oscs/{}/freq'.format(
+                self._device_id, sweep_channel-1
+                ))
+        self.sweeper.set('xmapping', log_sweep)
+        if sweep_type == 'Output':
+            Vrange=self._LI.get_out_channel(sweep_channel).get_osc_range()
+            self.sweeper.set('start', start/Vrange)
+            self.sweeper.set('stop', stop/Vrange)
+        else:
+            self.sweeper.set('start', start)
+            self.sweeper.set('stop', stop)
+        self.sweeper.set('samplecount', points)
+        self.sweeper.set('bandwidthcontrol', 0)
+        self.sweeper.set('settling/inaccuracy', 0.0001)
+        self.sweeper.set('omegasuppression', 40)
+        self.sweeper.set('order', 4)
+        if avg_time != 0:
+            self.sweeper.set('averaging/time', avg_time)
+        for ii, (chan,code) in enumerate(measkey):
+            log = logging.getLogger(__name__)
+            msg = ('Suscribed meas are %s')
+            log.info(self.log_prefix+msg,'; '.join(map(str, (chan,code))))
+            if chan+code not in self.suscribed:
+                self.sweeper.subscribe(
+                '/{}/demods/{}/sample.{}'.format(self._device_id,int(chan)-1,code))
+                self.suscribed.append(chan+code)
+        log = logging.getLogger(__name__)
+        msg = ('Suscribed chans are %s')
+        log.info(self.log_prefix+msg,'; '.join(map(str, self.suscribed)))
+        nepbws=[]
+        for ii, (chan,code) in enumerate(measkey):
+            chan_driver=self._LI.get_demod_channel(int(chan))
+            nepbws.append(chan_driver.get_nepbw())
+        if nepbws == []:
+            msg = 'No read channels are selected'
+            raise KeyError(msg)
+        if nepbws.count(nepbws[0]) != len(nepbws):
+            msg = 'Not all channels have same bandwidth for sweep'
+            raise ValueError(msg)
+        for ii, (chan,code) in enumerate(measkey):
+            chan_driver=self._LI.get_demod_channel(int(chan))
+            chan_driver.set_datarate(10*nepbws[ii])
+        self.sweeper.set('endless', 0)
+        self.sweeper.set('loopcount',1)
+
+    def sweep_exec(self):
+        self.sweeper.execute()
+
+    def sweep_finished(self):
+        r_time=self.sweeper.getDouble('remainingtime')
+        prog=self.sweeper.progress()
+        log = logging.getLogger(__name__)
+        msg = ('Achieved sweep prop: {} (remains {:.3f} s)')
+        log.info(self.log_prefix+msg.format(prog,r_time))
+        return self.sweeper.finished()
+
+    def read_data(self, sweep_type, sweep_channel, measkey):
+        if not self.sweep_finished():
+            self.sweeper.finish()
+        datastruct=self.sweeper.read()
+        self.sweeper.set('clearhistory', 1)
+        self.sweeper.unsubscribe('*')
+        final_dict = {}
+        for ii, (chan,code) in enumerate(measkey):
+            sample=datastruct[
+            self._device_id.lower()][
+            'demods'][
+            str(int(chan)-1)][
+            'sample']
+            sample=sample[0][0]
+            if final_dict == {}:
+                if sweep_type == 'Output':
+                    Vrange=self._LI.get_out_channel(
+                            sweep_channel).get_osc_range()                
+                    final_dict['sweep_param']=sample['grid']*Vrange
+                else:
+                    final_dict['sweep_param']=sample['grid']
+            final_dict[chan+code]=sample[code]
+        return final_dict
+
 class HF2LI(PyAPIInstrument):
     """Driver for the Zurich Instrument HF2LI
 
@@ -193,6 +398,7 @@ class HF2LI(PyAPIInstrument):
         self.cu_id = None
         self._id = None
         self.daq_serv = None
+        self.sweeper = None
         self._setup_api_session_identification()
 
         if auto_open:
@@ -200,6 +406,7 @@ class HF2LI(PyAPIInstrument):
 
         self.osc_channels = {}
         self.demod_channels = {}
+        self.out_channels = {}
 
     def open_connection(self):
         """Setup the right instrument based on the vendor id.
@@ -215,7 +422,9 @@ class HF2LI(PyAPIInstrument):
                 break
 
         if serv_index is None:
-            raise ValueError('No instrument with serial id %s' % self._infos['instr_id'])
+            raise ValueError(
+            'No instrument with serial id %s' % self._infos['instr_id']
+            )
 
         self.daq_serv = cu._sessions[serv_index]
         cu.enable_logging(self.daq_serv)
@@ -247,17 +456,27 @@ class HF2LI(PyAPIInstrument):
         """
         self.cu_id.utils.utils.disable_everything(self.daq_serv, self._id)
 
+    def get_sweeper(self):
+        """Returns a sweeper interface to ZI API
+
+        """
+        if self.sweeper is None:
+            self.sweeper = HF2LISweeper(self, device='{}'.format(self._id))
+        return self.sweeper
+
     def get_osc_channel(self, num):
         """num is an int identifying the osc channel 
         """
         if num not in range(1,7):
             msg = 'No channel {}, only channels 1--6 exist'
-            raise KeyError(msg.format(num, defined))
+            raise KeyError(msg.format(num))
 
         if num in self.osc_channels:
             return self.osc_channels[num]
         else:
-            channel = HF2LIOscChannel(self, num, device='{}'.format(self._id))
+            channel = HF2LIOscChannel(self, 
+                                      num, 
+                                      device='{}'.format(self._id))
             self.osc_channels[num] = channel
             return channel
 
@@ -266,17 +485,63 @@ class HF2LI(PyAPIInstrument):
         """
         if num not in range(1,9):
             msg = 'No channel {}, only channels 1--8 exist'
-            raise KeyError(msg.format(num, defined))
+            raise KeyError(msg.format(num))
 
         if num in self.demod_channels:
             return self.demod_channels[num]
         else:
-            channel = HF2LIDemodChannel(self, num, device='{}'.format(self._id))
+            channel = HF2LIDemodChannel(self, 
+                                        num, 
+                                        device='{}'.format(self._id))
             self.demod_channels[num] = channel
             return channel
 
+    def get_out_channel(self, num):
+        """num is an int identifying the out channel 
+        """
+        if num not in range(1,3):
+            msg = 'No channel {}, only out channels 1--2 exist'
+            raise KeyError(msg.format(num))
+
+        if num in self.out_channels:
+            return self.out_channels[num]
+        else:
+            channel = HF2LIOutChannel(self, 
+                                        num, 
+                                        device='{}'.format(self._id))
+            self.out_channels[num] = channel
+            return channel
+
     def _setup_api_session_identification(self):
-        """Load and initialize the APi session.
+        """Load and initialize the API session.
 
         """
         self._id = self._infos.get('instr_id')
+
+    def get_FO_f_cutoff(self, order):
+        '''Returns conversion factor between TC and cutoff freq
+        
+        '''
+        FO_list=np.array([1.0000,
+                          0.6436,
+                          0.5098,
+                          0.4350,
+                          0.3856,
+                          0.3499,
+                          0.3226,
+                          0.3008])/(2*np.pi)
+        return(FO_list[order-1])
+
+    def get_FO_f_nepbw(self, order):
+        '''Returns conversion factor between TC and nepbw freq
+        
+        '''
+        FO_list=np.array([0.2500,
+                          0.1250,
+                          0.0937,
+                          0.0781,
+                          0.0684,
+                          0.0615,
+                          0.0564,
+                          0.0524])
+        return(FO_list[order-1])

@@ -1,0 +1,176 @@
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+#
+# Distributed under the terms of the BSD license.
+#
+# The full license is in the file LICENCE, distributed with this software.
+# -----------------------------------------------------------------------------
+"""Views for the PNA tasks.
+
+"""
+
+from textwrap import fill
+
+from atom.api import set_default, Value, observe
+from enaml.core.api import Conditional
+from enaml.layout.api import grid, vbox, hbox, factory
+from enaml.widgets.api import (GroupBox, Label, Field, ObjectCombo, Container,
+                               CheckBox)
+from enaml.stdlib.fields import IntField, FloatField
+from enaml.validator import Validator
+
+from exopy.tasks.api import EVALUATER_TOOLTIP
+from exopy.utils.widgets.qt_completers import QtLineCompleter
+from exopy_hqc_legacy.utils.layouts import auto_grid_layout
+from exopy_hqc_legacy.utils.widgets.pair_editor import PairEditor
+from ...base_instr_view import InstrView
+
+MODES = {'Raw': '', 'X': 'x', 'Y': 'y', 
+         'Amplitude': 'r', 'Phase': 'phase',
+         'X_standard_dev': 'xstddev', 'Y_standard_dev': 'ystddev'}
+
+enamldef MeasField(Container):
+    """Measure editor used as content for DictEditor.
+
+    """
+    #: Pair model passed by the DictEditor
+    attr model
+
+    padding = 0
+    constraints = [hbox(intfield, combo)]
+
+    IntField: intfield:
+        text := model.key
+        tool_tip = fill("Select suscribed demod channel (1--6)")
+
+    ObjectCombo: combo:
+        items = list(MODES)
+        selected << [k for k,v in MODES.items() if v == model.value][0]
+        selected::
+            model.value = MODES[change['value']]
+        tool_tip = fill(
+            "Choose the format in which to display and read the measures. "
+            "In 'Raw' the measurement will return a complex number.")
+
+
+def label_maker(label, mode):
+    """Make a label based on the selected sweep mode.
+
+    """
+    if mode == 'Frequency':
+        return label + '(Hz)'
+    else:
+        return label + '(V)'
+
+enamldef ChannelView(Container):
+    """Channel editor
+
+    """
+    attr chan
+
+    padding = 0
+    constraints = [grid([chan_lab, chan_val])]
+
+    Label: chan_lab:
+        text = 'Channel'
+    IntField: chan_val:
+        value := chan
+
+enamldef ChannelandSecView(Container):
+    """Channel + sec channel editor
+
+    """
+    attr chan
+    attr chan_sec
+
+    padding = 0
+    constraints = [grid([chan_lab, chan_val, chan_sec_lab, chan_sec_val]),
+                    chan_val.width == chan_sec_val.width,]
+
+    Label: chan_lab:
+        text = 'Channel'
+    IntField: chan_val:
+        value := chan
+
+    Label: chan_sec_lab:
+        text = 'Channel sec'
+    IntField: chan_sec_val:
+        value := chan_sec
+        tool_tip = fill('Secondary specification '
+                        'for channel type, e.g., '
+                        'an amplitude source selection '
+                        'for a given channel')
+
+enamldef SweepLockinView(InstrView): view:
+    """View for the PNASweepMeasTask.
+
+    """
+    constraints = [vbox(
+                    hbox(grid([instr_label, type_lab],
+                         [instr_selection, type_val]),
+                    channels),
+                    grid([start_lab, stop_lab, points_lab, log_lab, avg_lab],
+                         [start_val, stop_val, points_val, log_val, avg_val]),
+                    meas),
+                    start_val.width == stop_val.width]
+
+    Label: type_lab:
+        text = 'Type'
+    ObjectCombo: type_val:
+        items << list(task.get_member('sweep_type').items)
+        selected := task.sweep_type
+
+    Container: channels:
+        Conditional:
+            condition << (task.sweep_type=='Frequency')
+            ChannelView: 
+                chan := task.sweep_channel
+        Conditional:
+            condition << (task.sweep_type=='Output')
+            ChannelandSecView: 
+                chan := task.sweep_channel
+                chan_sec := task.sweep_channel_sec
+
+    Label: start_lab:
+        text << label_maker('Start', task.sweep_type)
+    QtLineCompleter: start_val:
+        text := task.start
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label: stop_lab:
+        text << label_maker('Stop', task.sweep_type)
+    QtLineCompleter: stop_val:
+        text := task.stop
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label: points_lab:
+        text = 'Points'
+    QtLineCompleter: points_val:
+        text := task.points
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label: log_lab:
+        text = 'Log. sweep'
+    CheckBox: log_val:
+        checked := task.log_sweep
+        tool_tip = fill('Check to enable the instrument '
+                        'to use log sweep')
+
+    Label: avg_lab:
+        text = 'Meas. time per point (s)'
+    QtLineCompleter: avg_val:
+        text := task.avg_time
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    GroupBox: meas:
+        title = 'Measures'
+        padding = 1
+        PairEditor(MeasField): ed:
+            ed.iterable := task.measures
+            ed.operations = ('add', 'move', 'remove')
+            ed.alignment = 'v_center'

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+# Copyright 2015-2022 by ExopyHqcLegacy Authors, see AUTHORS for more details.
 #
 # Distributed under the terms of the BSD license.
 #
@@ -53,6 +53,23 @@ class SetOscillatorAmplitudeTask(InstrumentTask):
         self.driver.set_osc_amplitude(self.format_and_eval_string(self.amplitude))
         
         self.write_in_database('Vac(mV)', self.format_and_eval_string(self.amplitude))
+
+class SetDemodOscTask(InterfaceableTaskMixin, InstrumentTask):
+    """Sets the osc for demod by a lockin.
+
+    """
+    # Osc.
+    osc = Str().tag(pref=True)
+
+    database_entries = set_default({'Osc': 1})
+
+    def i_perform(self,value=None):
+        """Set the specified amplitude.
+
+        """
+        self.driver.set_demod_osc(self.format_and_eval_string(self.osc))
+        
+        self.write_in_database('Osc', self.format_and_eval_string(self.osc))
 
 class SetDemodHarmTask(InterfaceableTaskMixin, InstrumentTask):
     """Sets the harm for demod by a lockin.

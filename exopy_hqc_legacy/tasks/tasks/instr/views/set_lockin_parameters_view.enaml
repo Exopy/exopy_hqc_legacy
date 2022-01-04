@@ -48,6 +48,19 @@ enamldef SetOscillatorAmplitudeView(InstrView): view:
         text := task.amplitude
         tool_tip = fill('Integer value between 0 and 1000',60)
 
+enamldef SetDemodOscTaskView(InstrView): view:
+    """View for the SetDemodOscTask
+
+    """
+    constraints = [factory(auto_grid_layout)]
+
+    Label: osc_lab:
+        hug_width = 'ignore'
+        text = 'Osc'
+    QtLineCompleter: osc_val:
+        hug_width = 'ignore'
+        text := task.osc
+
 enamldef SetDemodHarmTaskView(InstrView): view:
     """View for the SetDemodHarmTask
 

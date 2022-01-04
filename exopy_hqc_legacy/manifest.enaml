@@ -477,6 +477,18 @@ enamldef HqcLegacyManifest(PluginManifest):
                                    'exopy_hqc_legacy.Legacy.LockInSR830']
                     metadata = {'loopable': True}
                 Task:
+                    task = 'set_lockin_parameters_tasks:SetDemodOscTask'
+                    view = 'views.set_lockin_parameters_view:SetDemodOscTaskView'
+                    instruments = ['exopy_hqc_legacy.Legacy.LockInSR7265',
+                                   'exopy_hqc_legacy.Legacy.LockInSR7270',
+                                   'exopy_hqc_legacy.Legacy.LockInSR7280',
+                                   'exopy_hqc_legacy.Legacy.LockInSR830']
+                    Interface:
+                        interface = 'set_lockin_parameters_tasks:MultiChannelDemodInterface'
+                        views = ['views.multi_channel_LI_views:MultiChannelDemodLabel',
+                                 'views.multi_channel_LI_views:MultiChannelDemodValue']
+                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
+                Task:
                     task = 'set_lockin_parameters_tasks:SetDemodHarmTask'
                     view = 'views.set_lockin_parameters_view:SetDemodHarmTaskView'
                     instruments = ['exopy_hqc_legacy.Legacy.LockInSR7265',
@@ -500,6 +512,10 @@ enamldef HqcLegacyManifest(PluginManifest):
                         views = ['views.multi_channel_LI_views:MultiChannelDemodLabel',
                                  'views.multi_channel_LI_views:MultiChannelDemodValue']
                         instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
+                Task:
+                    task = 'sweep_lockin_tasks:SweepLockinTask'
+                    view = 'views.sweep_lockin_views:SweepLockinView'
+                    instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
                 Task:
                     task = 'meas_dc_tasks:MeasDCVoltageTask'
                     view = 'views.meas_dc_views:MeasDCVoltView'

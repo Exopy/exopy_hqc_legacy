@@ -148,6 +148,8 @@ class HF2LIDemodChannel(BaseInstrument):
         self._LI = LI
         self._channel = channel_num
         self._device_id = device
+        self._header_demod_sample = (
+        '/' + device + '/demods/{}/sample'.format(channel_num-1))
         self._header_demod_osc = (
         '/' + device + '/demods/{}/oscselect'.format(channel_num-1))
         self._header_demod_harm = (
@@ -224,6 +226,91 @@ class HF2LIDemodChannel(BaseInstrument):
             raise ValueError('The instrument can only set rate for chans 1-6')
         self._LI.daq_serv.setDouble(self._header_demod_datarate, rate)
 
+    def read_x(self):
+        """
+        Return the x quadrature measured by the instrument
+
+        Perform a direct reading without any waiting. Can return non
+        independent values if the instrument is queried too often.
+
+        """
+        return self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0]
+
+    def read_y(self):
+        """
+        Return the y quadrature measured by the instrument
+
+        Perform a direct reading without any waiting. Can return non
+        independent values if the instrument is queried too often.
+
+        """
+        return self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0] 
+
+    def read_xy(self):
+        """
+        Return the x and y quadratures measured by the instrument
+
+        Perform a direct reading without any waiting. Can return non
+        independent values if the instrument is queried too often.
+
+        """
+        return (self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0],
+                self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0])
+
+    def read_amplitude(self):
+        """
+        Return the amplitude of the signal measured by the instrument
+
+        Perform a direct reading without any waiting. Can return non
+        independent values if the instrument is queried too often.
+
+        """
+        x=self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0]
+        y=self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0]
+        return np.sqrt(x**2+y**2)
+
+    def read_phase(self):
+        """
+        Return the phase of the signal measured by the instrument
+
+        Perform a direct reading without any waiting. Can return non
+        independent values if the instrument is queried too often.
+
+        """
+        x=self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0]
+        y=self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0]
+        return np.arctan2(y,x)*180/np.pi
+
+    def read_amp_and_phase(self):
+        """
+        Return the amplitude and phase of the signal measured by the instrument
+
+        Perform a direct reading without any waiting. Can return non
+        independent values if the instrument is queried too often.
+
+        """
+        x=self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0]
+        y=self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0]
+        return (np.sqrt(x**2+y**2),np.arctan2(y,x)*180/np.pi)
+
+    @secure_communication()
+    def read_xstddev(self):
+        """
+        Not implemented
+
+        """
+        raise RuntimeError('This command is not yet implemented'
+                           'for the instrument')
+
+    @secure_communication()
+    def read_ystddev(self):
+        """
+        Not implemented
+
+        """
+        raise RuntimeError('This command is not yet implemented'
+                           'for the instrument')
+
 class HF2LIOutChannel(BaseInstrument):
 
     def __init__(self, LI, channel_num, caching_allowed=True,
@@ -242,23 +329,23 @@ class HF2LIOutChannel(BaseInstrument):
 
         self._LI.reopen_connection()
 
-    def set_osc_amplitude(self, amplV, fromdemod):
+    def set_out_amplitude(self, amplmV, fromdemod=None):
         """
         Set the output amplitude from demod # for the channel 
 
         """
         Vrange=self._LI.daq_serv.getDouble(self._header_range)
-        ampl=amplV/Vrange
+        ampl=1e-3*amplmV/Vrange
         self._LI.daq_serv.setDouble(
-                self._header_outampl+'{}'.format(channel_num-1), ampl)
+                self._header_outampl+'{}'.format(fromdemod-1), ampl)
         self._LI.daq_serv.echoDevice(self._device_id)
         value=self._LI.daq_serv.getDouble(
-                self._header_outampl+'{}'.format(channel_num-1))
+                self._header_outampl+'{}'.format(fromdemod-1))
         if abs(value-ampl)*Vrange>1e-7:
             raise InstrIOError('The instrument did not '
                                'set amplitude correctly')
 
-    def get_osc_range(self):
+    def get_out_range(self):
         """
         Get the output range for the output channel
 
@@ -309,7 +396,7 @@ class HF2LISweeper(BaseInstrument):
                 ))
         self.sweeper.set('xmapping', log_sweep)
         if sweep_type == 'Output':
-            Vrange=self._LI.get_out_channel(sweep_channel).get_osc_range()
+            Vrange=self._LI.get_out_channel(sweep_channel).get_out_range()
             self.sweeper.set('start', start/Vrange)
             self.sweeper.set('stop', stop/Vrange)
         else:
@@ -326,10 +413,10 @@ class HF2LISweeper(BaseInstrument):
             log = logging.getLogger(__name__)
             msg = ('Suscribed meas are %s')
             log.info(self.log_prefix+msg,'; '.join(map(str, (chan,code))))
-            if chan+code not in self.suscribed:
+            if chan not in self.suscribed:
                 self.sweeper.subscribe(
-                '/{}/demods/{}/sample.{}'.format(self._device_id,int(chan)-1,code))
-                self.suscribed.append(chan+code)
+                '/{}/demods/{}/sample'.format(self._device_id,int(chan)-1))
+                self.suscribed.append(chan)
         log = logging.getLogger(__name__)
         msg = ('Suscribed chans are %s')
         log.info(self.log_prefix+msg,'; '.join(map(str, self.suscribed)))
@@ -377,11 +464,14 @@ class HF2LISweeper(BaseInstrument):
             if final_dict == {}:
                 if sweep_type == 'Output':
                     Vrange=self._LI.get_out_channel(
-                            sweep_channel).get_osc_range()                
+                            sweep_channel).get_out_range()                
                     final_dict['sweep_param']=sample['grid']*Vrange
                 else:
                     final_dict['sweep_param']=sample['grid']
-            final_dict[chan+code]=sample[code]
+            if code != '':
+                final_dict[chan+code]=sample[code]
+            else:
+                final_dict[chan]=sample['x']+1.0j*sample['y']
         return final_dict
 
 class HF2LI(PyAPIInstrument):

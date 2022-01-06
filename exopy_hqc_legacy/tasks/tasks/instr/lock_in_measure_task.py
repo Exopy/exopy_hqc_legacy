@@ -13,17 +13,17 @@ from time import sleep
 
 from atom.api import (Enum, Float, set_default)
 
-from exopy.tasks.api import InstrumentTask
+from exopy.tasks.api import InstrumentTask, InterfaceableTaskMixin
 
 
-class LockInMeasureTask(InstrumentTask):
+class LockInMeasureTask(InterfaceableTaskMixin, InstrumentTask):
     """Ask a lock-in to perform a measure.
 
     Wait for any parallel operationbefore execution.
 
     """
     #: Value to retrieve.
-    mode = Enum('X', 'Y', 'X&Y', 'Amp', 'Phase', 'Amp&Phase').tag(pref=True)
+    mode = Enum('X', 'Y', 'X&Y', 'Amp', 'Phase', 'Amp&Phase', 'X_standard_dev', 'Y_standard_dev').tag(pref=True)
 
     #: Time to wait before performing the measurement.
     waiting_time = Float().tag(pref=True)
@@ -32,7 +32,7 @@ class LockInMeasureTask(InstrumentTask):
 
     wait = set_default({'activated': True, 'wait': ['instr']})
 
-    def perform(self):
+    def i_perform(self,value=None):
         """Wait and query the last value in the instrument buffer.
 
         """
@@ -58,6 +58,12 @@ class LockInMeasureTask(InstrumentTask):
             amplitude, phase = self.driver.read_amp_and_phase()
             self.write_in_database('amplitude', amplitude)
             self.write_in_database('phase', phase)
+        elif self.mode == 'X_standard_dev':
+            xstddev = self.driver.read_x_stddev()
+            self.write_in_database('x_stddev', x_stddev)
+        elif self.mode == 'Y_standard_dev':
+            ystddev = self.driver.read_y_stddev()
+            self.write_in_database('y_stddev', y_stddev)
 
     def _post_setattr_mode(self, old, new):
         """ Update the database entries acording to the mode.
@@ -81,5 +87,9 @@ class LockInMeasureTask(InstrumentTask):
         elif new == 'Amp&Phase':
             entries['amplitude'] = 1.0
             entries['phase'] = 1.0
+        elif new == 'X_standard_dev':
+            entries['x_stddev'] = 1.0
+        elif new == 'Y_standard_dev':
+            entries['y_stddev'] = 1.0
 
         self.database_entries = entries

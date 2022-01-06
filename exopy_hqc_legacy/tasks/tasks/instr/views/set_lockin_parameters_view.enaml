@@ -34,8 +34,8 @@ enamldef SetOscillatorFrequencyView(InstrView): view:
         hug_width = 'ignore'
         text := task.frequency
 
-enamldef SetOscillatorAmplitudeView(InstrView): view:
-    """View for the SetOscillatorAmplitudeTask
+enamldef SetOutputAmplitudeView(InstrView): view:
+    """View for the SetOutputAmplitudeTask
 
     """
     constraints = [factory(auto_grid_layout)]

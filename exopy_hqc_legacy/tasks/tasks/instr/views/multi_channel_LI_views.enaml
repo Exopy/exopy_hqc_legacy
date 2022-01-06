@@ -19,7 +19,7 @@ enamldef MultiChannelOscLabel(Label):
     attr interface
     attr root
     attr index = 2
-    text = 'Channel'
+    text = 'Osc. Channel'
 
 
 enamldef MultiChannelOscValue(IntField):
@@ -39,7 +39,7 @@ enamldef MultiChannelDemodLabel(Label):
     attr interface
     attr root
     attr index = 2
-    text = 'Channel'
+    text = 'Demod. Channel'
 
 
 enamldef MultiChannelDemodValue(IntField):
@@ -50,3 +50,39 @@ enamldef MultiChannelDemodValue(IntField):
     attr root
     hug_width = 'strong'
     value := interface.channel
+
+enamldef MultiChannelOutputChanLabel(Label):
+    """Label for the channel selection.
+
+    """
+    attr interface
+    attr root
+    attr index = 2
+    text = 'Out. Channel'
+
+enamldef MultiChannelOutputChanValue(IntField):
+    """Value for the channel selection.
+
+    """
+    attr interface
+    attr root
+    hug_width = 'strong'
+    value := interface.channel
+
+enamldef MultiChannelOutputDemodLabel(Label):
+    """Label for the channel selection.
+
+    """
+    attr interface
+    attr root
+    attr index = 2
+    text = 'From demod'
+
+enamldef MultiChannelOutputDemodValue(IntField):
+    """Value for the channel selection.
+
+    """
+    attr interface
+    attr root
+    hug_width = 'strong'
+    value := interface.fromdemod

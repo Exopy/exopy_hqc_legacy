@@ -39,7 +39,10 @@ class LockInSR830(VisaInstrument):
         Return the phase of the signal measured by the instrument
     read_amp_and_phase()
         Return the amplitude and phase of the signal measured by the instrument
-
+    read_x_stddev()
+        Return the x quadrature standard deviation measured by the instrument
+    read_y_stddev()
+        Return the y quadrature standard deviation measured by the instrument
     """
 
     def __init__(self, *args, **kwargs):
@@ -142,3 +145,21 @@ class LockInSR830(VisaInstrument):
             raise InstrIOError('The command did not complete correctly')
         else:
             return values
+
+    @secure_communication()
+    def read_xstddev(self):
+        """
+        Not implemented
+
+        """
+        raise RuntimeError('This command is not yet implemented'
+                           'for the instrument')
+
+    @secure_communication()
+    def read_ystddev(self):
+        """
+        Not implemented
+
+        """
+        raise RuntimeError('This command is not yet implemented'
+                           'for the instrument')

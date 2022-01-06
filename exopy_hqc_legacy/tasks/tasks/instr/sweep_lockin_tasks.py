@@ -24,7 +24,7 @@ from exopy.tasks.api import (InstrumentTask, TaskInterface,
 FEVAL = validators.SkipEmpty(types=numbers.Real)
 
 class SweepLockinTask(InstrumentTask):
-    """Interface for sweeping a lock inparameter.
+    """Record lockin voltage while sweeping a lock in parameter.
 
     """
 

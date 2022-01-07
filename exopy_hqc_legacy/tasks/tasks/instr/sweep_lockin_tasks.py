@@ -127,6 +127,12 @@ class StreamLockinTask(InstrumentTask):
     #: Recording time.
     meastime = Str().tag(pref=True, feval=FEVAL)
 
+    #: Record aux input 1
+    record_auxin1 = Bool(False).tag(pref=True)
+
+    #: Record aux input 2
+    record_auxin2 = Bool(False).tag(pref=True)
+
     wait = set_default({'activated': True, 'wait': ['instr']})
     database_entries = set_default({'stream_datadict': {}})
 
@@ -147,7 +153,10 @@ class StreamLockinTask(InstrumentTask):
 
         meastime = self.format_and_eval_string(self.meastime)
 
-        driverstreamer.set_stream_param(self.measures,meastime) 
+        driverstreamer.set_stream_param(self.measures,
+                                        meastime,
+                                        record_auxin1=self.record_auxin1,
+                                        record_auxin2=self.record_auxin2)
 
         driverstreamer.stream_exec()
         start=time.time()
@@ -155,10 +164,16 @@ class StreamLockinTask(InstrumentTask):
             time.sleep(1.0)
             if self.root.should_stop.is_set():
                 return
-        datadict = driverstreamer.read_data(self.measures)
+        datadict = driverstreamer.read_data(self.measures,
+                                            record_auxin1=self.record_auxin1,
+                                            record_auxin2=self.record_auxin2)
         self.write_in_database('sampletime(s)', datadict['sampletime'])
         for (chan,code) in self.measures:
-            self.write_in_database(chan+code, datadict[chan+code])        
+            self.write_in_database(chan+code, datadict[chan+code])
+        if self.record_auxin1:
+            self.write_in_database('auxin1', datadict['auxin1'])
+        if self.record_auxin2:
+            self.write_in_database('auxin2', datadict['auxin2'])
 
     def _post_setattr_measures(self, old, new):
         """ Update the database entries acording to the mode.
@@ -170,6 +185,28 @@ class StreamLockinTask(InstrumentTask):
                 entries[chan+code] = np.array([0.0 + 0.0j])
             else:
                 entries[chan+code] = np.array([0.0])
+        self.database_entries = entries
+
+    def _post_setattr_record_auxin1(self, old, new):
+        """ Update the database entries acording to the mode.
+
+        """
+        entries = self.database_entries.copy()
+        if new:
+            entries['auxin1'] = np.array([0.0])
+        else:
+            del entries['auxin1']
+        self.database_entries = entries
+
+    def _post_setattr_record_auxin2(self, old, new):
+        """ Update the database entries acording to the mode.
+
+        """
+        entries = self.database_entries.copy()
+        if new:
+            entries['auxin2'] = np.array([0.0])
+        else:
+            del entries['auxin2']
         self.database_entries = entries
 
     def check(self, *args, **kwargs):

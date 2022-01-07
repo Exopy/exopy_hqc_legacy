@@ -180,8 +180,10 @@ enamldef StreamLockinView(InstrView): view:
 
     """
     constraints = [vbox(
-                    grid([instr_label, time_lab],
-                         [instr_selection, time_val]),
+                    grid([instr_label, time_lab, 
+                          record_auxin1_lab,record_auxin2_lab],
+                         [instr_selection, time_val, 
+                          record_auxin1_val,record_auxin2_val]),
                     meas)
                   ]
 
@@ -191,6 +193,20 @@ enamldef StreamLockinView(InstrView): view:
         text := task.meastime
         entries_updater << task.list_accessible_database_entries
         tool_tip = EVALUATER_TOOLTIP
+
+    Label: record_auxin1_lab:
+        text = 'Record Aux In 1'
+    CheckBox: record_auxin1_val:
+        checked := task.record_auxin1
+        tool_tip = fill('Check to enable the instrument '
+                        'to record aux input 1')
+
+    Label: record_auxin2_lab:
+        text = 'Record Aux In 2'
+    CheckBox: record_auxin2_val:
+        checked := task.record_auxin2
+        tool_tip = fill('Check to enable the instrument '
+                        'to record aux input 2')
 
     GroupBox: meas:
         title = 'Measures'

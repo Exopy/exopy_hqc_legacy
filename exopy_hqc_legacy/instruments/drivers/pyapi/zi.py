@@ -482,8 +482,10 @@ class HF2LISweeper(BaseInstrument):
                     final_dict['sweep_param']=sample['grid']*Vrange
                 else:
                     final_dict['sweep_param']=sample['grid']
-            if code != '':
+            if code not in {'','phase'}:
                 final_dict[chan+code]=sample[code]
+            elif code == 'phase':
+                final_dict[chan+code]=sample[code]*180/np.pi
             else:
                 final_dict[chan]=sample['x']+1.0j*sample['y']
         return final_dict
@@ -507,7 +509,8 @@ class HF2LIStreamer(BaseInstrument):
 
         self._LI.reopen_connection()
 
-    def set_stream_param(self, measkey, meastime):
+    def set_stream_param(self, measkey, meastime, record_auxin1=False,
+                                                  record_auxin2=False):
         """
         Run a sweep of parameter
 
@@ -545,6 +548,17 @@ class HF2LIStreamer(BaseInstrument):
                     '/{}/demods/{}/sample'.format(self._device_id,
                                                   'y') )
                     self.suscribed.append(chan+'y')
+            if ii == 0:
+                if record_auxin1:
+                    self.streamer.subscribe(
+                    '/{}/demods/{}/sample.auxin0'.format(self._device_id,
+                                                     int(chan)-1) )
+                    self.suscribed.append(chan+'auxin0')
+                if record_auxin2:
+                    self.streamer.subscribe(
+                    '/{}/demods/{}/sample.auxin1'.format(self._device_id,
+                                                     int(chan)-1) )
+                    self.suscribed.append(chan+'auxin1')
         log = logging.getLogger(__name__)
         msg = ('Suscribed chans are %s')
         log.info(self.log_prefix+msg,'; '.join(map(str, self.suscribed)))
@@ -588,7 +602,7 @@ class HF2LIStreamer(BaseInstrument):
         log.info(self.log_prefix+msg.format(prog[0],(1-prog[0])*t_time,t_time))
         return self.streamer.finished()
 
-    def read_data(self, measkey):
+    def read_data(self, measkey,record_auxin1=False,record_auxin2=False):
         if not self.stream_finished():
             self.streamer.finish()
         datastruct=self.streamer.read()
@@ -611,6 +625,7 @@ class HF2LIStreamer(BaseInstrument):
                 str(int(chan)-1)][
                 'sample.theta']
                 sample=sample[0]
+                sample['value'][0]=sample['value'][0]*180/np.pi
                 timestamps=sample['timestamp'][0]
             else:
                 sample_x=datastruct[
@@ -636,6 +651,21 @@ class HF2LIStreamer(BaseInstrument):
                 final_dict[chan+code]=sample['value'][0]
             else:
                 final_dict[chan]=values_x+1.0j*values_y
+            if ii == 0:
+                if record_auxin1:
+                    sample=datastruct[
+                    self._device_id.lower()][
+                    'demods'][
+                    str(int(chan)-1)][
+                    'sample.auxin0']
+                    final_dict['auxin1']=sample[0]['value'][0]
+                if record_auxin2:
+                    sample=datastruct[
+                    self._device_id.lower()][
+                    'demods'][
+                    str(int(chan)-1)][
+                    'sample.auxin1']
+                    final_dict['auxin2']=sample[0]['value'][0]
         return final_dict
 
 class HF2LI(PyAPIInstrument):

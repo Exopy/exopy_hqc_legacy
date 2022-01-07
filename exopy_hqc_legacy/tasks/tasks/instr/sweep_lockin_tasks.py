@@ -115,3 +115,68 @@ class SweepLockinTask(InstrumentTask):
 
         #implement a check to avoid twice the same meas
         return test, traceback
+
+class StreamLockinTask(InstrumentTask):
+    """Record lockin voltage over timespan.
+
+    """
+
+    #: Measures to perform.
+    measures = List().tag(pref=True)
+
+    #: Recording time.
+    meastime = Str().tag(pref=True, feval=FEVAL)
+
+    wait = set_default({'activated': True, 'wait': ['instr']})
+    database_entries = set_default({'stream_datadict': {}})
+
+    def prepare(self):
+        """Get the channel driver.
+
+        """
+        super(StreamLockinTask, self).prepare()
+
+    def perform(self):
+        """Set up the measures and run them.
+
+        """
+        if self.driver.owner != self.name:
+            self.driver.owner = self.name
+
+        driverstreamer = self.driver.get_streamer()
+
+        meastime = self.format_and_eval_string(self.meastime)
+
+        driverstreamer.set_stream_param(self.measures,meastime) 
+
+        driverstreamer.stream_exec()
+        start=time.time()
+        while not driverstreamer.stream_finished():
+            time.sleep(1.0)
+            if self.root.should_stop.is_set():
+                return
+        datadict = driverstreamer.read_data(self.measures)
+        self.write_in_database('sampletime(s)', datadict['sampletime'])
+        for (chan,code) in self.measures:
+            self.write_in_database(chan+code, datadict[chan+code])        
+
+    def _post_setattr_measures(self, old, new):
+        """ Update the database entries acording to the mode.
+
+        """
+        entries = {'sampletime(s)': np.array([0.0])}
+        for (chan,code) in new:
+            if code=='Raw':
+                entries[chan+code] = np.array([0.0 + 0.0j])
+            else:
+                entries[chan+code] = np.array([0.0])
+        self.database_entries = entries
+
+    def check(self, *args, **kwargs):
+        """Validate the measures.
+
+        """
+        test, traceback = super(StreamLockinTask, self).check(*args, **kwargs)
+
+        #implement a check to avoid twice the same meas
+        return test, traceback

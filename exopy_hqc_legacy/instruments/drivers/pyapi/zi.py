@@ -118,6 +118,7 @@ class HF2LIOscChannel(BaseInstrument):
         super(HF2LIOscChannel, self).__init__(None, caching_allowed,
                                               caching_permissions)
         self._LI = LI
+        self._daqserv = self._LI.get_daq_serv()
         self._channel = channel_num
         self._device_id = device
         self._header_osc_freq = (
@@ -132,9 +133,9 @@ class HF2LIOscChannel(BaseInstrument):
         Set the frequency (in Hz) outputted by the instrument
 
         """
-        self._LI.daq_serv.setDouble(self._header_osc_freq, frequency)
-        self._LI.daq_serv.echoDevice(self._device_id)
-        value=self._LI.daq_serv.getDouble(self._header_osc_freq)
+        self._daqserv.setDouble(self._header_osc_freq, frequency)
+        self._daqserv.echoDevice(self._device_id)
+        value=self._daqserv.getDouble(self._header_osc_freq)
         if abs(value-frequency)>1e-6:
             raise InstrIOError('The instrument did not '
                                'set frequency correctly')
@@ -146,6 +147,7 @@ class HF2LIDemodChannel(BaseInstrument):
         super(HF2LIDemodChannel, self).__init__(None, caching_allowed,
                                               caching_permissions)
         self._LI = LI
+        self._daqserv = self._LI.get_daq_serv()
         self._channel = channel_num
         self._device_id = device
         self._header_demod_sample = (
@@ -174,9 +176,9 @@ class HF2LIDemodChannel(BaseInstrument):
         """
         if self._channel>5:
             raise ValueError('The instrument can only set osc for chans 1-6')
-        self._LI.daq_serv.setInt(self._header_demod_osc, osc-1)
-        self._LI.daq_serv.echoDevice(self._device_id)
-        value=self._LI.daq_serv.getInt(self._header_demod_osc)
+        self._daqserv.setInt(self._header_demod_osc, osc-1)
+        self._daqserv.echoDevice(self._device_id)
+        value=self._daqserv.getInt(self._header_demod_osc)
         if int(value)!=int(osc-1):
             raise InstrIOError('The instrument did not set osc correctly')
 
@@ -187,9 +189,9 @@ class HF2LIDemodChannel(BaseInstrument):
         """
         if self._channel>5:
             raise ValueError('The instrument can only set harm for chans 1-6')
-        self._LI.daq_serv.setDouble(self._header_demod_harm, harm)
-        self._LI.daq_serv.echoDevice(self._device_id)
-        value=self._LI.daq_serv.getDouble(self._header_demod_harm)
+        self._daqserv.setDouble(self._header_demod_harm, harm)
+        self._daqserv.echoDevice(self._device_id)
+        value=self._daqserv.getDouble(self._header_demod_harm)
         if int(value)!=int(harm):
             raise InstrIOError('The instrument did not set harmonic correctly')
 
@@ -200,9 +202,9 @@ class HF2LIDemodChannel(BaseInstrument):
         """
         if self._channel>5:
             raise ValueError('The instrument can only set phase for chans 1-6')
-        self._LI.daq_serv.setDouble(self._header_demod_phase, phase)
-        self._LI.daq_serv.echoDevice(self._device_id)
-        value=self._LI.daq_serv.getDouble(self._header_demod_phase)
+        self._daqserv.setDouble(self._header_demod_phase, phase)
+        self._daqserv.echoDevice(self._device_id)
+        value=self._daqserv.getDouble(self._header_demod_phase)
         if abs(value-phase)>1e-3:
             raise InstrIOError('The instrument did not set phase correctly')
 
@@ -213,9 +215,18 @@ class HF2LIDemodChannel(BaseInstrument):
         """
         if self._channel>5:
             raise ValueError('The instrument can only spec BW for chans 1-6')
-        tc=self._LI.daq_serv.getDouble(self._header_demod_timeconstant)
-        order=self._LI.daq_serv.getInt(self._header_demod_order)
+        tc=self._daqserv.getDouble(self._header_demod_timeconstant)
+        order=self._daqserv.getInt(self._header_demod_order)
         return self._LI.get_FO_f_nepbw(order)/tc
+
+    def get_datarate(self):
+        """
+        Gets the datarate for the channel
+
+        """
+        if self._channel>5:
+            raise ValueError('The instrument only has datarates for chans 1-6')
+        return self._daqserv.getDouble(self._header_demod_datarate)
 
     def set_datarate(self, rate):
         """
@@ -224,7 +235,7 @@ class HF2LIDemodChannel(BaseInstrument):
         """
         if self._channel>5:
             raise ValueError('The instrument can only set rate for chans 1-6')
-        self._LI.daq_serv.setDouble(self._header_demod_datarate, rate)
+        self._daqserv.setDouble(self._header_demod_datarate, rate)
 
     def read_x(self):
         """
@@ -234,7 +245,7 @@ class HF2LIDemodChannel(BaseInstrument):
         independent values if the instrument is queried too often.
 
         """
-        return self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0]
+        return self._daqserv.getSample(self._header_demod_sample)['x'][0]
 
     def read_y(self):
         """
@@ -244,7 +255,7 @@ class HF2LIDemodChannel(BaseInstrument):
         independent values if the instrument is queried too often.
 
         """
-        return self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0] 
+        return self._daqserv.getSample(self._header_demod_sample)['y'][0] 
 
     def read_xy(self):
         """
@@ -254,8 +265,8 @@ class HF2LIDemodChannel(BaseInstrument):
         independent values if the instrument is queried too often.
 
         """
-        return (self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0],
-                self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0])
+        return (self._daqserv.getSample(self._header_demod_sample)['x'][0],
+                self._daqserv.getSample(self._header_demod_sample)['y'][0])
 
     def read_amplitude(self):
         """
@@ -265,8 +276,8 @@ class HF2LIDemodChannel(BaseInstrument):
         independent values if the instrument is queried too often.
 
         """
-        x=self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0]
-        y=self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0]
+        x=self._daqserv.getSample(self._header_demod_sample)['x'][0]
+        y=self._daqserv.getSample(self._header_demod_sample)['y'][0]
         return np.sqrt(x**2+y**2)
 
     def read_phase(self):
@@ -277,8 +288,8 @@ class HF2LIDemodChannel(BaseInstrument):
         independent values if the instrument is queried too often.
 
         """
-        x=self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0]
-        y=self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0]
+        x=self._daqserv.getSample(self._header_demod_sample)['x'][0]
+        y=self._daqserv.getSample(self._header_demod_sample)['y'][0]
         return np.arctan2(y,x)*180/np.pi
 
     def read_amp_and_phase(self):
@@ -289,8 +300,8 @@ class HF2LIDemodChannel(BaseInstrument):
         independent values if the instrument is queried too often.
 
         """
-        x=self._LI.daq_serv.getSample(self._header_demod_sample)['x'][0]
-        y=self._LI.daq_serv.getSample(self._header_demod_sample)['y'][0]
+        x=self._daqserv.getSample(self._header_demod_sample)['x'][0]
+        y=self._daqserv.getSample(self._header_demod_sample)['y'][0]
         return (np.sqrt(x**2+y**2),np.arctan2(y,x)*180/np.pi)
 
     @secure_communication()
@@ -318,6 +329,7 @@ class HF2LIOutChannel(BaseInstrument):
         super(HF2LIOutChannel, self).__init__(None, caching_allowed,
                                               caching_permissions)
         self._LI = LI
+        self._daqserv = self._LI.get_daq_serv()
         self._channel = channel_num
         self._device_id = device
         self._header_outampl = (
@@ -334,12 +346,12 @@ class HF2LIOutChannel(BaseInstrument):
         Set the output amplitude from demod # for the channel 
 
         """
-        Vrange=self._LI.daq_serv.getDouble(self._header_range)
+        Vrange=self._daqserv.getDouble(self._header_range)
         ampl=1e-3*amplmV/Vrange
-        self._LI.daq_serv.setDouble(
+        self._daqserv.setDouble(
                 self._header_outampl+'{}'.format(fromdemod-1), ampl)
-        self._LI.daq_serv.echoDevice(self._device_id)
-        value=self._LI.daq_serv.getDouble(
+        self._daqserv.echoDevice(self._device_id)
+        value=self._daqserv.getDouble(
                 self._header_outampl+'{}'.format(fromdemod-1))
         if abs(value-ampl)*Vrange>1e-7:
             raise InstrIOError('The instrument did not '
@@ -350,7 +362,7 @@ class HF2LIOutChannel(BaseInstrument):
         Get the output range for the output channel
 
         """
-        return self._LI.daq_serv.getDouble(self._header_range)      
+        return self._daqserv.getDouble(self._header_range)      
 
 class HF2LISweeper(BaseInstrument):
 
@@ -363,7 +375,7 @@ class HF2LISweeper(BaseInstrument):
         self._LI = LI
         self._device_id = device
         self.suscribed = []
-        self.sweeper = self._LI.daq_serv.sweep()
+        self.sweeper = self._LI.get_daq_serv().sweep()
         self.sweeper.set('device', device)
         self.sweeper.set('historylength', 1)
 
@@ -377,6 +389,7 @@ class HF2LISweeper(BaseInstrument):
         Run a sweep of parameter
 
         """
+        self._LI.get_daq_serv().flush
         if sweep_type == 'Output':
             if int(sweep_channel)>2:
                 msg = 'No channel {} for output, only channels 1--2 exist'
@@ -435,6 +448,7 @@ class HF2LISweeper(BaseInstrument):
             chan_driver.set_datarate(10*nepbws[ii])
         self.sweeper.set('endless', 0)
         self.sweeper.set('loopcount',1)
+        self._LI.get_daq_serv().echoDevice(self._device_id)
 
     def sweep_exec(self):
         self.sweeper.execute()
@@ -444,7 +458,7 @@ class HF2LISweeper(BaseInstrument):
         prog=self.sweeper.progress()
         log = logging.getLogger(__name__)
         msg = ('Achieved sweep prop: {} (remains {:.3f} s)')
-        log.info(self.log_prefix+msg.format(prog,r_time))
+        log.info(self.log_prefix+msg.format(prog[0],r_time))
         return self.sweeper.finished()
 
     def read_data(self, sweep_type, sweep_channel, measkey):
@@ -474,6 +488,156 @@ class HF2LISweeper(BaseInstrument):
                 final_dict[chan]=sample['x']+1.0j*sample['y']
         return final_dict
 
+class HF2LIStreamer(BaseInstrument):
+
+    log_prefix= 'ZI Streamer: '
+
+    def __init__(self, LI, caching_allowed=True,
+                 caching_permissions={}, device=''):
+        super(HF2LIStreamer, self).__init__(None, caching_allowed,
+                                              caching_permissions)
+        self._LI = LI
+        self._device_id = device
+        self.suscribed = []
+        self.streamer = self._LI.get_daq_serv().dataAcquisitionModule()
+        self.streamer.set('device', device)
+        self.streamer.set('historylength', 1)
+
+    def reopen_connection(self):
+
+        self._LI.reopen_connection()
+
+    def set_stream_param(self, measkey, meastime):
+        """
+        Run a sweep of parameter
+
+        """
+        self._LI.get_daq_serv().flush
+        self._LI.get_daq_serv().echoDevice(self._device_id)
+        self.streamer.set('type', 0) #continous trigger
+        self.streamer.set('grid/mode',4) #no resampling of higher rate stream
+        for ii, (chan,code) in enumerate(measkey):
+            log = logging.getLogger(__name__)
+            msg = ('Suscribed meas are %s')
+            log.info(self.log_prefix+msg,'; '.join(map(str, (chan,code))))
+            if code not in {'','phase'}:
+                if chan+code not in self.suscribed:
+                    self.streamer.subscribe(
+                    '/{}/demods/{}/sample.{}'.format(self._device_id,
+                                                     int(chan)-1,
+                                                     code) )
+                    self.suscribed.append(chan+code)
+            elif code == 'phase':
+                if chan+'theta' not in self.suscribed:
+                    self.streamer.subscribe(
+                    '/{}/demods/{}/sample.{}'.format(self._device_id,
+                                                     int(chan)-1,
+                                                     'theta') )
+                    self.suscribed.append(chan+'theta')
+            else:
+                if chan+'x' not in self.suscribed:
+                    self.streamer.subscribe(
+                    '/{}/demods/{}/sample'.format(self._device_id,
+                                                  'x') )
+                    self.suscribed.append(chan+'x')
+                if chan+'y' not in self.suscribed:
+                    self.streamer.subscribe(
+                    '/{}/demods/{}/sample'.format(self._device_id,
+                                                  'y') )
+                    self.suscribed.append(chan+'y')
+        log = logging.getLogger(__name__)
+        msg = ('Suscribed chans are %s')
+        log.info(self.log_prefix+msg,'; '.join(map(str, self.suscribed)))
+        nepbws=[]
+        for ii, (chan,code) in enumerate(measkey):
+            chan_driver=self._LI.get_demod_channel(int(chan))
+            nepbws.append(chan_driver.get_nepbw())
+        if nepbws == []:
+            msg = 'No read channels are selected'
+            raise KeyError(msg)
+        if nepbws.count(nepbws[0]) != len(nepbws):
+            msg = 'Not all channels have same bandwidth for sweep'
+            raise ValueError(msg)
+        for ii, (chan,code) in enumerate(measkey):
+            chan_driver=self._LI.get_demod_channel(int(chan))
+            chan_driver.set_datarate(10*nepbws[ii])
+        self._LI.get_daq_serv().echoDevice(self._device_id)
+        DR=chan_driver.get_datarate()
+        if meastime>0:
+            cols=int(np.ceil(meastime*DR))
+        else:
+            raise ValueError('Time cannot be zero or less')
+        self._LI.get_daq_serv().echoDevice(self._device_id)
+        self.streamer.set('duration', cols/DR)
+        self.streamer.set('grid/cols', cols)
+        self.streamer.set('historylength',1)
+        self.streamer.set('endless', 0)
+        self.streamer.set('count', 1)
+        self.streamer.set('holdoff/time',(cols+1.5)/DR)
+        self.streamer.set('delay',0.0)
+        self._LI.get_daq_serv().echoDevice(self._device_id)
+
+    def stream_exec(self):
+        self.streamer.execute()
+
+    def stream_finished(self):
+        t_time=self.streamer.getDouble('duration')
+        prog=self.streamer.progress()
+        log = logging.getLogger(__name__)
+        msg = ('Achieved sweep prop: {} (remains {:.3f} of {:.3f} s)')
+        log.info(self.log_prefix+msg.format(prog[0],(1-prog[0])*t_time,t_time))
+        return self.streamer.finished()
+
+    def read_data(self, measkey):
+        if not self.stream_finished():
+            self.streamer.finish()
+        datastruct=self.streamer.read()
+        self.streamer.set('clearhistory', 1)
+        self.streamer.unsubscribe('*')
+        final_dict = {}
+        for ii, (chan,code) in enumerate(measkey):
+            if code not in {'','phase'}:
+                sample=datastruct[
+                self._device_id.lower()][
+                'demods'][
+                str(int(chan)-1)][
+                'sample.'+code]
+                sample=sample[0]
+                timestamps=sample['timestamp'][0]
+            elif code == 'phase':
+                sample=datastruct[
+                self._device_id.lower()][
+                'demods'][
+                str(int(chan)-1)][
+                'sample.theta']
+                sample=sample[0]
+                timestamps=sample['timestamp'][0]
+            else:
+                sample_x=datastruct[
+                self._device_id.lower()][
+                'demods'][
+                str(int(chan)-1)][
+                'sample.'+'x']
+                sample_x=sample_x[0]
+                sample_y=datastruct[
+                self._device_id.lower()][
+                'demods'][
+                str(int(chan)-1)][
+                'sample.'+'y']
+                sample_y=sample_y[0]
+                timestamps=sample_x['timestamp'][0]
+                values_x=sample_x['value'][0]
+                values_y=sample_x['value'][0]
+            if final_dict == {}:
+                starttimestamp=np.min(timestamps[np.nonzero(timestamps)])
+                CB=self._LI.get_clockbase()
+                final_dict['sampletime']=(timestamps-starttimestamp)/CB
+            if code != '':
+                final_dict[chan+code]=sample['value'][0]
+            else:
+                final_dict[chan]=values_x+1.0j*values_y
+        return final_dict
+
 class HF2LI(PyAPIInstrument):
     """Driver for the Zurich Instrument HF2LI
 
@@ -489,6 +653,7 @@ class HF2LI(PyAPIInstrument):
         self._id = None
         self.daq_serv = None
         self.sweeper = None
+        self.streamer = None        
         self._setup_api_session_identification()
 
         if auto_open:
@@ -546,6 +711,12 @@ class HF2LI(PyAPIInstrument):
         """
         self.cu_id.utils.utils.disable_everything(self.daq_serv, self._id)
 
+    def get_daq_serv(self):
+        """Returns a sweeper interface to ZI API
+
+        """
+        return self.daq_serv
+
     def get_sweeper(self):
         """Returns a sweeper interface to ZI API
 
@@ -553,6 +724,14 @@ class HF2LI(PyAPIInstrument):
         if self.sweeper is None:
             self.sweeper = HF2LISweeper(self, device='{}'.format(self._id))
         return self.sweeper
+
+    def get_streamer(self):
+        """Returns a streamer interface to ZI API
+
+        """
+        if self.streamer is None:
+            self.streamer = HF2LIStreamer(self, device='{}'.format(self._id))
+        return self.streamer
 
     def get_osc_channel(self, num):
         """num is an int identifying the osc channel 
@@ -608,9 +787,12 @@ class HF2LI(PyAPIInstrument):
         """
         self._id = self._infos.get('instr_id')
 
+    def get_clockbase(self):
+        return self.daq_serv.getInt('/{}/clockbase'.format(self._id))
+
     def get_FO_f_cutoff(self, order):
         '''Returns conversion factor between TC and cutoff freq
-        
+        Could be replaced by zhinst.utils.utils functions
         '''
         FO_list=np.array([1.0000,
                           0.6436,
@@ -624,7 +806,7 @@ class HF2LI(PyAPIInstrument):
 
     def get_FO_f_nepbw(self, order):
         '''Returns conversion factor between TC and nepbw freq
-        
+        Could be replaced by zhinst.utils.utils functions        
         '''
         FO_list=np.array([0.2500,
                           0.1250,

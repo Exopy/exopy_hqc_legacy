@@ -103,7 +103,7 @@ enamldef ChannelandSecView(Container):
                         'for a given channel')
 
 enamldef SweepLockinView(InstrView): view:
-    """View for the PNASweepMeasTask.
+    """View for the SweepLockinTask.
 
     """
     constraints = [vbox(
@@ -164,6 +164,31 @@ enamldef SweepLockinView(InstrView): view:
         text = 'Meas. time per point (s)'
     QtLineCompleter: avg_val:
         text := task.avg_time
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    GroupBox: meas:
+        title = 'Measures'
+        padding = 1
+        PairEditor(MeasField): ed:
+            ed.iterable := task.measures
+            ed.operations = ('add', 'move', 'remove')
+            ed.alignment = 'v_center'
+
+enamldef StreamLockinView(InstrView): view:
+    """View for the StreamLockinTask.
+
+    """
+    constraints = [vbox(
+                    grid([instr_label, time_lab],
+                         [instr_selection, time_val]),
+                    meas)
+                  ]
+
+    Label: time_lab:
+        text = 'Acquisition time (s)'
+    QtLineCompleter: time_val:
+        text := task.meastime
         entries_updater << task.list_accessible_database_entries
         tool_tip = EVALUATER_TOOLTIP
 

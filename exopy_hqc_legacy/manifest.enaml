@@ -338,6 +338,13 @@ enamldef HqcLegacyManifest(PluginManifest):
                         kind = 'RF source'
                         connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
                                         }
+                    Driver:
+                        driver = ('rohde_and_schwarz_signal_generators:'
+                                  'RohdeSchwarzSMF100A')
+                        model = 'SMF100A'
+                        kind = 'RF source'
+                        connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
+                                        }
 
                 Drivers:
                     manufacturer = 'Anapico'
@@ -551,6 +558,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                    'exopy_hqc_legacy.Legacy.AnritsuMG3694',
                                    'exopy_hqc_legacy.Legacy.LabBrickLMS103',
                                    'exopy_hqc_legacy.Legacy.RohdeSchwarzSMB100A',
+                                   'exopy_hqc_legacy.Legacy.RohdeSchwarzSMF100A',
                                    'exopy_hqc_legacy.Legacy.Anapico']
                     metadata = {'loopable': True}
                     Interface:
@@ -577,6 +585,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                    'exopy_hqc_legacy.Legacy.AnritsuMG3694',
                                    'exopy_hqc_legacy.Legacy.LabBrickLMS103',
                                    'exopy_hqc_legacy.Legacy.RohdeSchwarzSMB100A',
+                                   'exopy_hqc_legacy.Legacy.RohdeSchwarzSMF100A',
                                    'exopy_hqc_legacy.Legacy.Anapico']
                     metadata = {'loopable': True}
                     Interface:
@@ -605,6 +614,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                    'exopy_hqc_legacy.Legacy.AnritsuMG3694',
                                    'exopy_hqc_legacy.Legacy.LabBrickLMS103',
                                    'exopy_hqc_legacy.Legacy.RohdeSchwarzSMB100A',
+                                   'exopy_hqc_legacy.Legacy.RohdeSchwarzSMF100A',
                                    'exopy_hqc_legacy.Legacy.ZNB20',
                                    'exopy_hqc_legacy.Legacy.ZVA24',
                                    'exopy_hqc_legacy.Legacy.Anapico']
@@ -623,6 +633,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                     task = 'rf_tasks:SetPulseModulationTask'
                     view = 'views.rf_views:PulseModulationView'
                     instruments = ['exopy_hqc_legacy.Legacy.RohdeSchwarzSMB100A',
+                                   'exopy_hqc_legacy.Legacy.RohdeSchwarzSMF100A',
                                    'exopy_hqc_legacy.Legacy.Anapico']
                     Interface:
                         interface = 'anapico_tasks:AnapicoSetChannelInterface'

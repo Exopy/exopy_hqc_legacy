@@ -197,3 +197,45 @@ class RohdeSchwarzSMB100A(VisaInstrument):
             mess = fill(cleandoc('''The invalid value {} was sent to
                         switch_on_off method''').format(value), 80)
             raise VisaTypeError(mess)
+
+class RohdeSchwarzSMF100A(RohdeSchwarzSMB100A):
+    """
+    Generic driver for Rohde and Schwarz SMF100A SignalGenerator,
+    using the VISA library.
+
+    This driver does not give access to all the functionnality of the
+    instrument but you can extend it if needed. See the documentation of
+    the driver_tools module for more details about writing instruments
+    drivers.
+
+    Parameters
+    ----------
+    see the `VisaInstrument` parameters
+
+    Attributes
+    ----------
+    frequency_unit : str
+        Frequency unit used by the driver. The default unit is 'GHz'. Other
+        valid units are : 'MHz', 'KHz', 'Hz'
+    frequency : float, instrument_property
+        Fixed frequency of the output signal.
+    power : float, instrument_property
+        Fixed power of the output signal.
+    output : bool, instrument_property
+        State of the output 'ON'(True)/'OFF'(False).
+
+    Notes
+    -----
+    This class will handle any minor difference between SMF100A and SMB100A
+
+    """
+    def __init__(self, connection_info, caching_allowed=True,
+                 caching_permissions={}, auto_open=True):
+
+        super(RohdeSchwarzSMF100A, self).__init__(connection_info,
+                                                  caching_allowed,
+                                                  caching_permissions,
+                                                  auto_open)
+        self.frequency_unit = 'GHz'
+        self.write_termination = '\n'
+        self.read_termination = '\n'

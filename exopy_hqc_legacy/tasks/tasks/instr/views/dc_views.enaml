@@ -234,7 +234,7 @@ enamldef SetDcFunctionView(InstrView): view:
         Label:
             text = 'function mode'
         ObjectCombo:
-            items << list(['VOLT','CURR'])
+            items << list(["'VOLT'","'CURR'"])
             selected := task.switch
 
 enamldef SetDcOutputView(InstrView): view:
@@ -252,5 +252,5 @@ enamldef SetDcOutputView(InstrView): view:
         Label:
             text = 'output'
         ObjectCombo:
-            items << list(['ON','OFF'])
+            items << list(["'ON'","'OFF'"])
             selected := task.switch

@@ -444,16 +444,16 @@ class SetDCOutputTask(InterfaceableTaskMixin, InstrumentTask):
     #: Target value for the source output
     switch = Str('OFF').tag(pref=True, feval=validators.SkipLoop())
 
-    database_entries = set_default({'output': 'OFF'})
+    database_entries = set_default({'output': "'OFF'"})
 
     def i_perform(self, switch=None):
         """Default interface.
 
         """
-        if self.switch == 'ON':
+        if self.switch == "'ON'":
             self.driver.output = 'ON'
-            self.write_in_database('output', 'ON')
+            self.write_in_database('output', "'ON'")
 
-        elif self.switch == 'OFF':
+        elif self.switch == "'OFF'":
             self.driver.output = 'OFF'
-            self.write_in_database('output', 'OFF')
+            self.write_in_database('output', "'OFF'")

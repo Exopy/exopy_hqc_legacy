@@ -1,0 +1,161 @@
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+#
+# Distributed under the terms of the BSD license.
+#
+# The full license is in the file LICENCE, distributed with this software.
+# -----------------------------------------------------------------------------
+"""Views for the AC sources related tasks.
+
+"""
+from textwrap import fill
+
+from enaml.core.api import Conditional
+from enaml.layout.api import grid, vbox, hbox, factory
+from enaml.widgets.api import (Container, GroupBox, Label, 
+                               Field, ObjectCombo, CheckBox)
+from enaml.stdlib.fields import FloatField, IntField
+from exopy.tasks.api import InstrTaskView, EVALUATER_TOOLTIP
+from exopy.utils.widgets.qt_completers import QtLineCompleter
+
+from exopy_hqc_legacy.utils.layouts import auto_grid_layout
+from ...base_instr_view import InstrView
+
+enamldef ValueView(Container): 
+    """Sub-view for the SetACCurrentWaveform.
+
+    """
+    attr value
+
+    constraints = [grid([ampl_lab],
+                       [ampl_val])]
+
+    Label: ampl_lab:
+        text = 'Current (A)'
+    QtLineCompleter: ampl_val:
+        resist_width = 'ignore'
+        text := value
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+enamldef GridViewA(Container): 
+    """Sub-view for the SetACCurrentWaveform.
+
+    """
+    attr value1
+    attr value2
+
+    constraints = [grid([offset_lab,duty_lab],
+                       [offset_val,duty_val]),
+                   offset_val.width == duty_val.width]
+
+    Label: offset_lab:
+        text = 'Offset (A)'
+    QtLineCompleter: offset_val:
+        resist_width = 'ignore'
+        text := value1
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label: duty_lab:
+        text = 'Duty cycle'
+    FloatField: duty_val:
+        resist_width = 'ignore'
+        value := value2
+
+enamldef FiniteView(Container): 
+    """Sub-view for the SetACCurrentWaveform.
+
+    """
+    attr on
+    attr value
+
+    constraints = [factory(auto_grid_layout)]
+
+    Label: finite_lab:
+        text = 'Finite waveform'
+    CheckBox: finite_val:
+        checked := task.waveform_finite
+        tool_tip = fill('Check to make the instrument '
+                        'only deliver a finite number '
+                        'of pulses',60)
+    Conditional:
+        condition << on
+        Label: finiteval_lab:
+            text = 'Number of cycles'
+        QtLineCompleter: finiteval_val:
+            hug_width = 'ignore'
+            text := value
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = fill('Number of pulses to be '
+                            'delivered (float). \n'+EVALUATER_TOOLTIP,60)
+
+enamldef SetAcWaveformView(InstrView): view:
+    """View for the SetACCurrentWaveform.
+
+    """
+    #: Attribute set by the parent view if the task is embedded inside a
+    #: LoopTask
+    attr in_loop : bool = False
+
+    constraints = [vbox(grid([instr_label, function_lab, freq_lab],
+                             [instr_selection, function_val, freq_val]),
+                        hbox(value_container, grid_container,finite_container)
+                        ),
+                   value_container.height == grid_container.height,
+                   finite_container.height == grid_container.height,
+                   2*value_container.width == grid_container.width,
+                   finite_container.width == grid_container.width
+                  ]
+
+    Label: function_lab:
+        text = 'Waveform type'
+    Field: function_val:
+        resist_width = 'ignore'
+        text := task.waveform_function
+
+    Label: freq_lab:
+        text = 'Freq (Hz)'
+    QtLineCompleter: freq_val:
+        hug_width = 'ignore'
+        text := task.waveform_freq
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Container: value_container:
+        padding = 0
+        Conditional:
+            condition = not in_loop
+            ValueView:
+                value := task.waveform_ampl
+
+    Container: grid_container:
+        padding = 0
+        GridViewA: 
+            value1 := task.waveform_offset
+            value2 := task.waveform_duty
+
+    Container: finite_container:
+        padding = 0
+        FiniteView:
+            on << task.waveform_finite
+            value := task.waveform_cycles
+
+enamldef SetAcOutputView(InstrView): view:
+    """View for the SetACOutputTask.
+
+    """
+    #: Attribute set by the parent view if the task is embedded inside a
+    #: LoopTask
+    attr in_loop : bool = False
+
+    constraints = [factory(auto_grid_layout)]
+
+    Conditional:
+        condition << not in_loop
+        Label:
+            text = 'output'
+        ObjectCombo:
+            items << list(["'ON'","'OFF'"])
+            selected := task.switch

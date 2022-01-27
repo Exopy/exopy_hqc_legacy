@@ -353,9 +353,10 @@ class HF2LIOutChannel(BaseInstrument):
         self._daqserv.echoDevice(self._device_id)
         value=self._daqserv.getDouble(
                 self._header_outampl+'{}'.format(fromdemod-1))
-        if abs(value-ampl)*Vrange>1e-7:
+        if abs(value-ampl)*Vrange>1e-5*Vrange:
             raise InstrIOError('The instrument did not '
-                               'set amplitude correctly')
+                               'set amplitude correctly by {} V'.format(
+                                             abs(value-ampl)*Vrange))
 
     def get_out_range(self):
         """

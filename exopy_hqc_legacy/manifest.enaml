@@ -356,7 +356,14 @@ enamldef HqcLegacyManifest(PluginManifest):
                         kind = 'RF source'
                         connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
                                         }
-
+                    Driver:
+                        driver = ('rohde_and_schwarz_signal_analyzers:'
+                                  'RohdeSchwarzFSV7')
+                        model = 'FSV7'
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaUSB': {'resource_class': 'INSTR'},
+                                       'VisaTCPIP': {'resource_class': 'INSTR'}
+                                       }
                 Drivers:
                     manufacturer = 'Anapico'
                     Driver:
@@ -679,6 +686,12 @@ enamldef HqcLegacyManifest(PluginManifest):
                     view = 'views.pna_task_views:ZNBGetTraceView'
                     instruments = ['exopy_hqc_legacy.Legacy.ZNB20',
                                    'exopy_hqc_legacy.Legacy.ZVA24']
+                Task:
+                    task = 'psa_tasks:PSASweepTask'
+                    view = 'views.psa_tasks_views:PSASweepTaskView'
+                    instruments = ['exopy_hqc_legacy.Legacy.AgilentPSA',
+                                   'exopy_hqc_legacy.Legacy.AgilentPXA',
+                                   'exopy_hqc_legacy.Legacy.RohdeSchwarzFSV7']
                 Task:
                     task = 'psa_tasks:PSAGetTrace'
                     view = 'views.psa_tasks_views:PSAGetTraceView'

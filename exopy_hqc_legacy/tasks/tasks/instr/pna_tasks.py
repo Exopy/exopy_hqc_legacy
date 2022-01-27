@@ -35,7 +35,7 @@ def check_channels_presence(task, channels, *args, **kwargs):
             for channel in channels:
                 if channel not in instr.defined_channels:
                     key = err_path + '_' + str(channel)
-                    msg = ("Channel {} is not defined in the PNA {}."
+                    msg = ("Channel {} is not defined in the instr {}."
                            " Please define it yourself and try again.")
                     traceback[key] = msg.format(channel,
                                                 task.selected_instrument[0])

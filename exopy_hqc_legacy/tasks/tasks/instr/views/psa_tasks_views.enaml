@@ -20,18 +20,43 @@ from exopy.utils.widgets.qt_completers import QtLineCompleter
 from exopy_hqc_legacy.utils.layouts import auto_grid_layout
 from ...base_instr_view import InstrView
 
-# XXX unfinished
-
 enamldef PSAGetTraceView(InstrView): view:
     """View for the PSAGetTraceTask.
 
     """
+
+    constraints = [factory(auto_grid_layout)]
+
+    Label:
+        text = 'Mode'
+    ObjectCombo:
+        items << list(task.get_member('mode').items)
+        selected := task.mode
+
     Label:
         text = 'Trace number'
     ObjectCombo:
-        items << [1,2,3]
+        items << [1,2,3,4]
         selected := task.trace
 
+enamldef PSASweepTaskView(InstrView): view:
+    """View for the PSAGetTraceTask.
+
+    """
+
+    constraints = [factory(auto_grid_layout)]
+
+    Label:
+        text = 'Mode'
+    ObjectCombo:
+        items << list(task.get_member('mode').items)
+        selected := task.mode
+
+    Label:
+        text = 'Trace number'
+    ObjectCombo:
+        items << [1,2,3,4]
+        selected := task.trace
 
 enamldef PSASetParamView(InstrView): view:
     """View for the PSASetParamTask.
@@ -42,16 +67,8 @@ enamldef PSASetParamView(InstrView): view:
     Label:
         text = 'Trace number'
     ObjectCombo:
-        items = [1,2,3]
+        items = [1,2,3,4]
         selected := task.trace
-
-    Label:
-        text =  'Average number'
-    QtLineCompleter:
-        hug_width = 'ignore'
-        text := task.average_nb
-        entries_updater << task.list_accessible_database_entries
-        tool_tip = EVALUATER_TOOLTIP
 
     Label:
         text =  'Resolution Bandwidth'
@@ -71,12 +88,12 @@ enamldef PSASetParamView(InstrView): view:
 
     Label:
         text = 'Input mode'
-    ObjectCombo: mode:
+    ObjectCombo:
         items = ['Start/Stop','Center/Span']
-        selected := task.mode
+        selected := task.mode_freq
 
     Conditional:
-        condition << task.mode == 'Start/Stop'
+        condition << task.mode_freq == 'Start/Stop'
         Label:
             text =  'Start Frequency'
         QtLineCompleter:
@@ -94,7 +111,7 @@ enamldef PSASetParamView(InstrView): view:
             tool_tip = EVALUATER_TOOLTIP
 
     Conditional:
-        condition << task.mode == 'Center/Span'
+        condition << task.mode_freq == 'Center/Span'
         Label:
             text =  'Center Frequency'
         QtLineCompleter:
@@ -110,3 +127,19 @@ enamldef PSASetParamView(InstrView): view:
             text := task.span_freq
             entries_updater << task.list_accessible_database_entries
             tool_tip = EVALUATER_TOOLTIP
+
+    Label:
+        text =  'Sweep Points'
+    QtLineCompleter:
+        hug_width = 'ignore'
+        text := task.sweep_points
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label:
+        text =  'Average number'
+    QtLineCompleter:
+        hug_width = 'ignore'
+        text := task.average_nb
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP

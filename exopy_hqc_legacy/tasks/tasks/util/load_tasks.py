@@ -10,14 +10,17 @@
 
 """
 import os
+import logging
+from inspect import cleandoc
+from collections import OrderedDict
 
 import numpy as np
 import h5py
-from atom.api import (Bool, Str, List, set_default)
+from atom.api import (Bool, Str, List, Value, Typed, set_default)
 from past.builtins import basestring
 
 from exopy.tasks.api import SimpleTask, InterfaceableTaskMixin, TaskInterface
-
+from exopy.utils.atom_util import ordered_dict_from_pref, ordered_dict_to_pref
 
 def _make_array(names, dtypes='f8', data=None):
     if isinstance(dtypes, basestring):
@@ -202,3 +205,146 @@ class H5PYLoadInterface(TaskInterface):
                                             {k: np.ones(5) for k in f})
 
         return True, {}
+
+class LoadFileTask(SimpleTask):
+    """ Save the specified entries in a CSV file.
+
+    Wait for any parallel operation before execution.
+
+    Notes
+    -----
+    Currently only support saving floats and arrays of floats (record arrays
+    or simple arrays).
+
+    """
+    #: Folder in which to save the data.
+    folder = Str('{default_path}').tag(pref=True, fmt=True)
+
+    #: Name of the file in which to write the data.
+    filename = Str().tag(pref=True, fmt=True)
+
+    #: Currently opened file object. (File mode)
+    file_object = Value()
+
+    #: Flag indicating whether or not initialisation has been performed.
+    initialized = Bool(False)
+
+    #: Values to load as an ordered dictionary.
+    loaded_values = Typed(OrderedDict, ()).tag(pref=(ordered_dict_to_pref,
+                                                    ordered_dict_from_pref))
+
+    database_entries = set_default({'file': None,
+                                    'header': ''})
+
+    wait = set_default({'activated': True})  # Wait on all pools by default.
+
+    def perform(self):
+        """ Collect all data and write them to file.
+
+        """
+
+        # Initialisation.
+        if not self.initialized:
+
+            full_folder_path = self.format_string(self.folder)
+            filename = self.format_string(self.filename)
+            full_path = os.path.join(full_folder_path, filename)
+            try:
+                self.file_object = open(full_path, 'r')
+            except IOError:
+                log = logging.getLogger()
+                msg = "In {}, failed to open the specified file."
+                log.exception(msg.format(self.name))
+                self.root.should_stop.set()
+
+            self.root.resources['files'][full_path] = self.file_object
+
+            self.initialized = True
+
+        file_object = open(full_path, 'r')
+
+        l='#'
+        header=''
+        labels=[]
+
+        while l[0]=='#':
+            l=file_object.readline()
+            if l[0]=='#':
+                if len(l)>2:
+                    header=header+l[2:]
+            if not l:
+                break
+
+        if header != '':
+            self.write_in_database('header', header)
+        
+        if not l:
+            raise ValueError(cleandoc('''Empty file'''))
+        else:
+            labels=l[:-1].split("\t")
+
+        if len(labels)==0 :
+            raise ValueError(cleandoc('''No labels'''))
+
+        l=file_object.readline()
+        if not l:
+            raise ValueError(cleandoc('''No values'''))
+        else:
+            readstr=l[:-1].split("\t")
+
+        values=np.array([[float(v) for v in readstr]])
+
+        while True:
+            l=file_object.readline()
+            if l:
+                readstr=l[:-1].split("\t")
+                values=np.append(values,[[float(v) for v in readstr]], axis=0)
+            else:
+                break
+
+        log = logging.getLogger()
+        msg = "In {}, keys are {}"
+        log.info(msg.format(self.name,list(self.loaded_values.keys())))
+
+        for lab_ind,key in enumerate(list(self.loaded_values.keys())):
+            if key not in ['file','header']:
+                if key in labels:                  
+                    self.write_in_database(key, values[:,lab_ind])
+
+        file_object.close()
+
+    def check(self, *args, **kwargs):
+        """Check that given parameters are meaningful
+
+        """
+        err_path = self.get_error_path()
+        test, traceback = super(LoadFileTask, self).check(*args, **kwargs)
+        try:
+            full_folder_path = self.format_string(self.folder)
+            filename = self.format_string(self.filename)
+        except Exception:
+            return test, traceback
+
+        full_path = os.path.join(full_folder_path, filename)
+
+        try:
+            f = open(full_path, 'ab')
+            f.close()
+        except Exception as e:
+            mess = 'Failed to open the specified file : {}'.format(e)
+            traceback[err_path] = mess.format(e)
+            return False, traceback
+
+        return test, traceback
+
+    def _post_setattr_loaded_values(self, old, new):
+        """Update the database based on the task.
+
+        """
+        entries = {}
+        entries['file'] = self.filename
+        entries['header'] = ''
+
+        for key in list(self.loaded_values.keys()):
+            entries[key] = np.array([])
+        self.database_entries = entries

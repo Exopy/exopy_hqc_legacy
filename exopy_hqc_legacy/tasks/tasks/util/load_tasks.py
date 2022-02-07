@@ -269,11 +269,12 @@ class LoadFileTask(SimpleTask):
 
         while l[0]=='#':
             l=file_object.readline()
+            if not l:
+                break
             if l[0]=='#':
                 if len(l)>2:
                     header=header+l[2:]
-            if not l:
-                break
+
 
         if header != '':
             self.write_in_database('header', header)
@@ -346,5 +347,5 @@ class LoadFileTask(SimpleTask):
         entries['header'] = ''
 
         for key in list(self.loaded_values.keys()):
-            entries[key] = np.array([])
+            entries[key] = np.array([0,0])
         self.database_entries = entries

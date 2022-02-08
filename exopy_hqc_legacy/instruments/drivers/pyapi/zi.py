@@ -468,6 +468,7 @@ class HF2LISweeper(BaseInstrument):
         datastruct=self.sweeper.read()
         self.sweeper.set('clearhistory', 1)
         self.sweeper.unsubscribe('*')
+        self.suscribed = []
         final_dict = {}
         for ii, (chan,code) in enumerate(measkey):
             sample=datastruct[
@@ -609,6 +610,7 @@ class HF2LIStreamer(BaseInstrument):
         datastruct=self.streamer.read()
         self.streamer.set('clearhistory', 1)
         self.streamer.unsubscribe('*')
+        self.suscribed = []
         final_dict = {}
         for ii, (chan,code) in enumerate(measkey):
             if code not in {'','phase'}:

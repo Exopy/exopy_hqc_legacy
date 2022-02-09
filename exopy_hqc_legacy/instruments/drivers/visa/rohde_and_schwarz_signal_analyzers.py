@@ -45,6 +45,19 @@ class RohdeSchwarzFSV7(VisaInstrument):
     models using the same SCPI commands.
 
     """
+    caching_permissions = {'mode': True,
+                           'start_frequency_SA': True,
+                           'stop_frequency_SA': True,
+                           'center_frequency': True,
+                           'span_frequency': True,
+                           'sweep_time': True,
+                           'RBW': True,
+                           'VBW_SA': True,
+                           'sweep_points_SA': True,
+                           'average_count_SA': True,
+                           'average_state_SA': True,
+                           'data_format': True}
+
     def __init__(self, connection_info, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
 

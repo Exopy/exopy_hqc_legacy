@@ -161,7 +161,7 @@ class StreamLockinTask(InstrumentTask):
         driverstreamer.stream_exec()
         start=time.time()
         while not driverstreamer.stream_finished():
-            time.sleep(1.0)
+            time.sleep(min(1.0,meastime))
             if self.root.should_stop.is_set():
                 return
         datadict = driverstreamer.read_data(self.measures,

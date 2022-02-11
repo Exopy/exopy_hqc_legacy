@@ -307,9 +307,10 @@ class LoadFileTask(SimpleTask):
         msg = "In {}, keys are {}"
         log.info(msg.format(self.name,list(self.loaded_values.keys())))
 
-        for lab_ind,key in enumerate(list(self.loaded_values.keys())):
+        for key_ind,key in enumerate(list(self.loaded_values.keys())):
             if key not in ['file','header']:
-                if key in labels:                  
+                if key in labels:
+                    lab_ind=labels.index(key)
                     self.write_in_database(key, values[:,lab_ind])
 
         file_object.close()

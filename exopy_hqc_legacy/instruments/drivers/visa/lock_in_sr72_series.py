@@ -148,6 +148,24 @@ class LockInSR7265(VisaInstrument):
             raise InstrIOError('The command did not complete correctly')
         else:
             return values
+            
+           
+    @secure_communication()
+    def read_ratio(self):
+        """
+        Return the amplitude and phase of the signal measured by the instrument
+
+        Perform a direct reading without any waiting. Can return non
+        independent values if the instrument is queried too often.
+
+        """
+        values = self.ask_for_values('RT.')
+        status = self._check_status()
+        if status != 'OK' or not values:
+            raise InstrIOError('The command did not complete correctly')
+        else:
+            return values
+
 
     @secure_communication()
     def _check_status(self):

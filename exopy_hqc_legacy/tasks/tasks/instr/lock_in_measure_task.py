@@ -23,7 +23,7 @@ class LockInMeasureTask(InstrumentTask):
 
     """
     #: Value to retrieve.
-    mode = Enum('X', 'Y', 'X&Y', 'Amp', 'Phase', 'Amp&Phase').tag(pref=True)
+    mode = Enum('X', 'Y', 'X&Y', 'Amp', 'Phase', 'Amp&Phase', 'Ratio').tag(pref=True)
 
     #: Time to wait before performing the measurement.
     waiting_time = Float().tag(pref=True)
@@ -58,6 +58,9 @@ class LockInMeasureTask(InstrumentTask):
             amplitude, phase = self.driver.read_amp_and_phase()
             self.write_in_database('amplitude', amplitude)
             self.write_in_database('phase', phase)
+        elif self.mode == 'Ratio':
+            value = self.driver.read_ratio()
+            self.write_in_database('ratio', value)
 
     def _post_setattr_mode(self, old, new):
         """ Update the database entries acording to the mode.
@@ -78,8 +81,7 @@ class LockInMeasureTask(InstrumentTask):
             entries['amplitude'] = 1.0
         elif new == 'Phase':
             entries['phase'] = 1.0
-        elif new == 'Amp&Phase':
-            entries['amplitude'] = 1.0
-            entries['phase'] = 1.0
+        elif new == 'Ratio':
+            entries['ratio'] = 1.0
 
         self.database_entries = entries

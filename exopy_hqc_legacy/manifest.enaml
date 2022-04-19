@@ -148,6 +148,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaUSB': {'resource_class': 'INSTR',
                                                    'manufacturer_id': '0xB21',
                                                    'model_code': '0x39'},
+                                       'VisaTCPIP': {'resource_class': 'INSTR'}
                                        }
                     Driver:
                         driver = 'yokogawa:Yokogawa7651'
@@ -380,6 +381,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                     task = 'lock_in_measure_task:LockInMeasureTask'
                     view = 'views.lock_in_meas_view:LockInMeasView'
                     instruments = ['exopy_hqc_legacy.Legacy.LockInSR7265',
+								   'exopy_hqc_legacy.Legacy.LockInSR7270',
                                    'exopy_hqc_legacy.Legacy.LockInSR830']
                 Task:
                     task = 'meas_dc_tasks:MeasDCVoltageTask'
@@ -466,6 +468,14 @@ enamldef HqcLegacyManifest(PluginManifest):
                     view = 'views.rf_views:PulseModulationView'
                     instruments = ['exopy_hqc_legacy.Legacy.RohdeSchwarzSMB100A',
                                    'exopy_hqc_legacy.Legacy.Anapico']
+                Task:
+                    task = 'psa_tasks:PSAGetTrace'
+                    view = 'views.psa_tasks_views:PSAGetTraceView'
+                    instruments = ['exopy_hqc_legacy.Legacy.SA124B']
+                Task:
+                    task = 'psa_tasks:PSASetParam'
+                    view = 'views.psa_tasks_views:PSASetParamView'
+                    instruments = ['exopy_hqc_legacy.Legacy.SA124B']					
                 Task:
                     task = 'pna_tasks:PNASinglePointMeasureTask'
                     view = 'views.pna_task_views:PNASinglePointView'

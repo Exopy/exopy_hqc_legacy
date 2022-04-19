@@ -419,6 +419,7 @@ class SA124B(DllInstrument):
 
         if auto_open:
             serial = saGetSerialNumberList()[0]
+            print(saGetSerialNumberList()[0])
             assert serial != 0
             self.open_connection(serial)
 

@@ -162,7 +162,7 @@ class PSASetParam(InstrumentTask):
     def check(self, *args, **kwargs):
         """
         """
-        test, traceback = super(PSAGetTrace, self).check(*args, **kwargs)
+        test, traceback = super(PSASetParam, self).check(*args, **kwargs) #Anil 27/09/21
 
         err_path = self.get_error_path()
 

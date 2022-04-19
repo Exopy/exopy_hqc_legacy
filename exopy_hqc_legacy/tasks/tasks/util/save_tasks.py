@@ -578,8 +578,8 @@ class SaveFileHDF5Task(SimpleTask):
                     if names:
                         for m in names:
                             f.create_dataset(label + '_' + m,
-                                             (calls_estimation,) + value.shape,
-                                             (None, ) + value.shape,
+                                             (calls_estimation,) + value[m].shape,
+                                             (None, ) + value[m].shape,
                                              self.datatype,
                                              self.compression)
                     else:

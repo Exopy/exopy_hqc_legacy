@@ -479,6 +479,9 @@ enamldef HqcLegacyManifest(PluginManifest):
                     task = 'array_tasks:ArrayFindValueTask'
                     view = 'views.array_views:ArrayFindValueView'
                 Task:
+                    task = 'fit_sine_tasks:FitSineTask'
+                    view = 'views.fit_sine_view:FitSineView'
+                Task:
                     task = 'fit_resonance_tasks:FitResonanceTask'
                     view = 'views.fit_resonance_view:FitResonanceView'
                     Interface:

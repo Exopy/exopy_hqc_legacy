@@ -251,6 +251,14 @@ enamldef HqcLegacyManifest(PluginManifest):
                                            {'resource_class': 'INSTR'}
                                        }
                     Driver:
+                        driver = 'keithley_multimeters:Keithley2182A'
+                        model = '2182A'
+                        kind = 'Multimeter'
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaRS232':
+                                           {'resource_class': 'INSTR'}
+                                       }                                       
+                    Driver:
                         driver = 'keithley_multimeters:Keithley2450'
                         model = '2450'
                         kind = 'DC source'
@@ -659,6 +667,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                     task = 'meas_dc_tasks:MeasDCVoltageTask'
                     view = 'views.meas_dc_views:MeasDCVoltView'
                     instruments = ['exopy_hqc_legacy.Legacy.Keithley2000',
+                                   'exopy_hqc_legacy.Legacy.Keithley2182A',
                                    'exopy_hqc_legacy.Legacy.Keithley2450',
                                    'exopy_hqc_legacy.Legacy.Agilent34410A',
                                    'exopy_hqc_legacy.Legacy.Yokogawa7651',

@@ -192,6 +192,81 @@ class Keithley2000(VisaInstrument):
         if val:
             return val[6]
 
+class Keithley2182A(VisaInstrument):
+    """Driver for Keithley 2182A using the VISA library
+
+    This driver does not give access to all the functionnality of the
+    instrument but you can extend it if needed. See the documentation of the
+    driver_tools package for more details about writing instruments drivers.
+
+    Parameters
+    ----------
+    see the `VisaInstrument` parameters
+
+    Methods
+    -------
+    read_voltage_dc(mes_range = 'DEF', mes_resolution = 'DEF')
+        Return the DC voltage read by the instrument. Can change the function
+        if needed.
+    """
+
+    caching_permissions = {}
+
+    protocoles = {'GPIB': 'INSTR'}
+
+    def open_connection(self, **para):
+        """Open the connection to the instr using the `connection_str`.
+
+        """
+        super(Keithley2182A, self).open_connection(**para)
+        self.write_termination = '\n'
+        self.read_termination = '\n'
+
+    @secure_communication()
+    def read_voltage_dc(self, mes_range='DEF', mes_resolution='DEF'):
+        """Return the DC voltage read by the instrument.
+
+        Perform a direct reading without any waiting. Can return identical
+        values if the instrument is read more often than its integration time.
+        The arguments are unused and here only to make this driver and the
+        agilent driver compatible.
+
+        """
+
+        value = self.query('SENS:DATA:FRES?')
+        if value:
+            return float(value)
+        else:
+            raise InstrIOError('Keithley2182A: DC voltage measure failed')
+
+    @secure_communication()
+    def read_voltage_dc(self, mes_range='DEF', mes_resolution='DEF'):
+        """Return the DC voltage read by the instrument.
+
+        Perform a direct reading without any waiting. Can return identical
+        values if the instrument is read more often than its integration time.
+        The arguments are unused and here only to make this driver and the
+        agilent driver compatible.
+
+        """
+
+        value = self.query('SENS:DATA:FRES?')
+        if value:
+            return float(value)
+        else:
+            raise InstrIOError('Keithley2182A: DC voltage measure failed')
+
+    @secure_communication()
+    def check_connection(self):
+        """Check wether or not a front panel user set the instrument in local.
+
+        If a front panel user set the instrument in local the cache can be
+        corrupted and should be cleared.
+
+        """
+        val = ('{0:08b}'.format(int(self.query('*ESR'))))[::-1]
+        if val:
+            return val[6]
 
 class Keithley2450(VisaInstrument):
     """Driver for Keithley 2450 using the VISA library

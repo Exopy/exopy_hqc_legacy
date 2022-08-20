@@ -1,0 +1,106 @@
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+#
+# Distributed under the terms of the BSD license.
+#
+# The full license is in the file LICENCE, distributed with this software.
+# -----------------------------------------------------------------------------
+"""Specific connection information edition widget for visa instruments with settings
+
+"""
+import os
+
+from enaml.widgets.api import Label
+from enaml.stdlib.fields import FloatField, IntField
+from enaml.layout.api import hbox, vbox
+from exopy.instruments.api import BaseSettings
+
+
+enamldef RS232ConnectionSettings(BaseSettings):
+    """Port specific info for RS232 connetion
+
+    """
+    #: Reference to the workbench.
+    attr workbench
+
+    #: Baudrate.
+    alias baudrate : baudrate_val.value
+
+    #: Flow control.
+    alias flowcontrol : flowcontrol_val.value
+
+    #: Parity.
+    alias parity : parity_val.value
+
+    #: Data bits.
+    alias databits : databits_val.value
+
+    #: Stop bits.
+    alias stopbits : stopbits_val.value
+
+    gather_infos => ():
+        settings = BaseSettings.gather_infos(self)
+        settings['baudrate'] = baudrate
+        settings['flowcontrol'] = flowcontrol
+        settings['parity'] = parity
+        settings['databits'] = databits
+        settings['stopbits'] = stopbits
+        return settings
+    
+    constraints = [
+        vbox(
+            hbox(baudrate_lab, baudrate_val),
+            hbox(flowcontrol_lab, flowcontrol_val),
+            hbox(parity_lab, parity_val),
+            hbox(databits_lab, databits_val),
+            hbox(stopbits_lab, stopbits_val))
+    ]
+
+    Label: baudrate_lab:
+        text = 'Baud rate'
+    IntField: baudrate_val:
+        enabled << not read_only
+        tool_tip = ('The baudrate of connection is an int')
+
+    Label: flowcontrol_lab:
+        text = 'Flow control'
+    IntField: flowcontrol_val:
+        enabled << not read_only
+        tool_tip = ('Int specifying flow control mode '
+                    '0: NONE '
+                    '1: XON_XOFF '
+                    '2: RTS_CTS '
+                    '4: DTR_DSR')
+
+    Label: parity_lab:
+        text = 'Parity'
+    IntField: parity_val:
+        enabled << not read_only
+        tool_tip = ('Int specifying parity check mode '
+                    '0: NONE '
+                    '1: ODD '
+                    '2: EVEN '
+                    '3: MARK '
+                    '4: SPACE')
+
+    Label: databits_lab:
+        text = 'Data bits'
+    IntField: databits_val:
+        enabled << not read_only
+        tool_tip = ('Int specifying number of bits to represent '
+                    'one character of data '
+                    '5: 5 bits '
+                    '6: 6 bits '
+                    '7: 7 bits '
+                    '8: 8 bits')
+
+    Label: stopbits_lab:
+        text = 'Stop bits'
+    IntField: stopbits_val:
+        enabled << not read_only
+        tool_tip = ('Int specifying pattern of bits indicating '
+                    'end of transmission '
+                    '10: 1 '
+                    '15: 1.5 '
+                    '20: 2')

@@ -1,0 +1,52 @@
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# Copyright 2015-2018 by ExopyHqcLegacy Authors, see AUTHORS for more details.
+#
+# Distributed under the terms of the BSD license.
+#
+# The full license is in the file LICENCE, distributed with this software.
+# -----------------------------------------------------------------------------
+"""Views of the tasks operating on numpy.arrays.
+
+"""
+from enaml.layout.api import grid
+from enaml.widgets.api import (GroupBox, Label, Field, ObjectCombo, Splitter,
+                               SplitItem, Container)
+
+from exopy.utils.widgets.qt_completers import QtLineCompleter
+from exopy.tasks.api import EVALUATER_TOOLTIP, BaseTaskView
+
+enamldef FitSineView(BaseTaskView): view:
+    """Widget for the fit sine task.
+
+    """
+
+    constraints << [grid([time_array_lab, value_array_lab, freq_lab],
+                         [time_array_val, value_array_val, freq_val]),
+                    time_array_val.width  == 2*freq_lab.width,
+                    value_array_val.width == 2*freq_lab.width]
+
+    Label: time_array_lab:
+        text = 'Time array'
+    QtLineCompleter: time_array_val:
+        hug_width = 'ignore'
+        text := task.time_array_in
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label: value_array_lab:
+        text = 'Values array'
+    QtLineCompleter: value_array_val:
+        hug_width = 'ignore'
+        text := task.val_array_in
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label: freq_lab:
+        text = 'Selected freq. (Hz)'
+    QtLineCompleter: freq_val:
+        hug_width = 'ignore'
+        text := task.freq
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+

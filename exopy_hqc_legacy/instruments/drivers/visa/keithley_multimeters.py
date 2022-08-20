@@ -700,8 +700,9 @@ class Keithley6221(VisaInstrument):
 
         """
         #avoid error when already on
-        if not (self.waveform_function==waveform_function):
-            self.waveform_function=waveform_function
+        if waveform_function:
+            if not (self.waveform_function==waveform_function):
+                self.waveform_function=waveform_function
 
         self.waveform_frequency=waveform_freq
         self.waveform_amplitude=waveform_ampl

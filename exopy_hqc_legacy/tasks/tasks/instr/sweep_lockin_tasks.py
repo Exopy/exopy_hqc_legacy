@@ -161,7 +161,8 @@ class StreamLockinTask(InstrumentTask):
         driverstreamer.stream_exec()
         start=time.time()
         while not driverstreamer.stream_finished():
-            time.sleep(min(1.0,meastime))
+            remainingtime=meastime-(time.time()-start)
+            time.sleep(min(min(0.5,meastime),max(0.05,remainingtime)))
             if self.root.should_stop.is_set():
                 return
         datadict = driverstreamer.read_data(self.measures,
@@ -179,13 +180,17 @@ class StreamLockinTask(InstrumentTask):
         """ Update the database entries acording to the mode.
 
         """
-        entries = {'sampletime(s)': np.array([0.0])}
+        entries = {'sampletime(s)': np.array(1000*[0.0])}
         for (chan,code) in new:
             if code=='Raw':
-                entries[chan+code] = np.array([0.0 + 0.0j])
+                entries[chan+code] = np.array(1000*[0.0 + 0.0j])
             else:
-                entries[chan+code] = np.array([0.0])
-        self.database_entries = entries
+                entries[chan+code] = np.array(1000*[0.0])
+        if self.record_auxin1:
+           entries['auxin1'] = np.array(1000*[0.0])
+        if self.record_auxin2:
+           entries['auxin2'] = np.array(1000*[0.0])   
+        self.database_entries = entries  
 
     def _post_setattr_record_auxin1(self, old, new):
         """ Update the database entries acording to the mode.
@@ -193,7 +198,7 @@ class StreamLockinTask(InstrumentTask):
         """
         entries = self.database_entries.copy()
         if new:
-            entries['auxin1'] = np.array([0.0])
+            entries['auxin1'] = np.array(1000*[0.0])
         else:
             del entries['auxin1']
         self.database_entries = entries
@@ -204,7 +209,7 @@ class StreamLockinTask(InstrumentTask):
         """
         entries = self.database_entries.copy()
         if new:
-            entries['auxin2'] = np.array([0.0])
+            entries['auxin2'] = np.array(1000*[0.0])
         else:
             del entries['auxin2']
         self.database_entries = entries

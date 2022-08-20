@@ -98,7 +98,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                 with enaml.imports():
                     from .instruments.connections.pyAPI_serial_number_connection\
                         import pyAPIConnection
-                defaults = dict(serial_number=defaults.get('serial_number',                                                           ''))
+                defaults = dict(serial_number=defaults.get('serial_number',
+                                                           ''))
                 return pyAPIConnection(read_only=read_only, declaration=self,
                                      workbench=workbench, **defaults)
     Extension:
@@ -122,7 +123,54 @@ enamldef HqcLegacyManifest(PluginManifest):
                                                  )
                 widget.read_only = read_only
                 return widget
-
+        Settings:
+            id = 'RS232ConnectionSettings'
+            description = ('RS232 port-dependent properties that need '
+                           'to be specified.')
+            new => (workbench, defaults, read_only):
+                with enaml.imports():
+                    from .instruments.settings.rs232_port_setting\
+                        import RS232ConnectionSettings
+                br = defaults.get('baudrate', 9600)
+                fc = defaults.get('flowcontrol', 0)
+                pr = defaults.get('parity', 0)
+                db = defaults.get('databits', 8)
+                sb = defaults.get('stopbits', 10)
+                uid = defaults.get('user_id', '')
+                widget = RS232ConnectionSettings(workbench=workbench,
+                                                 user_id=uid,
+                                                 baudrate=int(br),
+                                                 flowcontrol=int(fc),
+                                                 parity=int(pr),
+                                                 databits=int(db),
+                                                 stopbits=int(sb))
+                widget.read_only = read_only
+                return widget
+        Settings:
+            id = 'DanfysikConnectionSettings'
+            description = ('RS232 port-dependent properties that need '
+                           'to be specified, and coil max curr.')
+            new => (workbench, defaults, read_only):
+                with enaml.imports():
+                    from .instruments.settings.danfysik_setting\
+                        import DanfysikConnectionSettings
+                br = defaults.get('baudrate', 9600)
+                fc = defaults.get('flowcontrol', 0)
+                pr = defaults.get('parity', 0)
+                db = defaults.get('databits', 8)
+                sb = defaults.get('stopbits', 10)
+                maxc = defaults.get('maxcurr', 50)
+                uid = defaults.get('user_id', '')
+                widget = DanfysikConnectionSettings(workbench=workbench,
+                                                   user_id=uid,
+                                                   baudrate=int(br),
+                                                   flowcontrol=int(fc),
+                                                   parity=int(pr),
+                                                   databits=int(db),
+                                                   stopbits=int(sb),
+                                                   maxcurr=float(maxc))
+                widget.read_only = read_only
+                return widget
     Extension:
         id = 'instruments.drivers'
         point = 'exopy.instruments.drivers'
@@ -233,6 +281,13 @@ enamldef HqcLegacyManifest(PluginManifest):
                                        'VisaRS232': {'resource_class': 'INSTR'}
                                        }
                 Drivers:
+                    manufacturer = 'LakeShore'
+                    Driver:
+                        driver = 'lakeshore_gaussmeters:LakeShore475'
+                        model = '475'
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'}
+                                       }
+                Drivers:
                     manufacturer = 'Cryomagnetics'
                     settings = {'MagnetConversionSetting': {}}
                     Driver:
@@ -249,6 +304,14 @@ enamldef HqcLegacyManifest(PluginManifest):
                         model  = '4G-100'
                         connections = {'VisaGPIB': {'resource_class': 'INSTR'},
                                        'VisaRS232': {'resource_class': 'INSTR'}
+                                       }
+                Drivers:
+                    manufacturer = 'Danfysik'
+                    settings = {'DanfysikConnectionSettings': {}}
+                    Driver:
+                        driver = 'danfysik_mps:Danfysik9100'
+                        model = '9100'
+                        connections = {'VisaRS232': {'resource_class': 'INSTR'}
                                        }
                 Drivers:
                     manufacturer = 'Tektronix'
@@ -360,7 +423,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                                   'RohdeSchwarzSMF100A')
                         model = 'SMF100A'
                         kind = 'RF source'
-                        connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaTCPIP': {'resource_class': 'INSTR'}
                                         }
                     Driver:
                         driver = ('rohde_and_schwarz_signal_analyzers:'
@@ -421,6 +485,9 @@ enamldef HqcLegacyManifest(PluginManifest):
                     task = 'array_tasks:ArrayFindValueTask'
                     view = 'views.array_views:ArrayFindValueView'
                 Task:
+                    task = 'fit_sine_tasks:FitSineTask'
+                    view = 'views.fit_sine_view:FitSineView'
+                Task:
                     task = 'fit_resonance_tasks:FitResonanceTask'
                     view = 'views.fit_resonance_view:FitResonanceView'
                     Interface:
@@ -480,7 +547,17 @@ enamldef HqcLegacyManifest(PluginManifest):
                     view = 'views.meas_mag_field_view:MeasMagFieldView'
                     instruments = ['exopy_hqc_legacy.Legacy.IPS12010',
                                    'exopy_hqc_legacy.Legacy.CS4',
-                                   'exopy_hqc_legacy.Legacy.C4G']
+                                   'exopy_hqc_legacy.Legacy.C4G',
+                                   'exopy_hqc_legacy.Legacy.LakeShore475']
+                    metadata = {'loopable': True}
+                Task:
+                    task = 'meas_mag_field_task:MeasACMagFieldTask'
+                    view = 'views.meas_mag_field_view:MeasACMagFieldView'
+                    instruments = ['exopy_hqc_legacy.Legacy.LakeShore475']
+                Task:
+                    task = 'power_supply_tasks:ApplyPowerCurrentTask'
+                    view = 'views.power_supply_views:ApplyPowerCurrentView'
+                    instruments = ['exopy_hqc_legacy.Legacy.Danfysik9100']
                     metadata = {'loopable': True}
                 Task:
                     task = 'lock_in_measure_task:LockInMeasureTask'
@@ -537,6 +614,18 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'set_lockin_parameters_tasks:SetDemodHarmTask'
                     view = 'views.set_lockin_parameters_view:SetDemodHarmTaskView'
+                    instruments = ['exopy_hqc_legacy.Legacy.LockInSR7265',
+                                   'exopy_hqc_legacy.Legacy.LockInSR7270',
+                                   'exopy_hqc_legacy.Legacy.LockInSR7280',
+                                   'exopy_hqc_legacy.Legacy.LockInSR830']
+                    Interface:
+                        interface = 'set_lockin_parameters_tasks:MultiChannelDemodInterface'
+                        views = ['views.multi_channel_LI_views:MultiChannelDemodLabel',
+                                 'views.multi_channel_LI_views:MultiChannelDemodValue']
+                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
+                Task:
+                    task = 'set_lockin_parameters_tasks:SetDemodBWandSampleTask'
+                    view = 'views.set_lockin_parameters_view:SetDemodBWandSampleView'
                     instruments = ['exopy_hqc_legacy.Legacy.LockInSR7265',
                                    'exopy_hqc_legacy.Legacy.LockInSR7270',
                                    'exopy_hqc_legacy.Legacy.LockInSR7280',

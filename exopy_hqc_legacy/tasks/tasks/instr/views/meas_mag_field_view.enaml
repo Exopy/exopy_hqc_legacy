@@ -14,6 +14,8 @@ from textwrap import fill
 from enaml.widgets.api import (GroupBox, Label, Field, ObjectCombo)
 from enaml.stdlib.fields import FloatField
 from enaml.layout.api import factory
+from exopy.tasks.api import InstrTaskView, EVALUATER_TOOLTIP
+from exopy.utils.widgets.qt_completers import QtLineCompleter
 
 from exopy_hqc_legacy.utils.layouts import auto_grid_layout
 from ...base_instr_view import InstrView
@@ -24,6 +26,35 @@ enamldef MeasMagFieldView(InstrView): view:
 
     """
     constraints = [factory(auto_grid_layout)]
+
+    Label:
+        text = 'Wait (s)'
+    FloatField:
+        value := task.wait_time
+        tool_tip = fill("Time to wait before querying values from the "
+                        "field source.", 60)
+
+enamldef MeasACMagFieldView(InstrView): view:
+    """View for the MeasACMagFieldTask.
+
+    """
+    constraints = [factory(auto_grid_layout)]
+
+    Label:
+        text = 'Filter type'
+    ObjectCombo:
+        items << list(['No filter','LP','WBP'])
+        selected := task.filter_switch
+
+    Label: filtfreq_lab:
+        text = 'Filt. freq. (Hz)'
+    QtLineCompleter: filtfreq_val:
+        resist_width = 'ignore'
+        text := task.filter_freq
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = (EVALUATER_TOOLTIP + '\n\n' +
+                   fill("Instrument will select "
+                        "available filter closest to this frequency", 60))
 
     Label:
         text = 'Wait (s)'

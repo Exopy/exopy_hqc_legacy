@@ -105,6 +105,31 @@ class SetDemodPhaseTask(InterfaceableTaskMixin, InstrumentTask):
         
         self.write_in_database('Phase(deg)', self.format_and_eval_string(self.phase))
 
+class SetDemodBWandSampleTask(InterfaceableTaskMixin, InstrumentTask):
+    """Sets the phase for demod by a lockin.
+
+    """
+    # NEPBW.
+    nepbw = Str().tag(pref=True)
+
+    # Datarate
+    datarate = Str().tag(pref=True)
+
+    database_entries = set_default({'nepbw(Hz)': '',
+                                    'datarate(Sa/s)': ''})
+
+    def i_perform(self,value=None):
+        """Set the specified amplitude.
+
+        """
+        if self.nepbw:
+            self.driver.set_nepbw(self.format_and_eval_string(self.nepbw))
+        if self.datarate:
+            self.driver.set_datarate(self.format_and_eval_string(self.datarate))
+        
+        self.write_in_database('nepbw(Hz)', self.format_and_eval_string(self.nepbw))
+        self.write_in_database('datarate(Sa/s)', self.format_and_eval_string(self.datarate))
+
 
 class MultiChannelOscillatorInterface(TaskInterface):
     """Interface for multiple oscillators lockin.

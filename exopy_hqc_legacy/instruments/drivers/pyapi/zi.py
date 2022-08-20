@@ -219,6 +219,17 @@ class HF2LIDemodChannel(BaseInstrument):
         order=self._daqserv.getInt(self._header_demod_order)
         return self._LI.get_FO_f_nepbw(order)/tc
 
+    def set_nepbw(self, nepbw):
+        """
+        Returns the nepbw specified for the channel
+
+        """
+        if self._channel>5:
+            raise ValueError('The instrument can only spec BW for chans 1-6')
+        order=self._daqserv.getInt(self._header_demod_order)
+        tc=self._LI.get_FO_f_nepbw(order)/nepbw
+        self._daqserv.setDouble(self._header_demod_timeconstant,tc)
+
     def get_datarate(self):
         """
         Gets the datarate for the channel
@@ -519,12 +530,9 @@ class HF2LIStreamer(BaseInstrument):
         """
         self._LI.get_daq_serv().flush
         self._LI.get_daq_serv().echoDevice(self._device_id)
-        self.streamer.set('type', 0) #continous trigger
+        self.streamer.set('type', 2) #digital trigger (will be force triggered)
         self.streamer.set('grid/mode',4) #no resampling of higher rate stream
         for ii, (chan,code) in enumerate(measkey):
-            log = logging.getLogger(__name__)
-            msg = ('Suscribed meas are %s')
-            log.info(self.log_prefix+msg,'; '.join(map(str, (chan,code))))
             if code not in {'','phase'}:
                 if chan+code not in self.suscribed:
                     self.streamer.subscribe(
@@ -595,6 +603,7 @@ class HF2LIStreamer(BaseInstrument):
 
     def stream_exec(self):
         self.streamer.execute()
+        self.streamer.set('forcetrigger',1)
 
     def stream_finished(self):
         t_time=self.streamer.getDouble('duration')

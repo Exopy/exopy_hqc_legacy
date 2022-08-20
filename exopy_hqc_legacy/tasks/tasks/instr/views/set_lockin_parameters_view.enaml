@@ -86,3 +86,23 @@ enamldef SetDemodPhaseTaskView(InstrView): view:
     QtLineCompleter: phase_val:
         hug_width = 'ignore'
         text := task.phase
+
+enamldef SetDemodBWandSampleView(InstrView): view:
+    """View for the SetDemodBWandSample
+
+    """
+    constraints = [factory(auto_grid_layout)]
+
+    Label: nepbw_lab:
+        hug_width = 'ignore'
+        text = 'NEPBW (Hz)'
+    QtLineCompleter: nepbw_val:
+        hug_width = 'ignore'
+        text := task.nepbw
+
+    Label: datarate_lab:
+        hug_width = 'ignore'
+        text = 'Datarate (Sa/s)'
+    QtLineCompleter: datarate_val:
+        hug_width = 'ignore'
+        text := task.datarate

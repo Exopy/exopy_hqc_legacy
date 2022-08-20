@@ -220,7 +220,7 @@ class LoadFileTask(SimpleTask):
     #: Folder in which to save the data.
     folder = Str('{default_path}').tag(pref=True, fmt=True)
 
-    #: Name of the file in which to write the data.
+    #: Name of the file in which to read the data.
     filename = Str().tag(pref=True, fmt=True)
 
     #: Currently opened file object. (File mode)
@@ -242,13 +242,13 @@ class LoadFileTask(SimpleTask):
         """ Collect all data and write them to file.
 
         """
+        # Format path
+        full_folder_path = self.format_string(self.folder)
+        filename = self.format_string(self.filename)
+        full_path = os.path.join(full_folder_path, filename)
 
         # Initialisation.
         if not self.initialized:
-
-            full_folder_path = self.format_string(self.folder)
-            filename = self.format_string(self.filename)
-            full_path = os.path.join(full_folder_path, filename)
             try:
                 self.file_object = open(full_path, 'r')
             except IOError:
@@ -260,6 +260,8 @@ class LoadFileTask(SimpleTask):
             self.root.resources['files'][full_path] = self.file_object
 
             self.initialized = True
+
+
 
         file_object = open(full_path, 'r')
 

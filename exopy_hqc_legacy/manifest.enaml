@@ -343,6 +343,12 @@ enamldef HqcLegacyManifest(PluginManifest):
                         connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
                                        }
                     Driver:
+                        driver = 'rohde_and_schwarz_zva24:ZVK'
+                        model = 'ZVK'
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaTCPIP': {'resource_class': 'INSTR'}
+                                       }
+                    Driver:
                         driver = ('rohde_and_schwarz_signal_generators:'
                                   'RohdeSchwarzSMB100A')
                         model = 'SMB100A'
@@ -588,7 +594,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                                  'views.pna_task_views:IPNAChannelValue']
                         instruments = ['exopy_hqc_legacy.Legacy.AgilentPNA',
                                        'exopy_hqc_legacy.Legacy.ZNB20',
-                                       'exopy_hqc_legacy.Legacy.ZVA24']
+                                       'exopy_hqc_legacy.Legacy.ZVA24',
+                                       'exopy_hqc_legacy.Legacy.ZVK']
                     Interface:
                         interface = 'synthHD_tasks:SynthHDsetChannelInterface'
                         views = ['views.synthHD_task_views:ISynthHDChannelLabel',
@@ -617,7 +624,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                                  'views.pna_task_views:IPNAPortValue']
                         instruments = ['exopy_hqc_legacy.Legacy.AgilentPNA',
                                        'exopy_hqc_legacy.Legacy.ZNB20',
-                                       'exopy_hqc_legacy.Legacy.ZVA24']
+                                       'exopy_hqc_legacy.Legacy.ZVA24',
+                                       'exopy_hqc_legacy.Legacy.ZVK']
                     Interface:
                         interface = 'synthHD_tasks:SynthHDsetChannelInterface'
                         views = ['views.synthHD_task_views:ISynthHDChannelLabel',
@@ -638,6 +646,7 @@ enamldef HqcLegacyManifest(PluginManifest):
                                    'exopy_hqc_legacy.Legacy.RohdeSchwarzSMF100A',
                                    'exopy_hqc_legacy.Legacy.ZNB20',
                                    'exopy_hqc_legacy.Legacy.ZVA24',
+                                   'exopy_hqc_legacy.Legacy.ZVK',
                                    'exopy_hqc_legacy.Legacy.Anapico']
                     metadata = {'loopable': True}
                     Interface:
@@ -683,7 +692,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                     view = 'views.pna_task_views:PNAGetTraceView'
                     instruments = ['exopy_hqc_legacy.Legacy.AgilentPNA',
                                    'exopy_hqc_legacy.Legacy.ZNB20',
-                                   'exopy_hqc_legacy.Legacy.ZVA24']
+                                   'exopy_hqc_legacy.Legacy.ZVA24',
+                                   'exopy_hqc_legacy.Legacy.ZVK']
                 Task:
                     task = 'pna_tasks:ZNBGetTraces'
                     view = 'views.pna_task_views:ZNBGetTraceView'

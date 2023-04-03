@@ -37,6 +37,12 @@ class SetACCurrentWaveform(InterfaceableTaskMixin, InstrumentTask):
                               feval=validators.SkipLoop(types=numbers.Real)
                               )
 
+    #: Compliance for the source current (dynamically evaluated)
+    compliance_V = Str('5.0').tag(
+                              pref=True, 
+                              feval=validators.SkipLoop(types=numbers.Real)
+                              )
+
     #: Offset for the source current
     waveform_offset = Str('0.0').tag(
                               pref=True, 
@@ -72,6 +78,7 @@ class SetACCurrentWaveform(InterfaceableTaskMixin, InstrumentTask):
 
         freq=self.format_and_eval_string(self.waveform_freq)
         ampl=self.format_and_eval_string(self.waveform_ampl)
+        compl=self.format_and_eval_string(self.compliance_V)
         offset=self.format_and_eval_string(self.waveform_offset)
         cycles=self.format_and_eval_string(self.waveform_cycles)
 
@@ -82,6 +89,7 @@ class SetACCurrentWaveform(InterfaceableTaskMixin, InstrumentTask):
                                     self.waveform_duty,
                                     self.waveform_finite,
                                     cycles)
+        self.driver.current_compliance=compl
 
 class SetACOutputTask(InterfaceableTaskMixin, InstrumentTask):
     """Set an AC output to the specified value: ON or OFF

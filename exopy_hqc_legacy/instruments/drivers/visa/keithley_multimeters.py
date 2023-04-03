@@ -577,7 +577,7 @@ class Keithley6221(VisaInstrument):
 
         """
         self.write("SOUR:CURR:COMP {}".format(value))
-        feedback = self.query('SOUR:CURR:COMP')
+        feedback = self.query('SOUR:CURR:COMP?')
         # to avoid floating point rouding
         if abs(float(feedback) - round(value, 12)) > 1e-12:
             raise InstrIOError(cleandoc('''Instrument did not set correctly 

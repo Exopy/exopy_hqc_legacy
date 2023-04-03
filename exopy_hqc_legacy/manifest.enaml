@@ -424,7 +424,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                                   'RohdeSchwarzSMB100A')
                         model = 'SMB100A'
                         kind = 'RF source'
-                        connections = {'VisaTCPIP': {'resource_class': 'INSTR'}
+                        connections = {'VisaGPIB': {'resource_class': 'INSTR'},
+                                       'VisaTCPIP': {'resource_class': 'INSTR'}
                                         }
                     Driver:
                         driver = ('rohde_and_schwarz_signal_generators:'
@@ -477,6 +478,10 @@ enamldef HqcLegacyManifest(PluginManifest):
                     driver = 'zi:HF2LI'
                     manufacturer = 'Zurich Instruments'
                     model = 'HF2LI'
+                Driver:
+                    driver = 'zi:MFLI'
+                    manufacturer = 'Zurich Instruments'
+                    model = 'MFLI'
 
     Extension:
         id = 'exopy_hqc_legacy.tasks'
@@ -581,7 +586,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                         interface = 'set_lockin_parameters_tasks:MultiChannelDemodInterface'
                         views = ['views.multi_channel_LI_views:MultiChannelDemodLabel',
                                  'views.multi_channel_LI_views:MultiChannelDemodValue']
-                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
+                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI',
+                                       'exopy_hqc_legacy.Legacy.MFLI']
                 Task:
                     task = 'set_lockin_parameters_tasks:SetOscillatorFrequencyTask'
                     view = 'views.set_lockin_parameters_view:SetOscillatorFrequencyView'
@@ -645,7 +651,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                         interface = 'set_lockin_parameters_tasks:MultiChannelDemodInterface'
                         views = ['views.multi_channel_LI_views:MultiChannelDemodLabel',
                                  'views.multi_channel_LI_views:MultiChannelDemodValue']
-                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI']
+                        instruments = ['exopy_hqc_legacy.Legacy.HF2LI',
+                                       'exopy_hqc_legacy.Legacy.MFLI']
                 Task:
                     task = 'set_lockin_parameters_tasks:SetDemodPhaseTask'
                     view = 'views.set_lockin_parameters_view:SetDemodPhaseTaskView'

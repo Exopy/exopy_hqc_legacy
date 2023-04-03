@@ -26,16 +26,24 @@ enamldef ValueView(Container):
     """Sub-view for the SetACCurrentWaveform.
 
     """
-    attr value
+    attr value1
+    attr value2
 
-    constraints = [grid([ampl_lab],
-                       [ampl_val])]
+    constraints = [grid([ampl_lab,compl_lab],
+                       [ampl_val,compl_val])]
 
     Label: ampl_lab:
         text = 'Current (A)'
     QtLineCompleter: ampl_val:
         resist_width = 'ignore'
-        text := value
+        text := value1
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+    Label: compl_lab:
+        text = 'Compliance (V)'
+    QtLineCompleter: compl_val:
+        resist_width = 'ignore'
+        text := value2
         entries_updater << task.list_accessible_database_entries
         tool_tip = EVALUATER_TOOLTIP
 
@@ -114,6 +122,8 @@ enamldef SetAcWaveformView(InstrView): view:
     Field: function_val:
         resist_width = 'ignore'
         text := task.waveform_function
+        tool_tip = fill('Type here fucntion code without quotes,'
+                        ' e.g., SIN',60)
 
     Label: freq_lab:
         text = 'Freq (Hz)'
@@ -128,7 +138,8 @@ enamldef SetAcWaveformView(InstrView): view:
         Conditional:
             condition = not in_loop
             ValueView:
-                value := task.waveform_ampl
+                value1 := task.waveform_ampl
+                value2 := task.compliance_V
 
     Container: grid_container:
         padding = 0

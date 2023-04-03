@@ -19,7 +19,6 @@ from ..driver_tools import (InstrIOError, instrument_property,
                             secure_communication)
 from ..visa_tools import VisaInstrument
 
-
 class RohdeSchwarzSMB100A(VisaInstrument):
     """
     Generic driver for Rohde and Schwarz SMB100A SignalGenerator,
@@ -62,6 +61,10 @@ class RohdeSchwarzSMB100A(VisaInstrument):
         self.frequency_unit = 'GHz'
         self.write_termination = '\n'
         self.read_termination = '\n'
+        self.pulsedict={
+            "PulseGen": "INT",
+            "Ext": "EXT",
+            "Random": "RAND"}
 
     @instrument_property
     @secure_communication()
@@ -160,13 +163,84 @@ class RohdeSchwarzSMB100A(VisaInstrument):
 
     @instrument_property
     @secure_communication()
+    def pm_source(self):
+        """Pulse modulation getter method
+
+        """
+        source = self.query('SOURce:PULM:SOURce?')
+        if source:
+            return source # EXT, INT or RAND
+        else:
+            mes = 'Signal generator did not return the pulse modulation source'
+            raise InstrIOError(mes)
+
+    @pm_source.setter
+    @secure_communication()
+    def pm_source(self, value):
+        """Pulse modulation setter method.
+
+        """
+        # TODO: write checks
+        self.write('SOURce:PULM:POLarity NORMal')
+        self.write('SOURce:PULM:TRIGger:EXTernal:IMPedance G50')
+        source=self.pulsedict[value]
+        if source in ['EXT','INT','RAND']:
+            self.write('SOURce:PULM:SOURce ' + source)
+        if source == 'INT':
+            self.write('SOURce:PULM:MODE SINGle')
+        newvalue = self.query('SOURce:PULM:SOURce?')
+        if '.' in newvalue:
+            newvalue = newvalue[:-1]
+        if source != newvalue:
+            raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the pulse modulation source'''))
+
+    @instrument_property
+    @secure_communication()
+    def video_state(self):
+        """Pulse modulation getter method
+
+        """
+        state = self.query('SOURce:PGEN:STATE?')
+        if state:
+            return bool(int(state))
+        else:
+            mes = 'Signal generator did not return its pulse modulation state'
+            raise InstrIOError(mes)
+
+    @video_state.setter
+    @secure_communication()
+    def video_state(self, value):
+        """Pulse modulation setter method.
+
+        """
+        # TODO: write checks
+        on = re.compile('on', re.IGNORECASE)
+        off = re.compile('off', re.IGNORECASE)
+        if on.match(value) or value == 1:
+            self.write('SOURce:PGEN:STATE ON')
+            if self.query('SOURce:PGEN:STATE?') != '1':
+                raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the pulse modulation state'''))
+        elif off.match(value) or value == 0:
+            self.write('SOURce:PGEN:STATE OFF')
+            if self.query('SOURce:PGEN:STATE?') != '0':
+                raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the pulse modulation state'''))
+        else:
+            mess = fill(cleandoc('''The invalid value {} was sent to
+                        switch_on_off method''').format(value), 80)
+            raise VisaTypeError(mess)
+
+    @instrument_property
+    @secure_communication()
     def pm_state(self):
         """Pulse modulation getter method
 
         """
-        pm_state = self.query('SOURce:PULM:STATE?')
-        if pm_state:
-            return bool(int(pm_state))
+        state = self.query('SOURce:PULM:STATE?')
+        if state:
+            return bool(int(state))
         else:
             mes = 'Signal generator did not return its pulse modulation state'
             raise InstrIOError(mes)
@@ -178,9 +252,6 @@ class RohdeSchwarzSMB100A(VisaInstrument):
 
         """
         # TODO: write checks
-        self.write('SOURce:PULM:SOURce EXT')
-        self.write('SOURce:PULM:POLarity NORMal')
-        self.write('SOURce:PULM:TRIGger:EXTernal:IMPedance G50')
         on = re.compile('on', re.IGNORECASE)
         off = re.compile('off', re.IGNORECASE)
         if on.match(value) or value == 1:
@@ -197,6 +268,58 @@ class RohdeSchwarzSMB100A(VisaInstrument):
             mess = fill(cleandoc('''The invalid value {} was sent to
                         switch_on_off method''').format(value), 80)
             raise VisaTypeError(mess)
+
+    @instrument_property
+    @secure_communication()
+    def pulse_width(self):
+        """Pulse width of the output signal.
+
+        """
+        width = self.query('SOURce:PULM:WIDTh?')
+        if width:
+            return float(width)
+        else:
+            raise InstrIOError('Instrument did not return the pulse width')
+
+    @pulse_width.setter
+    @secure_communication()
+    def pulse_width(self, value):
+        """Pulse width setter method.
+
+        """
+        self.write('SOURce:PULM:WIDTh {}'.format(value))
+        result = self.query('SOURce:PULM:WIDTh?')
+        if result:
+            if abs(float(result) - value) > 1e-9:
+                raise InstrIOError('Instrument did not set correctly the pulse width')
+        else:
+            raise InstrIOError('Instrument did not return the pulse width')
+
+    @instrument_property
+    @secure_communication()
+    def pulse_period(self):
+        """Pulse period of the output signal.
+
+        """
+        period = self.query('SOURce:PULM:PERiod?')
+        if period:
+            return float(period)
+        else:
+            raise InstrIOError('Instrument did not return the pulse period')
+
+    @pulse_period.setter
+    @secure_communication()
+    def pulse_period(self, value):
+        """Pulse period setter method.
+
+        """
+        self.write('SOURce:PULM:PERiod {}'.format(value))
+        result = self.query('SOURce:PULM:PERiod?')
+        if result:
+            if abs(float(result) - value) > 1e-9:
+                raise InstrIOError('Instrument did not set correctly the pulse period')
+        else:
+            raise InstrIOError('Instrument did not return the pulse period')
 
 class RohdeSchwarzSMF100A(RohdeSchwarzSMB100A):
     """

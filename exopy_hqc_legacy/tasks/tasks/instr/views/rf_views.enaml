@@ -124,6 +124,26 @@ enamldef PulseModulationView(InstrView): view:
             text := task.switch
             entries_updater << task.list_accessible_database_entries
             tool_tip = EVALUATER_TOOLTIP
+    Label:
+        text = 'Source'
+    ObjectCombo:
+        items << list(task.get_member('source').items)
+        selected := task.source
+
+    Conditional:
+        condition << (task.source=='PulseGen')
+        Label:
+            text = 'Pulse width (s)'
+        QtLineCompleter: pulse_width:
+            text := task.pulse_width
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = EVALUATER_TOOLTIP+fill('Width of the mod. pulse',60)
+        Label:
+            text = 'Pulse period (s)'
+        QtLineCompleter: pulse_period:
+            text := task.pulse_period
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = EVALUATER_TOOLTIP+fill('Width of the mod. pulse',60)
 
 enamldef RFPhaseView(InstrView): view:
     """View for the RFPhaseTask.

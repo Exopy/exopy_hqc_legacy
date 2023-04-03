@@ -158,8 +158,18 @@ class SetPulseModulationTask(InterfaceableTaskMixin, InstrumentTask):
     """Switch on/off the pulse modulation of the source.
 
     """
+
+    # Source for mod
+    source = Enum('', 'PulseGen', 'Ext', 'Random').tag(pref=True)
+
     # Desired state of the output, runtime value can be 0 or 1.
     switch = Str('Off').tag(pref=True, feval=validators.SkipLoop())
+
+    # Internal pulse generator width
+    pulse_width = Str('1.0').tag(pref=True)
+
+    # Internal pulse generator period
+    pulse_period = Str('1.0').tag(pref=True)
 
     database_entries = set_default({'pm_state': 0})
 
@@ -173,6 +183,8 @@ class SetPulseModulationTask(InterfaceableTaskMixin, InstrumentTask):
         if test and self.switch:
             try:
                 switch = self.format_and_eval_string(self.switch)
+                pulse_width = self.format_and_eval_string(self.pulse_width)
+                pulse_period = self.format_and_eval_string(self.pulse_period)
             except Exception:
                 return False, traceback
 
@@ -190,11 +202,23 @@ class SetPulseModulationTask(InterfaceableTaskMixin, InstrumentTask):
         if switch is None:
             switch = self.format_and_eval_string(self.switch)
 
+        if self.source:
+            if self.source != self.driver.pm_source:
+                if self.driver.pm_state:
+                    self.driver.pm_state = 'Off'
+                self.driver.pm_source = self.source
+            if self.source == 'PulseGen':
+                pulse_width = self.format_and_eval_string(self.pulse_width)
+                pulse_period = self.format_and_eval_string(self.pulse_period)
+                self.driver.pulse_width  = pulse_width
+                self.driver.pulse_period = pulse_period
+
         if switch == 'On' or switch == 1:
             self.driver.pm_state = 'On'
             self.write_in_database('pm_state', 1)
         else:
             self.driver.pm_state = 'Off'
+            self.driver.video_state = 'On'
             self.write_in_database('pm_state', 0)
             
 

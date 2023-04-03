@@ -42,9 +42,9 @@ class L1ControlUnit(object):
         self.utils = utils
         self.discovery = library.ziDiscovery()
         log = logging.getLogger(__name__)
-        msg = ('Connected instruments are %s')
+        msg = ('Detected instruments are %s')
         log.info(self.log_prefix+msg,'; '.join(self.list_instrs()))
-        self.apilevel = 1
+        self.apilevel = 6
         self.debuglevel = 0
         self._addresses = []
         self._sessions = []
@@ -77,14 +77,52 @@ class L1ControlUnit(object):
             assert self.utils.utils.api_server_version_check(api_session)
             self._addresses.append(props['serveraddress'])
             self._sessions.append(api_session)
-            self._devices.append([])
+            self._devices.append([(props['deviceid']+'.')[:-1]])
             ad_ind=self._addresses.index(props['serveraddress'])
         else:
             ad_ind=self._addresses.index(props['serveraddress'])
             api_session=self._sessions[ad_ind]
-        api_session.connectDevice(props['deviceid'], props['interfaces'][0])
-        self._devices[ad_ind].append(props['deviceid'])    
-        
+            if props['deviceid'] not in self._devices[ad_ind]:
+                self._devices[ad_ind].append((props['deviceid']+'.')[:-1])
+        api_session.connectDevice(props['deviceid'], props['interfaces'][0]) 
+        log = logging.getLogger(__name__)
+        msg = ('Connected instruments are {}')
+        log.info(self.log_prefix+msg.format(self._devices))
+        msg = ('All {} registered adresses are {}')
+        log.info(self.log_prefix+msg.format(len(self._addresses),'; '.join(self._addresses)))
+        return ad_ind
+
+    def setup_MFLI(self, props):
+        """Prepare an API session for communication with MFLI instr_id 
+        and return its index.
+
+        """
+        serveraddress=''
+        if not(props['serveraddress']): #avoid bug when get_props returns a '' address
+            for ind in range(len(self._devices)):
+                if props['deviceid'] in self._devices[ind]:
+                    serveraddress = self._addresses[ind]
+        else:
+            serveraddress = props['serveraddress']
+        if serveraddress not in self._addresses:
+            api_session = self.utils.utils.create_api_session(props['deviceid'].lower(),
+                                                   6, #API level 6 for MFLI
+                                                   server_port=props['serverport'])[0]
+            assert self.utils.utils.api_server_version_check(api_session)
+            self._addresses.append(serveraddress)
+            self._sessions.append(api_session)
+            self._devices.append([(props['deviceid']+'.')[:-1]])
+            ad_ind=self._addresses.index(serveraddress)
+        else:
+            ad_ind=self._addresses.index(serveraddress)
+            api_session=self._sessions[ad_ind]
+            if props['deviceid'] not in self._devices[ad_ind]:
+                self._devices[ad_ind].append((props['deviceid']+'.')[:-1])
+        log = logging.getLogger(__name__)
+        msg = ('Connected instruments are {}')
+        log.info(self.log_prefix+msg.format(self._devices))
+        msg = ('All {} registered adresses are {}')
+        log.info(self.log_prefix+msg.format(len(self._addresses),'; '.join(self._addresses)))
         return ad_ind
 
     def unsetup_instr(self, daq, instr_id):
@@ -715,6 +753,9 @@ class HF2LI(PyAPIInstrument):
         for instr_id in instrs:
             if instr_id == self._id:
                 props = cu.get_props(self._id)
+                # msg = ('All props: {}')
+                # log = logging.getLogger(__name__)
+                # log.info(msg.format(props))
                 serv_index = cu.setup_instr(props)
                 break
 
@@ -754,7 +795,7 @@ class HF2LI(PyAPIInstrument):
         self.cu_id.utils.utils.disable_everything(self.daq_serv, self._id)
 
     def get_daq_serv(self):
-        """Returns a sweeper interface to ZI API
+        """Returns a daq server interface to ZI API
 
         """
         return self.daq_serv
@@ -824,7 +865,174 @@ class HF2LI(PyAPIInstrument):
             return channel
 
     def _setup_api_session_identification(self):
-        """Load and initialize the API session.
+        """Identifies instr_id from connection infos
+
+        """
+        self._id = self._infos.get('instr_id')
+
+    def get_clockbase(self):
+        return self.daq_serv.getInt('/{}/clockbase'.format(self._id))
+
+    def get_FO_f_cutoff(self, order):
+        '''Returns conversion factor between TC and cutoff freq
+        Could be replaced by zhinst.utils.utils functions
+        '''
+        FO_list=np.array([1.0000,
+                          0.6436,
+                          0.5098,
+                          0.4350,
+                          0.3856,
+                          0.3499,
+                          0.3226,
+                          0.3008])/(2*np.pi)
+        return(FO_list[order-1])
+
+    def get_FO_f_nepbw(self, order):
+        '''Returns conversion factor between TC and nepbw freq
+        Could be replaced by zhinst.utils.utils functions        
+        '''
+        FO_list=np.array([0.2500,
+                          0.1250,
+                          0.0937,
+                          0.0781,
+                          0.0684,
+                          0.0615,
+                          0.0564,
+                          0.0524])
+        return(FO_list[order-1])
+
+
+class MFLI(PyAPIInstrument):
+    """Driver for the Zurich Instrument MFLI
+
+    """
+
+    def __init__(self, connection_info, caching_allowed=True,
+                 caching_permissions={}, auto_open=True):
+
+        super(MFLI, self).__init__(connection_info, caching_allowed,
+                                      caching_permissions, auto_open)
+        self._infos = connection_info
+        self.cu_id = None
+        self._id = None
+        self.daq_serv = None
+      
+        self._setup_api_session_identification()
+
+        if auto_open:
+            self.open_connection()
+
+        self.osc_channels = {}
+        self.demod_channels = {}
+        self.out_channels = {}
+
+    def open_connection(self):
+        """Setup the right instrument based on the vendor id.
+
+        """
+        cu = L1ControlUnit(zhinst.ziPython,zhinst.utils)
+        instrs = cu.list_instrs()
+        serv_index = None
+        for instr_id in instrs:
+            if instr_id == self._id:
+                props = cu.get_props(self._id)
+                # log = logging.getLogger(__name__)
+                # msg = ('All props: {}')
+                # log.info(msg.format(props))
+                serv_index = cu.setup_MFLI(props)
+                break
+
+        if serv_index is None:
+            raise ValueError(
+            'No instrument with serial id %s' % self._infos['instr_id']
+            )
+
+        self.daq_serv = cu._sessions[serv_index]
+        cu.enable_logging(self.daq_serv)
+        self.cu_id = cu
+
+    def close_connection(self):
+        """Disconnect the instrument from the acquisition server
+
+        """
+        self.cu_id.unsetup_instr(self.daq_serv,self._id)
+        return True
+
+    def reopen_connection(self):
+        """Reopen the connection with the instrument, using in principle
+        same DAQserver as previously.
+
+        """
+        self.close_connection()
+        self.open_connection()
+
+    def connected(self):
+        """Returns whether commands can be sent to the instrument
+        """
+        return cu_id.is_connected(self.daq_serv,self._id)
+
+    def basestate_instr(self):
+        """Set all functions to off.
+
+        """
+        self.cu_id.utils.utils.disable_everything(self.daq_serv, self._id)
+
+    def get_daq_serv(self):
+        """Returns a daq interface to ZI API
+
+        """
+        return self.daq_serv
+
+    def get_osc_channel(self, num):
+        """num is an int identifying the osc channel 
+        """
+        if num not in range(1,5):
+            msg = 'No channel {}, only channel 1--4 exist'
+            raise KeyError(msg.format(num))
+
+        if num in self.osc_channels:
+            return self.osc_channels[num]
+        else:
+            channel = HF2LIOscChannel(self, 
+                                      num, 
+                                      device='{}'.format(self._id))
+            self.osc_channels[num] = channel
+            return channel
+
+    def get_demod_channel(self, num):
+        """num is an int identifying the osc channel 
+        """
+        if num not in range(1,5):
+            msg = 'No channel {}, only channels 1--4 exist'
+            raise KeyError(msg.format(num))
+
+        if num in self.demod_channels:
+            return self.demod_channels[num]
+        else:
+            channel = HF2LIDemodChannel(self, 
+                                        num, 
+                                        device='{}'.format(self._id))
+            self.demod_channels[num] = channel
+            return channel
+
+    def get_out_channel(self, num):
+        """num is an int identifying the out channel 
+        """
+        if num not in range(1,2):
+            msg = 'No channel {}, only out channel 1 exist'
+            raise KeyError(msg.format(num))
+
+        if num in self.out_channels:
+            return self.out_channels[num]
+        else:
+            channel = HF2LIOutChannel(self, 
+                                        num, 
+                                        device='{}'.format(self._id))
+            self.out_channels[num] = channel
+            return channel
+
+    def _setup_api_session_identification(self):
+        """Identifies instr_id from connection infos
 
         """
         self._id = self._infos.get('instr_id')

@@ -464,11 +464,14 @@ enamldef HqcLegacyManifest(PluginManifest):
                     driver = 'sp_adq14:SPADQ14'
                     manufacturer = 'SPDevices'
                     model = 'ADQ14'
-
                 Driver:
                     driver = 'alazar935x:Alazar935x'
                     manufacturer = 'AlazarTech'
                     model = 'ATS9350'
+                Driver:
+                    driver = 'U8SMC1:USMC_Motor'
+                    manufacturer = 'Standa'
+                    model = '8SMC1_USBhF'
 
             Drivers:
                 path = 'pyapi'
@@ -892,4 +895,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                     task = 'run_awg:RunAWGTask'
                     view = 'views.run_awg_views:RunAWGView'
                     instruments = ['exopy_hqc_legacy.Legacy.AWG']
-                    
+                Task:
+                    task = 'motor_tasks:MoveAbsMotorTask'
+                    view = 'views.motor_views:MoveAbsMotorView'
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']
+                Task:
+                    task = 'motor_tasks:MoveRelMotorTask'
+                    view = 'views.motor_views:MoveRelMotorView'
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']                    
+                Task:
+                    task = 'motor_tasks:MotorReturnAngleTask'
+                    view = 'views.motor_views:MotorReturnAngleView'
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']

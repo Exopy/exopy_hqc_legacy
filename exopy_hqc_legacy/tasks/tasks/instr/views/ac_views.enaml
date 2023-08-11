@@ -166,7 +166,7 @@ enamldef SetAcOutputView(InstrView): view:
     Conditional:
         condition << not in_loop
         Label:
-            text = 'output'
+            text = 'Output'
         ObjectCombo:
             items << list(["'ON'","'OFF'"])
             selected := task.switch

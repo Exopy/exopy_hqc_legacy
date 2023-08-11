@@ -116,7 +116,7 @@ class SetRFOnOffTask(InterfaceableTaskMixin, InstrumentTask):
 
     """
     # Desired state of the output, runtime value can be 0 or 1.
-    switch = Str('Off').tag(pref=True, feval=validators.SkipLoop())
+    switch = Str("'OFF'").tag(pref=True, feval=validators.SkipLoop())
 
     database_entries = set_default({'output': 0})
 
@@ -132,7 +132,7 @@ class SetRFOnOffTask(InterfaceableTaskMixin, InstrumentTask):
             except Exception:
                 return False, traceback
 
-            if switch not in ('Off', 'On', 0, 1):
+            if switch not in ("OFF", "ON", 0, 1):
                 test = False
                 traceback[self.get_error_path() + '-switch'] =\
                     '{} is not an acceptable value.'.format(self.switch)
@@ -146,7 +146,7 @@ class SetRFOnOffTask(InterfaceableTaskMixin, InstrumentTask):
         if switch is None:
             switch = self.format_and_eval_string(self.switch)
 
-        if switch == 'On' or switch == 1:
+        if switch == "ON" or switch == 1:
             self.driver.output = 'On'
             self.write_in_database('output', 1)
         else:

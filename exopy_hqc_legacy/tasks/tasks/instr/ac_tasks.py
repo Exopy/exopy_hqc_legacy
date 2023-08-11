@@ -96,7 +96,7 @@ class SetACOutputTask(InterfaceableTaskMixin, InstrumentTask):
 
     """
     #: Target value for the source output
-    switch = Str('OFF').tag(pref=True, feval=validators.SkipLoop())
+    switch = Str("'OFF'").tag(pref=True, feval=validators.SkipLoop())
 
     database_entries = set_default({'output': "'OFF'"})
 

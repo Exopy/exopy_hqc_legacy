@@ -99,11 +99,9 @@ enamldef RFSetOnOffView(InstrView): view:
         condition << not in_loop
         Label:
             text = 'Output'
-        QtLineCompleter:
-            hug_width = 'ignore'
-            text := task.switch
-            entries_updater << task.list_accessible_database_entries
-            tool_tip = EVALUATER_TOOLTIP
+        ObjectCombo:
+            items << list(["'ON'","'OFF'"])
+            selected := task.switch
 
 enamldef PulseModulationView(InstrView): view:
     """View for the PulseModulationTask.

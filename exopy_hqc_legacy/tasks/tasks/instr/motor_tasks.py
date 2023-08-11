@@ -91,11 +91,13 @@ class MotorReturnAngleTask(InstrumentTask):
         """Wait and read the magnetic field.
 
         """
+        
         # make ready
         if (self.driver.owner != self.name):
             self.driver.owner = self.name
 
         time.sleep(self.wait_time)
+
         new_angle = self.driver.get_present_abs_angle()
         
         self.write_in_database('angle_read', new_angle)

@@ -362,3 +362,40 @@ class RohdeSchwarzSMF100A(RohdeSchwarzSMB100A):
         self.frequency_unit = 'GHz'
         self.write_termination = '\n'
         self.read_termination = '\n'
+
+    @instrument_property
+    @secure_communication()
+    def video_state(self):
+        """Pulse modulation getter method
+
+        """
+        state = self.query('SOURce:PGEN:OUTput:STATE?')
+        if state:
+            return bool(int(state))
+        else:
+            mes = 'Signal generator did not return its pulse modulation state'
+            raise InstrIOError(mes)
+
+    @video_state.setter
+    @secure_communication()
+    def video_state(self, value):
+        """Pulse modulation setter method.
+
+        """
+        # TODO: write checks
+        on = re.compile('on', re.IGNORECASE)
+        off = re.compile('off', re.IGNORECASE)
+        if on.match(value) or value == 1:
+            self.write('SOURce:PGEN:OUTput:STATE ON')
+            if self.query('SOURce:PGEN:OUTput:STATE?') != '1':
+                raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the pulse modulation state'''))
+        elif off.match(value) or value == 0:
+            self.write('SOURce:PGEN:OUTput:STATE OFF')
+            if self.query('SOURce:PGEN:OUTput:STATE?') != '0':
+                raise InstrIOError(cleandoc('''Instrument did not set correctly
+                                        the pulse modulation state'''))
+        else:
+            mess = fill(cleandoc('''The invalid value {} was sent to
+                        switch_on_off method''').format(value), 80)
+            raise VisaTypeError(mess)

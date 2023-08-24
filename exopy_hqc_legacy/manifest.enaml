@@ -494,6 +494,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                     model = '8SMC1_USBhF'
 
             Drivers:
+                path = 'dotnet'
+                starter = 'exopy_hqc_legacy.starter.dotnet'
+                connections = {'LegacyDotNetConnection': {}}
+                Driver:
+                    driver = 'magnet_physik_usb:HU_PT1_164005'
+                    manufacturer = 'Magnet-Physik GmbH'
+                    model = 'HU_PT1_164005'
+
+            Drivers:
                 path = 'pyapi'
                 starter = 'exopy_hqc_legacy.starter.pyapi'
                 connections = {'LegacyPyAPIConnection': {}}
@@ -587,7 +596,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                     instruments = ['exopy_hqc_legacy.Legacy.IPS12010',
                                    'exopy_hqc_legacy.Legacy.CS4',
                                    'exopy_hqc_legacy.Legacy.C4G',
-                                   'exopy_hqc_legacy.Legacy.LakeShore475']
+                                   'exopy_hqc_legacy.Legacy.LakeShore475',
+                                   'exopy_hqc_legacy.Legacy.HU_PT1_164005']
                     metadata = {'loopable': True}
                 Task:
                     task = 'meas_mag_field_task:MeasACMagFieldTask'

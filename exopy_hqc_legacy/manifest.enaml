@@ -928,12 +928,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'motor_tasks:MoveAbsMotorTask'
                     view = 'views.motor_views:MoveAbsMotorView'
-                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor',
+                                   'exopy_hqc_legacy.Legacy.U8SMC5_8MRU_1TP_Motor']
                 Task:
                     task = 'motor_tasks:MoveRelMotorTask'
                     view = 'views.motor_views:MoveRelMotorView'
-                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']                    
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor',
+                                   'exopy_hqc_legacy.Legacy.U8SMC5_8MRU_1TP_Motor']                   
                 Task:
                     task = 'motor_tasks:MotorReturnAngleTask'
                     view = 'views.motor_views:MotorReturnAngleView'
-                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor',
+                                   'exopy_hqc_legacy.Legacy.U8SMC5_8MRU_1TP_Motor']

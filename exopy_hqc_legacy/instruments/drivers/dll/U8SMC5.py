@@ -614,7 +614,7 @@ class U8SMC5_8MRU_1TP_Motor(DllInstrument):
             self._cu.apply_control_settings(self._motorindex,[60,600],[],[],300,2,1,0)
             self._cu.set_settings_done(self._id)
         #According to parameters passed above, we have
-        self._motorsteps = 200
+        self._motorsteps = 600
         self._motorusteps = 256
         self._speed = 10
 

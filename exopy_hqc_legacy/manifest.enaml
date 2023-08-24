@@ -20,6 +20,7 @@ from exopy.instruments.api import (Starter, Connection, Drivers, Driver,
 
 from .instruments.starters.legacy_starter import (VisaLegacyStarter,
                                                   DllLegacyStarter,
+                                                  DotNetLegacyStarter,
                                                   PyAPILegacyStarter)
 
 
@@ -68,6 +69,12 @@ enamldef HqcLegacyManifest(PluginManifest):
             starter = DllLegacyStarter()
 
         Starter:
+            id = 'exopy_hqc_legacy.starter.dotnet'
+            description = ('Starter for legacy instruments using a custom .net '
+                           'for communication.')
+            starter = DotNetLegacyStarter()
+
+        Starter:
             id = 'exopy_hqc_legacy.starter.pyapi'
             description = ('Starter for legacy instruments using a external '
                            'API for communication.')
@@ -89,6 +96,19 @@ enamldef HqcLegacyManifest(PluginManifest):
                                                            ''),
                                 header_dir=defaults.get('header_dir',''))
                 return DLLConnection(read_only=read_only, declaration=self,
+                                     workbench=workbench, **defaults)
+        Connection:
+            id = 'LegacyDotNetConnection'
+            description = ('Connection for instruments communicating via a '
+                           '.NET and identified by their serial number.')
+            new => (workbench, defaults, read_only):
+                with enaml.imports():
+                    from .instruments.connections.dotnet_serial_number_connection\
+                        import DotNetConnection
+                defaults = dict(lib_dir=defaults.get('lib_dir', ''),
+                                serial_number=defaults.get('serial_number',
+                                                           ''))
+                return DotNetConnection(read_only=read_only, declaration=self,
                                      workbench=workbench, **defaults)
         Connection:
             id = 'LegacyPyAPIConnection'

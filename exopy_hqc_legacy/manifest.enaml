@@ -492,6 +492,10 @@ enamldef HqcLegacyManifest(PluginManifest):
                     driver = 'U8SMC1:USMC_Motor'
                     manufacturer = 'Standa'
                     model = '8SMC1_USBhF'
+                Driver:
+                    driver = 'U8SMC5:U8SMC5_8MRU_1TP_Motor'
+                    manufacturer = 'Standa'
+                    model = '8SMC5_USB_8MRU_1TP'
 
             Drivers:
                 path = 'dotnet'

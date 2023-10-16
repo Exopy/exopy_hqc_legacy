@@ -845,6 +845,10 @@ enamldef HqcLegacyManifest(PluginManifest):
                     instruments = ['exopy_hqc_legacy.Legacy.ZNB20',
                                    'exopy_hqc_legacy.Legacy.ZVA24']
                 Task:
+                    task = 'pna_tasks:ZVKSetParam'
+                    view = 'views.pna_task_views:ZVKSetParamView'
+                    instruments = ['exopy_hqc_legacy.Legacy.ZVK']
+                Task:
                     task = 'psa_tasks:PSASweepTask'
                     view = 'views.psa_tasks_views:PSASweepTaskView'
                     instruments = ['exopy_hqc_legacy.Legacy.AgilentPSA',

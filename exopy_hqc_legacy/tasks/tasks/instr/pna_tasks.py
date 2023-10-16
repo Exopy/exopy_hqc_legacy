@@ -453,6 +453,9 @@ class PNAGetTraces(InstrumentTask):
     #: Should the data be measured first.
     already_measured = Bool(False).tag(pref=True)
 
+    #: Should the angle data be unwrapped
+    unwrap_phase = Bool(False).tag(pref=True)
+
     database_entries = set_default({'sweep_data': {}})
 
     def perform(self):
@@ -494,10 +497,14 @@ class PNAGetTraces(InstrumentTask):
         data = channel_driver.sweep_x_axis
         complexdata = (channel_driver.read_raw_data(measname) *
                        np.exp(2*np.pi*1j*data*channel_driver.electrical_delay))
-        aux = [data, complexdata.real, complexdata.imag,
-               np.absolute(complexdata),
-               np.unwrap(np.angle(complexdata))]
-
+        if self.unwrap_phase:
+            aux = [data, complexdata.real, complexdata.imag,
+                   np.absolute(complexdata),
+                   np.unwrap(np.angle(complexdata))]
+        else:
+            aux = [data, complexdata.real, complexdata.imag,
+                   np.absolute(complexdata),
+                   np.angle(complexdata)]
         return np.rec.fromarrays(aux, names=[str('Freq (GHz)'),
                                              str(measname+' real'),
                                              str(measname+' imag'),
@@ -520,6 +527,177 @@ class PNAGetTraces(InstrumentTask):
         self.write_in_database('sweep_data', sweep_data)
         return test, traceback
 
+EMPTY_REAL = validators.SkipEmpty(types=numbers.Real)
+
+EMPTY_INT = validators.SkipEmpty(types=numbers.Integral)
+
+class ZVKSetParam(SingleChannelPNATask):
+    """ Set the parameters for the traces that are specified.
+
+    The list of traces to be measured must be entered in the following format
+    ch1,tr1;ch2,tr2;ch3,tr3;...
+    ex: 1,1;1,3 for ch1, tr1 and ch1, tr3
+
+    """
+
+    #: Traces to set.
+    tracelist = Str('1,1').tag(pref=True)
+
+    mode_freq = Enum('Start/Stop', 'Center/Span').tag(pref=True)
+
+    start_freq = Str().tag(pref=True, feval=EMPTY_REAL)
+
+    stop_freq = Str().tag(pref=True, feval=EMPTY_REAL)
+
+    center_freq = Str().tag(pref=True, feval=EMPTY_REAL)
+
+    span_freq = Str().tag(pref=True, feval=EMPTY_REAL)
+
+    sweep_points = Str().tag(pref=True, feval=EMPTY_INT)
+
+    average_count = Str().tag(pref=True, feval=EMPTY_INT)
+
+    #: Auto time based on IF
+    sweep_auto = Bool(False).tag(pref=True)
+
+    sweep_time = Str().tag(pref=True, feval=EMPTY_REAL)
+
+    if_freq = Str().tag(pref=True, feval=EMPTY_REAL)
+
+    database_entries = set_default({'zvk_config': '',
+                                    'sweep_time': 1.0,
+                                    'average_count': 1.0})
+
+    def perform(self):
+        traces = self.tracelist.split(';')
+
+        if self.driver.owner != self.name:
+            self.driver.owner = self.name
+
+        for trace in traces:
+            c_nb, t_nb = trace.split(',')
+
+            """Set the specified parameters.
+            """
+            
+            if self.mode_freq == 'Start/Stop':
+                if self.start_freq:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        start_freq=self.format_and_eval_string(self.start_freq))
+                if self.stop_freq:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        stop_freq=self.format_and_eval_string(self.stop_freq))
+                # start_freq is set again in case the former value of stop
+                # prevented to do it
+                if self.start_freq:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        start_freq=self.format_and_eval_string(self.start_freq))
+            else:
+                if self.center_freq:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        center_freq=self.format_and_eval_string(self.center_freq))
+                if self.span_freq:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        span_freq=self.format_and_eval_string(self.span_freq))
+                # center_freq is set again in case the former value of span
+                # prevented to do it
+                if self.center_freq:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        center_freq=self.format_and_eval_string(self.center_freq))
+
+            if self.sweep_points:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        sweep_points=self.format_and_eval_string(self.sweep_points))
+
+            if self.sweep_auto:
+                if self.if_freq:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        if_freq=self.format_and_eval_string(self.if_freq))
+                channel_driver = self.driver.get_channel(int(c_nb))
+                try:
+                    channel_driver.tracenb = int(t_nb)
+                except:
+                    raise ValueError(cleandoc('''The trace {} for auto does not exist on channel
+                                              {}: '''.format(tracenb, channelnb)))
+                channel_driver.sweep_time_auto()
+            else:
+                if self.if_freq:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        if_freq=self.format_and_eval_string(self.if_freq))
+                if self.sweep_time:
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        sweep_time=self.format_and_eval_string(self.sweep_time))
+
+            if self.average_count:
+                try:
+                    channel_driver.tracenb = int(t_nb)
+                except:
+                    raise ValueError(cleandoc('''The trace {} for auto does not exist on channel
+                                              {}: '''.format(tracenb, channelnb)))
+                if self.format_and_eval_string(self.average_count)>1:
+                    channel_driver.average_state=True
+                    self.set_trace_param(int(c_nb), int(t_nb),
+                        average_count=self.format_and_eval_string(self.average_count))
+                else:
+                    channel_driver.average_state=False
+
+            d = self.driver.get_channel(int(c_nb))
+            header = cleandoc('''Start freq {}, Stop freq {}, Span freq {},
+                              Center freq {}, Average state and number {}_{}, Sweep time {},
+                              IF freq: {}, Number of points {}''')
+            zvk_config = header.format(d.start_frequency, d.stop_frequency,
+                                        d.span_frequency, d.center_frequency,
+                                        d.average_state, d.average_count, d.sweep_time, d.if_bandwidth,
+                                        d.sweep_points)
+            self.write_in_database('zvk_config', zvk_config)
+            self.write_in_database('sweep_time', d.sweep_time)
+            self.write_in_database('average_count', d.average_count)
+
+    def set_trace_param(self, channelnb, tracenb, start_freq=None,
+                                                  stop_freq=None,
+                                                  center_freq=None,
+                                                  span_freq=None,
+                                                  sweep_points=None,
+                                                  sweep_time=None,
+                                                  if_freq=None,
+                                                  average_count=None
+                                                  ):
+        """Get the trace that is displayed right now (no new acquisition)
+        on channel and tracenb.
+
+        """
+        channel_driver = self.driver.get_channel(channelnb)
+
+        try:
+            channel_driver.tracenb = tracenb
+        except:
+            raise ValueError(cleandoc('''The trace {} does not exist on channel
+                                      {}: '''.format(tracenb, channelnb)))
+
+        if start_freq is not None:
+            channel_driver.start_frequency = start_freq
+        if stop_freq is not None:
+            channel_driver.stop_frequency = stop_freq
+        if center_freq is not None:
+            channel_driver.center_frequency = center_freq
+        if span_freq is not None:
+            channel_driver.span_frequency = span_freq
+        if sweep_points is not None:
+            channel_driver.sweep_points = sweep_points
+        if sweep_time is not None:
+            channel_driver.sweep_time = sweep_time
+        if if_freq is not None:
+            channel_driver.if_bandwidth = if_freq
+        if average_count is not None:
+            channel_driver.average_count = average_count
+
+    def check(self, *args, **kwargs):
+        """Create meaningful database entries.
+
+        """
+        test, traceback = super(ZVKSetParam, self).check(*args, **kwargs)
+
+        return test, traceback
 
 class ZNBGetTraces(SingleChannelPNATask):
     """ Get the traces that are displayed right now (no new acquisition).

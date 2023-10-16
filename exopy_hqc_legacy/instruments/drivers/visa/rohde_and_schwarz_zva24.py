@@ -6,14 +6,14 @@
 #
 # The full license is in the file LICENCE, distributed with this software.
 # -----------------------------------------------------------------------------
-"""Driver for the Rohde and Schwartz VNA ZVA24.
+"""Drivers for the Rohde and Schwartz VNA ZVA24 and older model ZVK.
 
 """
-import logging
 from inspect import cleandoc
 import numpy as np
 import re
 from textwrap import fill
+import logging
 
 from ..driver_tools import (BaseInstrument, InstrIOError, InstrError,
                             secure_communication, instrument_property)
@@ -453,7 +453,7 @@ class ZVA24Channel(BaseInstrument):
                                           self._channel,
                                           self.port))
         if result:
-            if abs(float(result) > value) > 10**-12:
+            if abs(float(result) - value) > 10**-12:
                 raise InstrIOError(cleandoc('''ZVA24 did not set correctly the
                     channel {} power for port {}'''.format(self._channel,
                                                            self.port)))
@@ -514,7 +514,7 @@ class ZVA24Channel(BaseInstrument):
         result = self._pna.query('SENSe{}:BANDwidth?'.format(
                                           self._channel))
         if result:
-            if abs(float(result) > value) > 10**-12:
+            if abs(float(result) - value) > 10**-12:
                 raise InstrIOError(cleandoc('''ZVA24 did not set correctly the
                     channel {} IF bandwidth'''.format(self._channel)))
         else:
@@ -664,7 +664,7 @@ class ZVA24Channel(BaseInstrument):
         self._pna.write('SENSe{}:SWE:GRO:COUNt {}'.format(self._channel, value))
         result = self._pna.query('SENSe{}:AVERage:COUNt?'.format(self._channel))
         if result:
-            if int(result) == value:
+            if int(result) != value:
                 raise InstrIOError(cleandoc('''ZVA24 did not set correctly the
                     channel {} average count'''.format(self._channel)))
         else:
@@ -1141,7 +1141,7 @@ class ZVKChannel(BaseInstrument):
                     logger.info(msg.format(self._pna.timeout))
 
             if done != 1:
-                raise InstrError(cleandoc('''ZVK did could  not perform
+                raise InstrError(cleandoc('''ZVK did could not perform
                 the average on channel {} '''.format(self._channel)))
 
     @secure_communication()
@@ -1183,92 +1183,11 @@ class ZVKChannel(BaseInstrument):
 
     @instrument_property
     @secure_communication()
-    def sweep_x_axis(self):
-        """List of values on the Sweep X axis getter method.
-
-        """
-        sweep_points = self.sweep_points
-        if self.sweep_mode == 'SWE':
-            sweep_start = float(self._pna.query(
-                'SENSe{}:FREQuency:STARt?'.format(self._channel)))*1e-9
-            sweep_stop = float(self._pna.query(
-                'SENSe{}:FREQuency:STOP?'.format(self._channel)))*1e-9
-            return np.linspace(sweep_start, sweep_stop, sweep_points)
-        else:
-            raise InstrIOError(cleandoc('''Sweep type of ZVK not yet
-                supported for channel {}'''.format(self._channel)))
-
-    @instrument_property
-    @secure_communication()
-    def power(self):
-        """Power getter method
-        """
-        power = self._pna.query('SOUR{}:POWer{}:AMPL?'.format(
-                                         self._channel,
-                                         self.port))
-        if power:
-            return float(power)
-        else:
-            raise InstrIOError(cleandoc('''ZVK did not return the
-                    channel {} power for port {}'''.format(self._channel,
-                                                           self.port)))
-
-    @power.setter
-    @secure_communication()
-    def power(self, value):
-        """Power setter method
-        """
-        self._pna.write('SOUR{}:POWer{}:AMPL {}'.format(self._channel,
-                                                        self.port,
-                                                        value))
-        result = self._pna.query('SOUR{}:POWer{}:AMPL?'.format(
-                                          self._channel,
-                                          self.port))
-        if result:
-            if abs(float(result) > value) > 10**-12:
-                raise InstrIOError(cleandoc('''ZVK did not set correctly the
-                    channel {} power for port {}'''.format(self._channel,
-                                                           self.port)))
-        else:
-            raise InstrIOError(cleandoc('''ZVK did not set correctly the
-                    channel {} power for port {}'''.format(self._channel,
-                                                           self.port)))
-
-    @instrument_property
-    @secure_communication()
-    def if_bandwidth(self):
-        """
-        """
-        if_bw = self._pna.query('SENSe{}:BANDwidth?'.format(
-                                         self._channel))
-        if if_bw:
-            return float(if_bw)
-        else:
-            raise InstrIOError(cleandoc('''ZVK did not return the
-                    channel {} IF bandwidth'''.format(self._channel)))
-
-    @if_bandwidth.setter
-    @secure_communication()
-    def if_bandwidth(self, value):
-        """
-        """
-        self._pna.write('SENSe{}:BANDwidth {}'.format(self._channel, value))
-        result = self._pna.query('SENSe{}:BANDwidth?'.format(
-                                          self._channel))
-        if result:
-            if abs(float(result) > value) > 10**-12:
-                raise InstrIOError(cleandoc('''ZVK did not set correctly the
-                    channel {} IF bandwidth'''.format(self._channel)))
-        else:
-            raise InstrIOError(cleandoc('''ZVK did not set correctly the
-                    channel {} IF bandwidth'''.format(self._channel)))
-
-    @instrument_property
-    @secure_communication()
     def sweep_mode(self):
         """
         """
-        mode = self._pna.query('SENSe{}:FREQ:MODE?'.format(self._channel))
+        mode = self._pna.query(
+            'SENSe{}:FREQ:MODE?'.format(self._channel))
         if mode:
             return mode
         else:
@@ -1280,7 +1199,8 @@ class ZVKChannel(BaseInstrument):
     def sweep_mode(self, value):
         """
         """
-        self._pna.write('SENSe{}:FREQ:MODE {}'.format(self._channel, value))
+        self._pna.write(
+            'SENSe{}:FREQ:MODE {}'.format(self._channel, value))
         result = self._pna.query('SENSe{}:FREQ:MODE?'.format(self._channel))
 
         if result.lower() != value.lower()[:len(result)]:
@@ -1292,8 +1212,8 @@ class ZVKChannel(BaseInstrument):
     def sweep_points(self):
         """
         """
-        points = self._pna.query('SENSe{}:SWEep:POINts?'.format(
-                                          self._channel))
+        points = self._pna.query(
+            'SENSe{}:SWEep:POINts?'.format(self._channel))
         if points:
             return int(points)
         else:
@@ -1305,9 +1225,9 @@ class ZVKChannel(BaseInstrument):
     def sweep_points(self, value):
         """
         """
-        self._pna.write('SENSe{}:SWEep:POINts {}'.format(self._channel, value))
-        result = self._pna.query('SENSe{}:SWEep:POINts?'.format(
-                                          self._channel))
+        self._pna.write(
+            'SENSe{}:SWEep:POINts {}'.format(self._channel, value))
+        result = self._pna.query('SENSe{}:SWEep:POINts?'.format(self._channel))
         if result:
             if int(result) != value:
                 raise InstrIOError(cleandoc('''ZVK not set correctly the
@@ -1318,22 +1238,233 @@ class ZVKChannel(BaseInstrument):
 
     @instrument_property
     @secure_communication()
+    def sweep_x_axis(self):
+        """List of values on the Sweep X axis getter method.
+
+        """
+        if self.sweep_mode == 'SEGM':
+            sweep_points=np.array([])
+            segm_count = int(self._pna.query(
+                'SENSe{}:SEGment:COUNt?'.format(self._channel)))
+            for seg in range(1,segm_count+1):
+                segm_string = self._pna.query(
+                    'SENSe{}:SEGment:DEF{}?'.format(self._channel,seg))
+                split_segm_string=segm_string.split(',')
+                segm_start = float(split_segm_string[0])*1e-9
+                segm_stop = float(split_segm_string[1])*1e-9
+                segm_points = int(split_segm_string[2])
+                sweep_points = np.concatenate((sweep_points,np.linspace(
+                    segm_start, segm_stop, segm_points)))
+            return sweep_points
+        if self.sweep_mode == 'SWE':
+            sweep_points = self.sweep_points
+            sweep_start = self.start_frequency*1e-9
+            sweep_stop = self.stop_frequency*1e-9
+            return np.linspace(sweep_start, sweep_stop, sweep_points)
+        else:
+            raise InstrIOError(cleandoc('''Sweep type of ZVK not yet
+                supported for channel {}'''.format(self._channel)))
+
+    @instrument_property
+    @secure_communication()
+    def start_frequency(self):
+        """
+        """
+        start_freq = self._pna.query(
+            'SENSe{}:FREQ:STARt?'.format(self._channel))
+        if start_freq:
+            return float(start_freq)
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not return the
+                    channel {} start freq'''.format(self._channel)))
+
+    @start_frequency.setter
+    @secure_communication()
+    def start_frequency(self, value):
+        """
+        """
+        self._pna.write(
+            'SENSe{}:FREQ:STARt {}'.format(self._channel, value))
+        result = self._pna.query('SENSe{}:FREQ:STARt?'.format(
+                                          self._channel))
+        if result:
+            if abs(float(result) - value) > 10**-6:
+                raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} start freq'''.format(self._channel)))
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} start freq'''.format(self._channel)))
+
+    @instrument_property
+    @secure_communication()
+    def stop_frequency(self):
+        """
+        """
+        stop_freq = self._pna.query(
+            'SENSe{}:FREQ:STOP?'.format(self._channel))
+        if stop_freq:
+            return float(stop_freq)
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not return the
+                    channel {} stop freq'''.format(self._channel)))
+
+    @stop_frequency.setter
+    @secure_communication()
+    def stop_frequency(self, value):
+        """
+        """
+        self._pna.write(
+            'SENSe{}:FREQ:STOP {}'.format(self._channel, value))
+        result = self._pna.query('SENSe{}:FREQ:STOP?'.format(
+                                          self._channel))
+        if result:
+            if abs(float(result) - value) > 10**-6:
+                raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} stop freq'''.format(self._channel)))
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} stop freq'''.format(self._channel)))
+
+    @instrument_property
+    @secure_communication()
+    def center_frequency(self):
+        """
+        """
+        center_freq = self._pna.query(
+            'SENSe{}:FREQ:CENTer?'.format(self._channel))
+        if center_freq:
+            return float(center_freq)
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not return the
+                    channel {} center freq'''.format(self._channel)))
+
+    @center_frequency.setter
+    @secure_communication()
+    def center_frequency(self, value):
+        """
+        """
+        self._pna.write(
+            'SENSe{}:FREQ:CENTer {}'.format(self._channel, value))
+        result = self._pna.query('SENSe{}:FREQ:CENTer?'.format(self._channel))
+        if result:
+            if abs(float(result) - value) > 10**-6:
+                raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} center freq'''.format(self._channel)))
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} center freq'''.format(self._channel)))
+
+    @instrument_property
+    @secure_communication()
+    def span_frequency(self):
+        """
+        """
+        span_freq = self._pna.query(
+            'SENSe{}:FREQ:SPAN?'.format(self._channel))
+        if span_freq:
+            return float(span_freq)
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not return the
+                    channel {} span freq'''.format(self._channel)))
+
+    @span_frequency.setter
+    @secure_communication()
+    def span_frequency(self, value):
+        """
+        """
+        self._pna.write(
+            'SENSe{}:FREQ:SPAN {}'.format(self._channel, value))
+        result = self._pna.query('SENSe{}:FREQ:SPAN?'.format(self._channel))
+        if result:
+            if abs(float(result) - value) > 10**-6:
+                raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} span freq'''.format(self._channel)))
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} span freq'''.format(self._channel)))
+
+    @instrument_property
+    @secure_communication()
+    def if_bandwidth(self):
+        """
+        """
+        if_bw = self._pna.query(
+            'SENSe{}:BANDwidth?'.format(self._channel))
+        if if_bw:
+            if if_bw=='MAX':
+                return 26000
+            else:
+                return float(if_bw)
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not return the
+                    channel {} IF bandwidth'''.format(self._channel)))
+
+    @if_bandwidth.setter
+    @secure_communication()
+    def if_bandwidth(self, value):
+        """
+        """
+        rvalue=int(np.round(value))
+        if (rvalue not in [1,3,10,30,100,300,1000,3000,10000,26000]):
+            raise ValueError(cleandoc('''PNA only takes IF bandwidth from 1 Hz to 10 kHz,
+                                         as 1, 3 x 1eX, or 26kHz'''.format(self._channel)))
+        if rvalue==26000:
+            self._pna.write(
+                'SENSe{}:BANDwidth MAX'.format(self._channel))
+        else:
+            self._pna.write(
+                'SENSe{}:BANDwidth {}'.format(self._channel, rvalue))
+        result = self._pna.query(
+            'SENSe{}:BANDwidth?'.format(self._channel))
+        if result:
+            if result=='MAX':
+                if value!=26000:
+                    raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                        channel {} IF bandwidth'''.format(self._channel)))
+            elif int(result) != value:
+                raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} IF bandwidth'''.format(self._channel)))
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} IF bandwidth'''.format(self._channel)))
+
+    @secure_communication()
+    def sweep_time_auto(self):
+        """
+        """
+        self._pna.write(
+            'SENSe{}:SWEep:TIME:AUTO ON'.format(self._channel))
+        return self.sweep_time
+
+    @instrument_property
+    @secure_communication()
     def sweep_time(self):
         """Sweep time in seconds
         """
-        time = self._pna.query('sense{}:sweep:time?'.format(self._channel))
+        time = self._pna.query(
+            'SENSe{}:SWEep:TIME?'.format(self._channel))
         if time:
             return float(time)
         else:
             raise InstrIOError(cleandoc('''ZVK did not return the
-                    channel {} sweep point number'''.format(self._channel)))
+                    channel {} sweep time'''.format(self._channel)))
 
     @sweep_time.setter
     @secure_communication()
     def sweep_time(self, value):
         """
         """
-        self._pna.write('sense{}:sweep:time {}'.format(self._channel, value))
+        self._pna.write(
+            'SENSe{}:SWEep:TIME {}'.format(self._channel, value))
+        result = self._pna.query(
+            'SENSe{}:SWEep:TIME?'.format(self._channel))
+        if result:
+            if abs(float(result) - value) > 10**-6:
+                raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} sweep time'''.format(self._channel)))
+        else:
+            raise InstrIOError(cleandoc('''ZVK did not set correctly the
+                    channel {} sweep time'''.format(self._channel)))
 
     @instrument_property
     @secure_communication()
@@ -1352,9 +1483,14 @@ class ZVKChannel(BaseInstrument):
     def average_state(self, value):
         """
         """
-        self._pna.write('SENSe{}:AVERage:STATe {}'.format(self._channel, value))
-        result = self._pna.query('SENSe{}:AVERage:STATe?'.format(self._channel))
-
+        if value:
+            self._pna.write(
+                'SENSe{}:AVERage:STATe ON'.format(self._channel, value))
+        else:
+            self._pna.write(
+                'SENSe{}:AVERage:STATe OFF'.format(self._channel, value))
+        result = self._pna.query(
+            'SENSe{}:AVERage:STATe?'.format(self._channel))
         if bool(int(result)) != value:
             raise InstrIOError(cleandoc('''ZVK did not set correctly the
                 channel {} average state'''.format(self._channel)))
@@ -1364,8 +1500,8 @@ class ZVKChannel(BaseInstrument):
     def average_count(self):
         """
         """
-        count = self._pna.query('SENSe{}:AVERage:COUNt?'.format(
-                                         self._channel))
+        count = self._pna.query(
+            'SENSe{}:AVERage:COUNt?'.format(self._channel))
         if count:
             return int(count)
         else:
@@ -1378,11 +1514,12 @@ class ZVKChannel(BaseInstrument):
         """
         """
 
-        self._pna.write('SENSe{}:AVERage:COUNt {}'.format(self._channel, value))
-        self._pna.write('SENSe{}:SWE:GRO:COUNt {}'.format(self._channel, value))
-        result = self._pna.query('SENSe{}:AVERage:COUNt?'.format(self._channel))
+        self._pna.write(
+            'SENSe{}:AVERage:COUNt {}'.format(self._channel, value))
+        result = self._pna.query(
+            'SENSe{}:AVERage:COUNt?'.format(self._channel))
         if result:
-            if int(result) == value:
+            if int(result) != value:
                 raise InstrIOError(cleandoc('''ZVK did not set correctly the
                     channel {} average count'''.format(self._channel)))
         else:
@@ -1394,7 +1531,8 @@ class ZVKChannel(BaseInstrument):
     def average_mode(self):
         """
         """
-        mode = self._pna.query('SENSe{}:AVERage:MODE?'.format(self._channel))
+        mode = self._pna.query(
+            'SENSe{}:AVERage:MODE?'.format(self._channel))
         if mode:
             return mode
         else:
@@ -1406,8 +1544,10 @@ class ZVKChannel(BaseInstrument):
     def average_mode(self, value):
         """
         """
-        self._pna.write('SENSe{}:AVERage:MODE {}'.format(self._channel, value))
-        result = self._pna.query('SENSe{}:AVERage:MODE?'.format(self._channel))
+        self._pna.write(
+            'SENSe{}:AVERage:MODE {}'.format(self._channel, value))
+        result = self._pna.query(
+            'SENSe{}:AVERage:MODE?'.format(self._channel))
 
         if result.lower() != value.lower()[:len(result)]:
             raise InstrIOError(cleandoc('''ZVK did not set correctly the
@@ -1418,8 +1558,8 @@ class ZVKChannel(BaseInstrument):
     def electrical_delay(self):
         """electrical delay for the selected trace in ns
         """
-        mode = self._pna.query('SENSe{}:CORRection:EDELay?'.format(
-                                                    self._channel))
+        mode = self._pna.query(
+            'SENSe{}:CORRection:EDELay?'.format(self._channel))
         if mode:
             return float(mode)*1000000000.0
         else:
@@ -1432,8 +1572,8 @@ class ZVKChannel(BaseInstrument):
         """
         electrical delay for the selected trace in ns
         """
-        self._pna.write('SENSe{}:CORRection:EDELay {}NS'.format(self._channel, value))
-
+        self._pna.write(
+            'SENSe{}:CORRection:EDELay {}NS'.format(self._channel, value))
 
 class ZVK(VisaInstrument):
     """
@@ -1471,7 +1611,7 @@ class ZVK(VisaInstrument):
         defined_channels = []
         for ch in [1,2,3,4]:
             try:
-                self.query("TRAC:PRE? CH{}DATA".format(ch))
+                self.query('TRAC:PRE? CH{}DATA'.format(ch))
             except:
                 pass
             else:

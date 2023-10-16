@@ -66,7 +66,7 @@ class LakeShore475(VisaInstrument):
         """
         value = self.query('RDGTEMP?')
         
-        return value
+        return float(value)
 
     @secure_communication()
     def read_field(self):
@@ -74,8 +74,8 @@ class LakeShore475(VisaInstrument):
         Return the field for the probe measured by the instrument
         """
         value = self.query('RDGFIELD?')
-        
-        return value
+
+        return float(value)
 
     @secure_communication()
     def read_freq(self):
@@ -84,4 +84,4 @@ class LakeShore475(VisaInstrument):
         """
         value = self.query('RDGFRQ?')
         
-        return value
+        return float(value)

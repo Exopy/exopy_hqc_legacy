@@ -20,6 +20,7 @@ from exopy.instruments.api import (Starter, Connection, Drivers, Driver,
 
 from .instruments.starters.legacy_starter import (VisaLegacyStarter,
                                                   DllLegacyStarter,
+                                                  DotNetLegacyStarter,
                                                   PyAPILegacyStarter)
 
 
@@ -68,6 +69,12 @@ enamldef HqcLegacyManifest(PluginManifest):
             starter = DllLegacyStarter()
 
         Starter:
+            id = 'exopy_hqc_legacy.starter.dotnet'
+            description = ('Starter for legacy instruments using a custom .net '
+                           'for communication.')
+            starter = DotNetLegacyStarter()
+
+        Starter:
             id = 'exopy_hqc_legacy.starter.pyapi'
             description = ('Starter for legacy instruments using a external '
                            'API for communication.')
@@ -89,6 +96,19 @@ enamldef HqcLegacyManifest(PluginManifest):
                                                            ''),
                                 header_dir=defaults.get('header_dir',''))
                 return DLLConnection(read_only=read_only, declaration=self,
+                                     workbench=workbench, **defaults)
+        Connection:
+            id = 'LegacyDotNetConnection'
+            description = ('Connection for instruments communicating via a '
+                           '.NET and identified by their serial number.')
+            new => (workbench, defaults, read_only):
+                with enaml.imports():
+                    from .instruments.connections.dotnet_serial_number_connection\
+                        import DotNetConnection
+                defaults = dict(lib_dir=defaults.get('lib_dir', ''),
+                                serial_number=defaults.get('serial_number',
+                                                           ''))
+                return DotNetConnection(read_only=read_only, declaration=self,
                                      workbench=workbench, **defaults)
         Connection:
             id = 'LegacyPyAPIConnection'
@@ -472,6 +492,19 @@ enamldef HqcLegacyManifest(PluginManifest):
                     driver = 'U8SMC1:USMC_Motor'
                     manufacturer = 'Standa'
                     model = '8SMC1_USBhF'
+                Driver:
+                    driver = 'U8SMC5:U8SMC5_8MRU_1TP_Motor'
+                    manufacturer = 'Standa'
+                    model = '8SMC5_USB_8MRU_1TP'
+
+            Drivers:
+                path = 'dotnet'
+                starter = 'exopy_hqc_legacy.starter.dotnet'
+                connections = {'LegacyDotNetConnection': {}}
+                Driver:
+                    driver = 'magnet_physik_usb:HU_PT1_164005'
+                    manufacturer = 'Magnet-Physik GmbH'
+                    model = 'HU_PT1_164005'
 
             Drivers:
                 path = 'pyapi'
@@ -567,7 +600,8 @@ enamldef HqcLegacyManifest(PluginManifest):
                     instruments = ['exopy_hqc_legacy.Legacy.IPS12010',
                                    'exopy_hqc_legacy.Legacy.CS4',
                                    'exopy_hqc_legacy.Legacy.C4G',
-                                   'exopy_hqc_legacy.Legacy.LakeShore475']
+                                   'exopy_hqc_legacy.Legacy.LakeShore475',
+                                   'exopy_hqc_legacy.Legacy.HU_PT1_164005']
                     metadata = {'loopable': True}
                 Task:
                     task = 'meas_mag_field_task:MeasACMagFieldTask'
@@ -811,6 +845,10 @@ enamldef HqcLegacyManifest(PluginManifest):
                     instruments = ['exopy_hqc_legacy.Legacy.ZNB20',
                                    'exopy_hqc_legacy.Legacy.ZVA24']
                 Task:
+                    task = 'pna_tasks:ZVKSetParam'
+                    view = 'views.pna_task_views:ZVKSetParamView'
+                    instruments = ['exopy_hqc_legacy.Legacy.ZVK']
+                Task:
                     task = 'psa_tasks:PSASweepTask'
                     view = 'views.psa_tasks_views:PSASweepTaskView'
                     instruments = ['exopy_hqc_legacy.Legacy.AgilentPSA',
@@ -898,12 +936,15 @@ enamldef HqcLegacyManifest(PluginManifest):
                 Task:
                     task = 'motor_tasks:MoveAbsMotorTask'
                     view = 'views.motor_views:MoveAbsMotorView'
-                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor',
+                                   'exopy_hqc_legacy.Legacy.U8SMC5_8MRU_1TP_Motor']
                 Task:
                     task = 'motor_tasks:MoveRelMotorTask'
                     view = 'views.motor_views:MoveRelMotorView'
-                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']                    
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor',
+                                   'exopy_hqc_legacy.Legacy.U8SMC5_8MRU_1TP_Motor']                   
                 Task:
                     task = 'motor_tasks:MotorReturnAngleTask'
                     view = 'views.motor_views:MotorReturnAngleView'
-                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor']
+                    instruments = ['exopy_hqc_legacy.Legacy.USMC_Motor',
+                                   'exopy_hqc_legacy.Legacy.U8SMC5_8MRU_1TP_Motor']

@@ -87,7 +87,3 @@ class MeasACMagFieldTask(InstrumentTask):
         if self.filter_switch!='No filter':
             freq_value = self.driver.read_freq()
             self.write_in_database('ac_freq', freq_value)
-
-        
-        
-        

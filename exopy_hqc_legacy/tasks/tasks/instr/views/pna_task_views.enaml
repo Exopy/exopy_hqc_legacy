@@ -246,9 +246,112 @@ enamldef PNAGetTraceView(InstrView): view:
         tool_tip = fill("Check if you do not want to run a new measurement "
                         "before recording what is on the PNA screen.")
 
+    Label: unwrap_lab:
+        text = 'Unwrap phase'
+    CheckBox: unwrap_val:
+        checked := task.unwrap_phase
+        tool_tip = fill("Check if you do not want to run a new measurement "
+                        "before recording what is on the PNA screen.")
 
 enamldef ZNBGetTraceView(InstrView): view:
     """View for the ZNBGetTraceTask.
 
     """
     constraints = [factory(auto_grid_layout)]
+
+enamldef ZVKSetParamView(InstrView): view:
+    """View for the ZVKSetParamTask.
+
+    """
+    constraints = [factory(auto_grid_layout)]
+
+    Label: tracelist_lab:
+        text = 'Traces'
+    Field: tracelist_val:
+        text := task.tracelist
+        tool_tip = fill("The list of traces to be measured must be entered "
+                        "in the following formatch1,tr1;ch2,tr2;ch3,tr3;... "
+                        "ex: 1,1;1,3 for ch1, tr1 and ch1, tr3")
+
+
+    Label:
+        text = 'Sweep auto'
+    CheckBox: sweep_auto_bool:
+        checked := task.sweep_auto
+        tool_tip = fill("Check if you want time auto from IF freq.")
+
+    Conditional:
+        condition << not(task.sweep_auto)
+        Label:
+            text =  'Sweep time'
+        QtLineCompleter:
+            hug_width = 'ignore'
+            text := task.sweep_time
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = EVALUATER_TOOLTIP
+
+    Label:
+        text =  'IF freq'
+    QtLineCompleter:
+        hug_width = 'ignore'
+        text := task.if_freq
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label:
+        text = 'Input mode'
+    ObjectCombo:
+        items = ['Start/Stop','Center/Span']
+        selected := task.mode_freq
+
+    Conditional:
+        condition << task.mode_freq == 'Start/Stop'
+        Label:
+            text =  'Start Frequency'
+        QtLineCompleter:
+            hug_width = 'ignore'
+            text := task.start_freq
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = EVALUATER_TOOLTIP
+
+        Label:
+            text =  'Stop Frequency'
+        QtLineCompleter:
+            hug_width = 'ignore'
+            text := task.stop_freq
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = EVALUATER_TOOLTIP
+
+    Conditional:
+        condition << task.mode_freq == 'Center/Span'
+        Label:
+            text =  'Center Frequency'
+        QtLineCompleter:
+            hug_width = 'ignore'
+            text := task.center_freq
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = EVALUATER_TOOLTIP
+
+        Label:
+            text =  'Span Frequency'
+        QtLineCompleter:
+            hug_width = 'ignore'
+            text := task.span_freq
+            entries_updater << task.list_accessible_database_entries
+            tool_tip = EVALUATER_TOOLTIP
+
+    Label:
+        text =  'Sweep Points'
+    QtLineCompleter:
+        hug_width = 'ignore'
+        text := task.sweep_points
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP
+
+    Label:
+        text =  'Average count'
+    QtLineCompleter:
+        hug_width = 'ignore'
+        text := task.average_count
+        entries_updater << task.list_accessible_database_entries
+        tool_tip = EVALUATER_TOOLTIP

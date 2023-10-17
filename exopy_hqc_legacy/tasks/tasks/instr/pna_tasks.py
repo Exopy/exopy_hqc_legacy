@@ -511,6 +511,22 @@ class PNAGetTraces(InstrumentTask):
                                              str(measname+' abs'),
                                              str(measname+' phase')])
 
+    def _post_setattr_mode(self, old, new):
+        """ Update the database entries acording to the mode.
+
+        """
+        sweep_data = {}
+        traces = self.tracelist.split(';')
+        for trace in traces:
+            aux = [np.array([0.0, 0.0])]*5
+            measname=trace[0]+trace[2]
+            sweep_data[trace] = np.rec.fromarrays(aux,names=[str('Freq (GHz)'),
+                                                             str('MAG real'),
+                                                             str('MAG imag'),
+                                                             str('MAG abs'),
+                                                             str('MAG phase')])
+        self.write_in_database('sweep_data', sweep_data)
+
     def check(self, *args, **kwargs):
         """Create meaningful database entries.
 
@@ -520,11 +536,15 @@ class PNAGetTraces(InstrumentTask):
         traces = self.tracelist.split(';')
         sweep_data = {}
         for trace in traces:
-            data = [np.array([0.0, 1.0]), np.array([1.0, 2.0])]
-            sweep_data[trace] = np.rec.fromarrays(data,
-                                                  names=[str('a'), str('b')])
-
+            data = [np.array([0.0, 0.0, 0.0, 0.0, 0.0])]*2001
+            measname='S'+trace[0]+trace[2]
+            sweep_data[trace] = np.rec.fromarrays(data,names=[str('Freq (GHz)'),
+                                                              str('MAG real'),
+                                                              str('MAG imag'),
+                                                              str('MAG abs'),
+                                                              str('MAG phase')])
         self.write_in_database('sweep_data', sweep_data)
+
         return test, traceback
 
 EMPTY_REAL = validators.SkipEmpty(types=numbers.Real)
